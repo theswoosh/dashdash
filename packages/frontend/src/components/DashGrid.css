@@ -1,0 +1,30 @@
+.dash-grid-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.dash-grid {
+  /* react-grid-layout override: transparent background */
+}
+
+/* Edit mode: show grid placeholder */
+.react-grid-item.react-grid-placeholder {
+  background: var(--accent);
+  opacity: 0.15;
+  border-radius: var(--radius);
+}
+
+/* Drag/resize handles */
+.react-resizable-handle {
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.react-grid-item:hover .react-resizable-handle {
+  opacity: 0.5;
+}
+
+.react-resizable-handle::after {
+  border-color: var(--accent) !important;
+}

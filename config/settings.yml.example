@@ -1,0 +1,35 @@
+title: "Home"
+theme: glass           # glass | dark | light | custom
+
+background:
+  type: gradient       # image | gradient | color | unsplash | video
+  # For type: image
+  # url: /config/backgrounds/my-bg.jpg
+  # For type: gradient (CSS gradient string)
+  value: "linear-gradient(135deg, #0f0f1a 0%, #1a0f2e 50%, #0a1a2e 100%)"
+  blur: 0              # blur applied to bg layer only (px)
+  overlay: "rgba(0,0,0,0.35)"
+  parallax: false
+
+grid:
+  columns: 12
+  rowHeight: 80        # px per row unit
+  gap: 12              # px gap between widgets
+
+auth:
+  oidc:
+    enabled: false
+    issuer: https://auth.example.com
+    clientId: dashdash
+    # clientSecret via env: DASHDASH_OIDC_SECRET
+    scopes: "openid profile email groups"
+    groupsClaim: groups
+  local:
+    enabled: true      # fallback local accounts
+
+# Optional: custom CSS injected after theme
+css:
+  custom: |
+    :root {
+      --accent: #7c3aed;
+    }

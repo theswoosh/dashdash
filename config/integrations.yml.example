@@ -1,0 +1,29 @@
+# Named integrations — credentials via environment variables only.
+# API keys and secrets are NEVER stored in this file.
+
+- id: sonarr-main
+  type: sonarr
+  url: http://sonarr:8989
+  # apiKey via env: DASHDASH_INTEGRATION_SONARR_MAIN_KEY
+
+- id: radarr-main
+  type: radarr
+  url: http://radarr:7878
+  # apiKey via env: DASHDASH_INTEGRATION_RADARR_MAIN_KEY
+
+- id: pve-home
+  type: proxmox
+  url: https://pve.lan:8006
+  # tokenId via env: DASHDASH_INTEGRATION_PVE_HOME_TOKEN_ID
+  # tokenSecret via env: DASHDASH_INTEGRATION_PVE_HOME_TOKEN_SECRET
+  insecure: false               # set true to skip TLS verification on LAN
+
+- id: pihole-main
+  type: pihole
+  url: http://pihole
+  # apiKey via env: DASHDASH_INTEGRATION_PIHOLE_MAIN_KEY
+
+- id: jellyfin-main
+  type: jellyfin
+  url: http://jellyfin:8096
+  # apiKey via env: DASHDASH_INTEGRATION_JELLYFIN_MAIN_KEY

@@ -1,0 +1,54 @@
+# Widget instances. Each service maps to a widget type.
+# layout.x/y are defaults; user overrides are stored in the database.
+
+- id: clock-main
+  title: Clock
+  widget: clock
+  layout:
+    w: 2
+    h: 2
+    x: 0
+    y: 0
+  options:
+    timezone: Europe/Berlin
+    format: 24h
+
+- id: sonarr-queue
+  title: Sonarr
+  icon: sonarr
+  integration: sonarr-main     # references integrations.yml
+  widget: arr
+  layout:
+    w: 2
+    h: 2
+    x: 2
+    y: 0
+  options:
+    showQueue: true
+    refreshInterval: 30         # seconds
+
+- id: proxmox-status
+  title: Proxmox
+  icon: proxmox
+  integration: pve-home
+  widget: proxmox-nodes
+  layout:
+    w: 4
+    h: 3
+    x: 4
+    y: 0
+  options:
+    showStorage: true
+    refreshInterval: 15
+
+- id: search-bar
+  title: Search
+  widget: search
+  layout:
+    w: 6
+    h: 1
+    x: 0
+    y: 2
+  options:
+    engine: duckduckgo          # duckduckgo | google | brave | custom
+    # customUrl: https://search.example.com/?q=
