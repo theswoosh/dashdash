@@ -57,7 +57,6 @@ export function createServicesRoutes(
               widget: { type: 'string' },
               layout: { type: 'object' },
               options: { type: 'object' },
-              _userCreated: { type: 'boolean' },
             },
           },
         },

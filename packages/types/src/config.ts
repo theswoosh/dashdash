@@ -60,6 +60,4 @@ export interface ServiceConfig {
   widget: string;
   layout: ServiceLayout;
   options?: Record<string, unknown> | undefined;
-  /** Set to true for widgets created via the UI (stored in SQLite). YAML widgets omit this. */
-  _userCreated?: true | undefined;
 }

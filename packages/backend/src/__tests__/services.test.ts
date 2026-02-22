@@ -69,7 +69,6 @@ describe('POST /api/services', () => {
       title: 'Stats',
       widget: 'stats',
       layout: { x: 2, y: 0, w: 3, h: 2 },
-      _userCreated: true,
     };
     const res = await server.inject({
       method: 'POST',
@@ -126,7 +125,7 @@ describe('DELETE /api/services/:id', () => {
     await server.inject({
       method: 'POST',
       url: '/api/services',
-      payload: { id: 'to-delete', title: 'Temp', widget: 'clock', layout: { x: 0, y: 5, w: 2, h: 2 }, _userCreated: true },
+      payload: { id: 'to-delete', title: 'Temp', widget: 'clock', layout: { x: 0, y: 5, w: 2, h: 2 } },
     });
 
     const del = await server.inject({ method: 'DELETE', url: '/api/services/to-delete' });

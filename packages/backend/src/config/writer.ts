@@ -15,7 +15,7 @@ function readServices(configDir: string): Service[] {
 function writeServices(configDir: string, services: Service[]): void {
   const filePath = join(configDir, 'services.yml');
   const tmpPath = filePath + '.tmp';
-  writeFileSync(tmpPath, yaml.dump(services, { indent: 2, lineWidth: -1 }));
+  writeFileSync(tmpPath, yaml.dump(services, { indent: 2, lineWidth: -1, schema: yaml.CORE_SCHEMA }));
   renameSync(tmpPath, filePath);
 }
 

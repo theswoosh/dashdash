@@ -120,9 +120,11 @@ export function DashGrid() {
         return;
       }
 
-      const id = typeof crypto?.randomUUID === 'function'
-        ? crypto.randomUUID()
-        : `uc-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+      const existingIds = allServices.map(s => s.id);
+      const base = template.type;
+      let id = base;
+      let n = 2;
+      while (existingIds.includes(id)) { id = `${base}-${n++}`; }
 
       const w = template.defaultSize?.w ?? 2;
       const h = template.defaultSize?.h ?? 2;
@@ -136,7 +138,6 @@ export function DashGrid() {
         widget: template.type,
         layout: { x: pos.x, y: pos.y, w, h },
         options: template.defaultOptions ?? {},
-        _userCreated: true,
       };
 
       setLayout(prev => [...prev, { i: id, x: pos.x, y: pos.y, w, h }]);
@@ -212,7 +213,7 @@ export function DashGrid() {
             <WidgetCard
               service={s}
               editMode={editMode}
-              onDelete={s._userCreated ? handleDeleteService : undefined}
+              onDelete={handleDeleteService}
             />
           </div>
         ))}
