@@ -1,0 +1,33 @@
+.widget-skeleton {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.widget-skeleton__bar {
+  height: 12px;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--border-color) 25%,
+    var(--card-bg) 50%,
+    var(--border-color) 75%
+  );
+  background-size: 200% 100%;
+  animation: widget-skeleton-pulse 1.4s ease infinite;
+}
+
+.widget-skeleton__bar--title {
+  height: 16px;
+  width: 60%;
+}
+
+.widget-skeleton__bar--short {
+  width: 40%;
+}
+
+@keyframes widget-skeleton-pulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

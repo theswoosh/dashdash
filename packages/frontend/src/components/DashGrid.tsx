@@ -89,7 +89,7 @@ export function DashGrid() {
       >
         {services.map(s => (
           <div key={s.id}>
-            <WidgetCard id={s.id} title={s.title} icon={s.icon} editMode={editMode} />
+            <WidgetCard service={s} editMode={editMode} />
           </div>
         ))}
       </ReactGridLayout>

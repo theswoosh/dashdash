@@ -1,0 +1,22 @@
+.widget-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100%;
+  padding: 16px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.widget-error__icon {
+  color: #f87171;
+  flex-shrink: 0;
+}
+
+.widget-error__message {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  word-break: break-word;
+}

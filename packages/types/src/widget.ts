@@ -20,3 +20,12 @@ export interface WidgetDataRequest {
 export type WidgetDataResponse<T = unknown> =
   | { ok: true; data: T; cachedAt?: number }
   | { ok: false; error: string };
+
+/** Props passed to every widget component. */
+export interface WidgetProps {
+  serviceId: string;
+  options: Record<string, unknown>;
+  data: unknown;
+  error: string | undefined;
+  loading: boolean;
+}

@@ -41,6 +41,17 @@ export const SettingsSchema = z.object({
   grid: GridSchema.default({}),
 });
 
+export const IntegrationSchema = z.object({
+  id: z.string(),
+  type: z.string(),
+  url: z.string().optional(),
+  options: z.record(z.unknown()).optional(),
+});
+
+export const IntegrationsSchema = z.array(IntegrationSchema);
+
 export type Services = z.infer<typeof ServicesSchema>;
 export type Settings = z.infer<typeof SettingsSchema>;
 export type Service = z.infer<typeof ServiceSchema>;
+export type Integration = z.infer<typeof IntegrationSchema>;
+export type Integrations = z.infer<typeof IntegrationsSchema>;

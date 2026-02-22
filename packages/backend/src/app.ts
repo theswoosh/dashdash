@@ -9,6 +9,7 @@ import { healthRoutes } from './routes/health.js';
 import { createLayoutRoutes } from './routes/layout.js';
 import { createServicesRoutes } from './routes/services.js';
 import { createSettingsRoutes } from './routes/settings.js';
+import { createWidgetRoutes } from './routes/widget.js';
 
 export interface AppOptions {
   dataDir: string;
@@ -42,6 +43,7 @@ export async function buildApp({ dataDir, configDir, logger = false }: AppOption
   await server.register(createLayoutRoutes(db), { prefix: '/api' });
   await server.register(createServicesRoutes(getServices), { prefix: '/api' });
   await server.register(createSettingsRoutes(getSettings), { prefix: '/api' });
+  await server.register(createWidgetRoutes({ getServices, configDir }), { prefix: '/api' });
 
   server.get('/api/ws', { websocket: true }, (socket: WebSocket) => {
     addWsClient(socket);
