@@ -9,7 +9,8 @@
     "lint": "eslint packages/*/src --ext .ts,.tsx",
     "typecheck": "pnpm -r run typecheck",
     "test": "pnpm -r run test",
-    "format": "prettier --write \"packages/*/src/**/*.{ts,tsx,css}\""
+    "format": "prettier --write \"packages/*/src/**/*.{ts,tsx,css}\"",
+    "kill-dev": "bash scripts/kill-dev.sh"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.18.0",
