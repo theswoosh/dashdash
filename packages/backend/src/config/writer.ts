@@ -1,15 +1,15 @@
 import { readFileSync, writeFileSync, renameSync, existsSync } from 'fs';
 import { join } from 'path';
 import yaml from 'js-yaml';
-import { ServicesSchema } from './schemas.js';
+import { RawServicesSchema, assignIds } from './schemas.js';
 import type { Service } from './schemas.js';
 
 function readServices(configDir: string): Service[] {
   const filePath = join(configDir, 'services.yml');
   if (!existsSync(filePath)) return [];
   const raw = yaml.load(readFileSync(filePath, 'utf8'));
-  const result = ServicesSchema.safeParse(raw);
-  return result.success ? result.data : [];
+  const result = RawServicesSchema.safeParse(raw);
+  return result.success ? assignIds(result.data) : [];
 }
 
 function writeServices(configDir: string, services: Service[]): void {

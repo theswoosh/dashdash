@@ -7,6 +7,34 @@ export const ServiceLayoutSchema = z.object({
   y: z.number().int().nonnegative().default(0),
 });
 
+/** Schema used when reading from YAML — id is optional, auto-assigned if absent. */
+export const RawServiceSchema = z.object({
+  id: z.string().optional(),
+  title: z.string(),
+  icon: z.string().optional(),
+  integration: z.string().optional(),
+  widget: z.string(),
+  layout: ServiceLayoutSchema,
+  options: z.record(z.unknown()).optional(),
+});
+
+export const RawServicesSchema = z.array(RawServiceSchema);
+
+/** Assigns stable readable IDs to services that don't have one. */
+export function assignIds(
+  services: Array<z.infer<typeof RawServiceSchema>>
+): Service[] {
+  const usedIds = new Set(services.filter(s => s.id).map(s => s.id!));
+  return services.map(s => {
+    if (s.id) return s as Service;
+    let id = s.widget;
+    let n = 2;
+    while (usedIds.has(id)) { id = `${s.widget}-${n++}`; }
+    usedIds.add(id);
+    return { ...s, id };
+  });
+}
+
 export const ServiceSchema = z.object({
   id: z.string(),
   title: z.string(),

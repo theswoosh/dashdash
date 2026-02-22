@@ -53,7 +53,7 @@ export interface ServiceLayout {
 }
 
 export interface ServiceConfig {
-  id: string;
+  id: string; // always present after load (auto-assigned from widget type if absent in YAML)
   title: string;
   icon?: string | undefined;
   integration?: string | undefined;
