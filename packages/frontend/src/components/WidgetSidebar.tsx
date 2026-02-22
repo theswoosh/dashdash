@@ -10,7 +10,9 @@ function SidebarItem({ template }: { template: WidgetTemplate }) {
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
     e.dataTransfer.effectAllowed = 'copy';
     e.dataTransfer.setData('widget-template', JSON.stringify(template));
-    setDroppingItem({ i: '__dropping__', w: template.defaultSize.w, h: template.defaultSize.h });
+    // Must use '__dropping-elem__' — RGL's internal default ID.
+    // Both the ghost (created in onDragOver) and the prop lookup (in onDrop) must use the same ID.
+    setDroppingItem({ i: '__dropping-elem__', w: template.defaultSize.w, h: template.defaultSize.h });
   };
 
   const handleDragEnd = () => {

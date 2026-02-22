@@ -82,10 +82,17 @@ export function DashGrid() {
         _userCreated: true,
       };
 
-      // Replace the __dropping__ placeholder with the real ID in the layout RGL provides
-      const newLayoutItem: Layout = { i: id, x: item.x, y: item.y, w: item.w, h: item.h };
+      // Replace the __dropping-elem__ ghost with the real ID.
+      // Use template.defaultSize for w/h — item.w/h may reflect a stale ghost size.
+      const newLayoutItem: Layout = {
+        i: id,
+        x: item.x,
+        y: item.y,
+        w: template.defaultSize.w,
+        h: template.defaultSize.h,
+      };
       const updatedLayout = [
-        ...rglLayout.filter(l => l.i !== '__dropping__'),
+        ...rglLayout.filter(l => l.i !== '__dropping-elem__'),
         newLayoutItem,
       ];
       setLayout(updatedLayout);
@@ -160,7 +167,7 @@ export function DashGrid() {
         isDroppable={editMode}
         compactType={null}
         preventCollision={true}
-        droppingItem={droppingItem ?? undefined}
+        droppingItem={editMode ? { i: '__dropping-elem__', w: droppingItem?.w ?? 2, h: droppingItem?.h ?? 2 } : undefined}
         onDrop={handleDrop}
         onLayoutChange={handleLayoutChange}
         draggableHandle=".widget-drag-handle"
