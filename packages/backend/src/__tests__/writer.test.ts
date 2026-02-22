@@ -65,9 +65,9 @@ describe('appendService', () => {
       widget: 'stats',
       layout: { x: 2, y: 0, w: 3, h: 2 },
     });
-    const services = readServices(tmpDir) as { id: string }[];
+    const services = readServices(tmpDir) as { widget: string }[];
     expect(services).toHaveLength(2);
-    expect(services[1]!.id).toBe('stats-1');
+    expect(services[1]!.widget).toBe('stats');
   });
 
   it('throws when id already exists', () => {

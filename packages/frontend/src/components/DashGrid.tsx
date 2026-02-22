@@ -87,7 +87,10 @@ export function DashGrid() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ items }),
-      }).then(() => reloadServices());
+      }).then(async r => {
+        if (!r.ok) console.error('Layout save failed:', r.status, await r.text());
+        else void reloadServices();
+      });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editMode]);

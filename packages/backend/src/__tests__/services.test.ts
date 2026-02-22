@@ -13,11 +13,10 @@ let tmpDir: string;
 beforeAll(async () => {
   tmpDir = mkdtempSync(join(tmpdir(), 'dashdash-test-'));
 
-  // Write a minimal services.yml for the test
+  // No id field — system derives it from widget type at load time
   writeFileSync(join(tmpDir, 'services.yml'), `
-- id: test-clock
+- widget: clock
   title: Clock
-  widget: clock
   layout:
     w: 2
     h: 2
@@ -41,11 +40,11 @@ describe('GET /api/services', () => {
     expect(res.statusCode).toBe(200);
   });
 
-  it('returns the services from services.yml', async () => {
+  it('returns the services from services.yml with derived id', async () => {
     const res = await server.inject({ method: 'GET', url: '/api/services' });
     const { services } = res.json<{ services: { id: string }[] }>();
     expect(services).toHaveLength(1);
-    expect(services[0]!.id).toBe('test-clock');
+    expect(services[0]!.id).toBe('clock');
   });
 
   it('returns an empty array when services.yml is missing', async () => {
@@ -64,30 +63,27 @@ describe('GET /api/services', () => {
 
 describe('POST /api/services', () => {
   it('appends a new service to services.yml', async () => {
-    const newSvc = {
-      id: 'new-stats',
-      title: 'Stats',
-      widget: 'stats',
-      layout: { x: 2, y: 0, w: 3, h: 2 },
-    };
+    // Frontend generates id 'stats' (widget type, no conflict)
     const res = await server.inject({
       method: 'POST',
       url: '/api/services',
-      payload: newSvc,
+      payload: { id: 'stats', title: 'Stats', widget: 'stats', layout: { x: 2, y: 0, w: 3, h: 2 } },
     });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ ok: true });
 
     const get = await server.inject({ method: 'GET', url: '/api/services' });
     const { services } = get.json<{ services: { id: string }[] }>();
-    expect(services.find(s => s.id === 'new-stats')).toBeDefined();
+    // Derived id for second widget is 'stats' (widget type, unique)
+    expect(services.find(s => s.id === 'stats')).toBeDefined();
   });
 
-  it('returns 409 when id already exists', async () => {
+  it('returns 409 when derived id already exists', async () => {
+    // Sending id 'clock' conflicts with the existing derived 'clock' service
     const res = await server.inject({
       method: 'POST',
       url: '/api/services',
-      payload: { id: 'test-clock', title: 'Dup', widget: 'clock', layout: { x: 0, y: 0, w: 2, h: 2 } },
+      payload: { id: 'clock', title: 'Dup', widget: 'clock', layout: { x: 0, y: 0, w: 2, h: 2 } },
     });
     expect(res.statusCode).toBe(409);
   });
@@ -95,16 +91,17 @@ describe('POST /api/services', () => {
 
 describe('PATCH /api/services/:id', () => {
   it('updates title and options', async () => {
+    // Derived id for the clock widget is 'clock'
     const res = await server.inject({
       method: 'PATCH',
-      url: '/api/services/test-clock',
+      url: '/api/services/clock',
       payload: { title: 'Updated Clock', options: { format24h: false } },
     });
     expect(res.statusCode).toBe(200);
 
     const get = await server.inject({ method: 'GET', url: '/api/services' });
     const { services } = get.json<{ services: { id: string; title: string; options: Record<string, unknown> }[] }>();
-    const svc = services.find(s => s.id === 'test-clock');
+    const svc = services.find(s => s.id === 'clock');
     expect(svc?.title).toBe('Updated Clock');
     expect(svc?.options?.format24h).toBe(false);
   });
@@ -121,19 +118,19 @@ describe('PATCH /api/services/:id', () => {
 
 describe('DELETE /api/services/:id', () => {
   it('removes the service', async () => {
-    // First add one to delete
+    // Add a second clock; frontend derives 'clock-2' (clock exists, stats exists)
     await server.inject({
       method: 'POST',
       url: '/api/services',
-      payload: { id: 'to-delete', title: 'Temp', widget: 'clock', layout: { x: 0, y: 5, w: 2, h: 2 } },
+      payload: { id: 'clock-2', title: 'Temp', widget: 'clock', layout: { x: 0, y: 5, w: 2, h: 2 } },
     });
 
-    const del = await server.inject({ method: 'DELETE', url: '/api/services/to-delete' });
+    const del = await server.inject({ method: 'DELETE', url: '/api/services/clock-2' });
     expect(del.statusCode).toBe(200);
 
     const get = await server.inject({ method: 'GET', url: '/api/services' });
     const { services } = get.json<{ services: { id: string }[] }>();
-    expect(services.find(s => s.id === 'to-delete')).toBeUndefined();
+    expect(services.find(s => s.id === 'clock-2')).toBeUndefined();
   });
 
   it('returns 404 for unknown id', async () => {

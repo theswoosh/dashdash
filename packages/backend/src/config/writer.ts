@@ -15,7 +15,9 @@ function readServices(configDir: string): Service[] {
 function writeServices(configDir: string, services: Service[]): void {
   const filePath = join(configDir, 'services.yml');
   const tmpPath = filePath + '.tmp';
-  writeFileSync(tmpPath, yaml.dump(services, { indent: 2, lineWidth: -1, schema: yaml.CORE_SCHEMA }));
+  // Strip runtime id — it is derived at load time, never stored in YAML.
+  const output = services.map(({ id: _id, ...rest }) => rest);
+  writeFileSync(tmpPath, yaml.dump(output, { indent: 2, lineWidth: -1, schema: yaml.CORE_SCHEMA }));
   renameSync(tmpPath, filePath);
 }
 
