@@ -103,6 +103,11 @@ export function DashGrid() {
     const ghost = newLayout.find(l => l.i === '__dropping-elem__');
     if (ghost) lastGhostRef.current = ghost;
 
+    // Outside edit mode YAML is the source of truth. Ignoring RGL's
+    // auto-generated positions here prevents them from overwriting the
+    // YAML layout that the allServices effect is about to (or just did) set.
+    if (!editModeRef.current) return;
+
     setLayout(prev => {
       const newIds = new Set(newLayout.map(l => l.i));
       const extras = prev.filter(l => !newIds.has(l.i) && l.i !== '__dropping-elem__');
@@ -195,7 +200,7 @@ export function DashGrid() {
       )}
       <ReactGridLayout
         className="dash-grid"
-        layout={layout}
+        layout={layout.length > 0 ? layout : servicesAsLayout(allServices)}
         cols={12}
         rowHeight={80}
         width={width}
