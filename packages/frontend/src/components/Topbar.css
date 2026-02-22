@@ -34,6 +34,10 @@
   gap: 8px;
 }
 
+.topbar-btn--icon {
+  padding: 6px 10px;
+}
+
 .topbar-btn {
   display: flex;
   align-items: center;

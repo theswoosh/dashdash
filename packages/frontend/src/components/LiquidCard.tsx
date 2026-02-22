@@ -239,7 +239,7 @@ export function LiquidCard({ children, className = '', radius = 20 }: Props) {
           <rect
             width={state.w}
             height={state.h}
-            fill="rgba(255,255,255,0.04)"
+            fill="var(--card-bg, rgba(255,255,255,0.05))"
             filter={`url(#${filterId})`}
           />
         )}

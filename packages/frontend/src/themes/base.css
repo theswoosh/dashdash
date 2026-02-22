@@ -14,28 +14,35 @@ html, body, #root {
 body {
   font-family: var(--font);
   color: var(--text-primary);
-  background: #0f0f1a;
+  background: var(--bg-base, #000);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 300ms ease, color 300ms ease;
 }
 
-/* Background layer */
+/* Background: dot pattern driven by theme CSS vars */
 .bg-layer {
   position: fixed;
   inset: 0;
   z-index: 0;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
   pointer-events: none;
+  background-color: var(--bg-base, #000);
+  background-image: radial-gradient(
+    circle,
+    var(--bg-dot, rgba(255, 255, 255, 0.14)) 1px,
+    transparent 1px
+  );
+  background-size: 22px 22px;
+  transition: background-color 300ms ease;
 }
 
 .bg-overlay {
   position: fixed;
   inset: 0;
   z-index: 1;
-  background: rgba(0, 0, 0, 0.35);
   pointer-events: none;
+  background: var(--bg-overlay, rgba(0, 0, 0, 0.18));
+  transition: background 300ms ease;
 }
 
 /* App shell */
@@ -44,21 +51,6 @@ body {
   z-index: 2;
   display: flex;
   flex-direction: column;
-}
-
-/* Glass card base */
-.card {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius);
-  backdrop-filter: blur(var(--backdrop-blur));
-  -webkit-backdrop-filter: blur(var(--backdrop-blur));
-  box-shadow: var(--shadow);
-  transition: border-color var(--transition);
-}
-
-.card:hover {
-  border-color: rgba(255, 255, 255, 0.25);
 }
 
 /* Scrollbar */
