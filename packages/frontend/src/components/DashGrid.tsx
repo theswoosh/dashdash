@@ -40,17 +40,25 @@ export function DashGrid() {
   const [layout, setLayout] = useState<Layout[]>([]);
   const [width, setWidth] = useState(window.innerWidth - 32);
 
+  // Synced every render so the layout effect can read the current editMode
+  // without adding it as a dep (which would re-run the effect on toggle).
+  const editModeRef = useRef(editMode);
+  editModeRef.current = editMode;
+
   useEffect(() => {
     if (allServices.length > 0) {
       setLayout(prev => {
-        // Local drag positions take priority over YAML so unsaved drags are not
-        // lost when services reload (e.g., after dropping a new widget).
-        // Only brand-new items (not in prev) fall back to YAML positions.
-        const prevMap = new Map(prev.map(l => [l.i, l]));
         const fromYaml = servicesAsLayout(allServices);
+
+        // Outside edit mode (initial load, WS reload, post-save): always use
+        // YAML positions so the layout is correct after a refresh.
+        if (!editModeRef.current || prev.length === 0) return fromYaml;
+
+        // Inside edit mode: preserve local drag positions for items already
+        // in the layout; only new items (e.g., just dropped) fall back to
+        // their YAML (i.e., drop) position.
+        const prevMap = new Map(prev.map(l => [l.i, l]));
         const merged = fromYaml.map(item => prevMap.get(item.i) ?? item);
-        // Keep any extra items in prev that aren't in fromYaml yet (e.g., a
-        // widget still settling through the drop queue).
         const mergedIds = new Set(merged.map(l => l.i));
         const extras = prev.filter(l => !mergedIds.has(l.i) && l.i !== '__dropping-elem__');
         return extras.length > 0 ? [...merged, ...extras] : merged;
