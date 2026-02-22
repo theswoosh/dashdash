@@ -17,7 +17,11 @@ function writeServices(configDir: string, services: Service[]): void {
   const tmpPath = filePath + '.tmp';
   // Strip runtime id — it is derived at load time, never stored in YAML.
   const output = services.map(({ id: _id, ...rest }) => rest);
-  writeFileSync(tmpPath, yaml.dump(output, { indent: 2, lineWidth: -1, schema: yaml.CORE_SCHEMA }));
+  // js-yaml quotes 'y' as a mapping key for YAML 1.1 compat; undo it since
+  // 'y' as a key is never ambiguous (only scalar values can be booleans).
+  const dumped = yaml.dump(output, { indent: 2, lineWidth: -1, schema: yaml.CORE_SCHEMA })
+    .replace(/'y':/g, 'y:');
+  writeFileSync(tmpPath, dumped);
   renameSync(tmpPath, filePath);
 }
 
