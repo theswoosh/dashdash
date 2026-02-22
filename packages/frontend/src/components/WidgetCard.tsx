@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react';
 import { GripVertical, Settings, X } from 'lucide-react';
 import type { ServiceConfig } from '@dashdash/types';
 import { useThemeCard } from '../themes/registry';
@@ -7,6 +8,40 @@ import { useUIStore } from '../store/uiStore';
 import { WidgetSkeleton } from '../widgets/shared/WidgetSkeleton';
 import { WidgetError } from '../widgets/shared/WidgetError';
 import './WidgetCard.css';
+
+function HoldDeleteButton({ id, onDelete }: { id: string; onDelete: (id: string) => void }) {
+  const [holding, setHolding] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+
+  const start = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    setHolding(true);
+    timer.current = setTimeout(() => { onDelete(id); }, 2000);
+  };
+
+  const cancel = () => {
+    if (timer.current) { clearTimeout(timer.current); timer.current = null; }
+    setHolding(false);
+  };
+
+  return (
+    <button
+      className={`widget-delete-btn${holding ? ' widget-delete-btn--holding' : ''}`}
+      onMouseDown={start}
+      onMouseUp={cancel}
+      onMouseLeave={cancel}
+      onTouchStart={start}
+      onTouchEnd={cancel}
+      title="Hold to delete"
+      aria-label="Hold to delete widget"
+    >
+      <span className="widget-delete-btn__fill" />
+      <span className="widget-delete-btn__icon"><X size={13} /></span>
+    </button>
+  );
+}
 
 interface Props {
   service: ServiceConfig;
@@ -53,16 +88,7 @@ export function WidgetCard({ service, editMode, onDelete }: Props) {
             >
               <Settings size={13} />
             </button>
-            {onDelete && (
-              <button
-                className="widget-edit-btn widget-edit-btn--danger"
-                title="Remove widget"
-                onClick={() => onDelete(service.id)}
-                aria-label="Remove widget"
-              >
-                <X size={13} />
-              </button>
-            )}
+            {onDelete && <HoldDeleteButton id={service.id} onDelete={onDelete} />}
           </div>
         )}
       </div>
