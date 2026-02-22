@@ -27,6 +27,7 @@ body {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  pointer-events: none;
 }
 
 .bg-overlay {
@@ -34,6 +35,7 @@ body {
   inset: 0;
   z-index: 1;
   background: rgba(0, 0, 0, 0.35);
+  pointer-events: none;
 }
 
 /* App shell */
