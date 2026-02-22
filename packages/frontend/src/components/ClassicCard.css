@@ -1,0 +1,20 @@
+.classic-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow var(--transition), border-color var(--transition);
+}
+
+.classic-card:hover {
+  box-shadow: var(--shadow), 0 0 0 1px var(--border-color);
+}
+
+.classic-card.widget-card--edit {
+  outline: 1px dashed var(--text-muted);
+  outline-offset: -1px;
+}

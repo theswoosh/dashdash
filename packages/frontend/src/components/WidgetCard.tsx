@@ -1,5 +1,5 @@
 import { GripVertical } from 'lucide-react';
-import { LiquidCard } from './LiquidCard';
+import { useThemeCard } from '../themes/registry';
 import './WidgetCard.css';
 
 interface Props {
@@ -9,9 +9,11 @@ interface Props {
   editMode: boolean;
 }
 
-export function WidgetCard({ id, title, icon, editMode }: Props) {
+export function WidgetCard({ id, title, icon: _icon, editMode }: Props) {
+  const Card = useThemeCard();
+
   return (
-    <LiquidCard className={editMode ? 'widget-card--edit' : ''}>
+    <Card className={editMode ? 'widget-card--edit' : ''}>
       <div className="widget-header">
         {editMode && (
           <span className="widget-drag-handle" title="Drag to move">
@@ -24,6 +26,6 @@ export function WidgetCard({ id, title, icon, editMode }: Props) {
         <span className="widget-placeholder-id">{id}</span>
         <p className="widget-placeholder-text">Widget content coming in Phase 3</p>
       </div>
-    </LiquidCard>
+    </Card>
   );
 }

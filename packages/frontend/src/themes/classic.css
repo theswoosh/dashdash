@@ -1,0 +1,34 @@
+/* ── Classic theme — clean cards on light dot canvas ─────────────────────── */
+
+[data-theme='classic'],
+[data-theme-preview='classic'] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --bg-elevated: #ffffff;
+  --border-color: rgba(0, 0, 0, 0.10);
+  --backdrop-blur: 0px;
+  --text-primary: rgba(0, 0, 0, 0.88);
+  --text-muted: rgba(0, 0, 0, 0.50);
+  --text-faint: rgba(0, 0, 0, 0.25);
+  --accent: #6d28d9;
+  --accent-hover: #5b21b6;
+  --accent-fg: #ffffff;
+  --danger: #dc2626;
+  --radius: 12px;
+  --radius-sm: 6px;
+  --shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --transition: 150ms ease;
+  /* Background dot canvas */
+  --bg-base: #f0f0f0;
+  --bg-dot: rgba(0, 0, 0, 0.06);
+  --bg-overlay: rgba(240, 240, 240, 0);
+  /* Card background */
+  --card-bg: #ffffff;
+  /* Topbar */
+  --topbar-bg: rgba(255, 255, 255, 0.92);
+  --topbar-border: rgba(0, 0, 0, 0.08);
+  --topbar-blur: 0px;
+}

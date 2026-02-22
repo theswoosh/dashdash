@@ -1,5 +1,5 @@
 .widget-card--edit {
-  outline: 1px dashed rgba(255, 255, 255, 0.2);
+  outline: 1px dashed var(--text-muted);
   outline-offset: -1px;
 }
 
@@ -8,7 +8,7 @@
   align-items: center;
   gap: 6px;
   padding: 10px 14px 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
 }
 

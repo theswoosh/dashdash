@@ -1,0 +1,157 @@
+.settings-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.settings-panel {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  width: 580px;
+  max-width: calc(100vw - 32px);
+  padding: 24px;
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.settings-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.settings-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 4px;
+  display: flex;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition);
+  line-height: 0;
+}
+
+.settings-close:hover {
+  color: var(--text-primary);
+}
+
+.settings-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  margin: 0 0 12px;
+}
+
+.settings-theme-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+/* ── Theme option button ─────────────────────────────────────────────────── */
+
+.theme-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 2px solid transparent;
+  background: var(--bg-secondary);
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  text-align: left;
+  width: 100%;
+}
+
+.theme-option:hover {
+  background: var(--bg-elevated);
+  border-color: var(--border-color);
+}
+
+.theme-option--active {
+  border-color: var(--accent);
+  background: var(--bg-elevated);
+}
+
+.theme-option-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-primary);
+}
+
+.theme-option-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.theme-option-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* ── Mini preview frame ──────────────────────────────────────────────────── */
+
+.theme-preview {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  /* preview background from the theme's --bg-base var */
+  background-color: var(--bg-base);
+  background-image: radial-gradient(circle, var(--bg-dot) 1px, transparent 1px);
+  background-size: 10px 10px;
+  margin-bottom: 2px;
+}
+
+.theme-preview-bar {
+  height: 8px;
+  border-radius: 2px;
+  background: var(--topbar-bg, var(--bg-elevated));
+  border: 1px solid var(--topbar-border, var(--border-color));
+  flex-shrink: 0;
+}
+
+.theme-preview-cards {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 3px;
+  flex: 1;
+}
+
+.theme-preview-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: calc(var(--radius) * 0.35);
+  min-height: 0;
+}
+
+.theme-preview-card--wide {
+  grid-column: 1 / -1;
+}

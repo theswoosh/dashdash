@@ -1,9 +1,9 @@
-import { LayoutGrid, Pencil, Check, Sun, Moon } from 'lucide-react';
+import { LayoutGrid, Pencil, Check, Palette } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
 import './Topbar.css';
 
 export function Topbar() {
-  const { editMode, toggleEditMode, theme, toggleTheme } = useUIStore();
+  const { editMode, toggleEditMode, toggleSettingsPanel } = useUIStore();
 
   return (
     <header className="topbar">
@@ -14,11 +14,11 @@ export function Topbar() {
       <nav className="topbar-actions">
         <button
           className="topbar-btn topbar-btn--icon"
-          onClick={toggleTheme}
-          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-          aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          onClick={toggleSettingsPanel}
+          title="Appearance settings"
+          aria-label="Open appearance settings"
         >
-          {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          <Palette size={16} />
         </button>
         <button
           className={`topbar-btn ${editMode ? 'topbar-btn--active' : ''}`}

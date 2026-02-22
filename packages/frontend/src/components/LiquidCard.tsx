@@ -94,8 +94,8 @@ interface GlassState {
 
 interface Props {
   children: ReactNode;
-  className?: string;
-  radius?: number;
+  className?: string | undefined;
+  radius?: number | undefined;
 }
 
 export function LiquidCard({ children, className = '', radius = 20 }: Props) {

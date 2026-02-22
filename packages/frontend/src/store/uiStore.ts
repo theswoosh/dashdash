@@ -1,22 +1,24 @@
 import { create } from 'zustand';
 
-type Theme = 'dark' | 'light';
-
 interface UIState {
   editMode: boolean;
   activeBoardId: string | null;
-  theme: Theme;
+  theme: string;
+  settingsPanelOpen: boolean;
   toggleEditMode: () => void;
   setActiveBoard: (id: string) => void;
-  toggleTheme: () => void;
+  setTheme: (id: string) => void;
+  toggleSettingsPanel: () => void;
   // TODO Phase 2: persist theme to user profile via PATCH /api/me
 }
 
 export const useUIStore = create<UIState>(set => ({
   editMode: false,
   activeBoardId: null,
-  theme: 'dark',
+  theme: 'liquid-glass',
+  settingsPanelOpen: false,
   toggleEditMode: () => set(s => ({ editMode: !s.editMode })),
   setActiveBoard: id => set({ activeBoardId: id }),
-  toggleTheme: () => set(s => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
+  setTheme: id => set({ theme: id }),
+  toggleSettingsPanel: () => set(s => ({ settingsPanelOpen: !s.settingsPanelOpen })),
 }));

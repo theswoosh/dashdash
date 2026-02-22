@@ -1,0 +1,36 @@
+/* ── Liquid Glass theme — squircle cards on black dot canvas ─────────────── */
+/* To add a new theme: create <name>.css with the same var set, import in     */
+/* App.tsx, add an entry to src/themes/registry.tsx. That's all.             */
+
+[data-theme='liquid-glass'],
+[data-theme-preview='liquid-glass'] {
+  --bg-primary: rgba(255, 255, 255, 0.06);
+  --bg-secondary: rgba(255, 255, 255, 0.03);
+  --bg-elevated: rgba(255, 255, 255, 0.10);
+  --border-color: rgba(255, 255, 255, 0.12);
+  --backdrop-blur: 20px;
+  --text-primary: rgba(255, 255, 255, 0.92);
+  --text-muted: rgba(255, 255, 255, 0.50);
+  --text-faint: rgba(255, 255, 255, 0.22);
+  --accent: #7c3aed;
+  --accent-hover: #6d28d9;
+  --accent-fg: #fff;
+  --danger: #ef4444;
+  --radius: 16px;
+  --radius-sm: 8px;
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --transition: 180ms ease;
+  /* Background dot canvas */
+  --bg-base: #000;
+  --bg-dot: rgba(255, 255, 255, 0.14);
+  --bg-overlay: rgba(0, 0, 0, 0.18);
+  /* LiquidCard glass tint */
+  --card-bg: rgba(255, 255, 255, 0.05);
+  /* Topbar */
+  --topbar-bg: rgba(255, 255, 255, 0.04);
+  --topbar-border: rgba(255, 255, 255, 0.08);
+  --topbar-blur: 20px;
+}
