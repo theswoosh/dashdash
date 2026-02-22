@@ -32,7 +32,7 @@ export function DashGrid() {
   const droppingItem = useUIStore(s => s.droppingItem);
   const setDroppingItem = useUIStore(s => s.setDroppingItem);
 
-  const { services, reload: reloadServices } = useServices();
+  const { services, reload: reloadServices, addServiceOptimistic } = useServices();
   const { savedLayout, saveLayout, reload: reloadLayout } = useLayout();
 
   const [layout, setLayout] = useState<Layout[]>([]);
@@ -60,7 +60,7 @@ export function DashGrid() {
   );
 
   const handleDrop = useCallback(
-    async (_layout: Layout[], item: Layout, e: Event) => {
+    (rglLayout: Layout[], item: Layout, e: Event) => {
       const dragEvent = e as DragEvent;
       const raw = dragEvent.dataTransfer?.getData('widget-template');
       if (!raw) return;
@@ -82,28 +82,32 @@ export function DashGrid() {
         _userCreated: true,
       };
 
-      // POST to backend first
-      const res = await fetch('/api/user-services', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newService),
-      });
-      if (!res.ok) {
-        console.error('Failed to create user service:', await res.text());
-        return;
-      }
-
-      // Add new layout item + save
+      // Replace the __dropping__ placeholder with the real ID in the layout RGL provides
       const newLayoutItem: Layout = { i: id, x: item.x, y: item.y, w: item.w, h: item.h };
-      const updatedLayout = [...layout, newLayoutItem];
+      const updatedLayout = [
+        ...rglLayout.filter(l => l.i !== '__dropping__'),
+        newLayoutItem,
+      ];
       setLayout(updatedLayout);
       saveLayout(updatedLayout);
 
-      // Reload services SWR so the new widget appears
-      await reloadServices();
+      // Add to SWR cache immediately — widget renders without waiting for the network
+      addServiceOptimistic(newService);
       setDroppingItem(null);
+
+      // Persist in background; revert optimistic state on failure
+      void fetch('/api/user-services', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newService),
+      }).then(res => {
+        if (!res.ok) {
+          console.error('Failed to persist widget, reverting');
+          void reloadServices();
+        }
+      });
     },
-    [layout, saveLayout, reloadServices, setDroppingItem]
+    [saveLayout, reloadServices, addServiceOptimistic, setDroppingItem]
   );
 
   const handleDeleteService = useCallback(
