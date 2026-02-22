@@ -5,10 +5,11 @@ import './WidgetCard.css';
 interface Props {
   id: string;
   title: string;
+  icon?: string | undefined;
   editMode: boolean;
 }
 
-export function WidgetCard({ id, title, editMode }: Props) {
+export function WidgetCard({ id, title, icon, editMode }: Props) {
   return (
     <LiquidCard className={editMode ? 'widget-card--edit' : ''}>
       <div className="widget-header">

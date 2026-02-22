@@ -6,11 +6,10 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
-    "outDir": "./dist",
-    "rootDir": "./src",
+    "noEmit": true,
     "paths": {
       "@dashdash/types": ["../types/src/index.ts"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "../types/src"]
 }

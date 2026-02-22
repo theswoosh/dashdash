@@ -4,6 +4,20 @@
   padding: 16px;
 }
 
+.dash-grid-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.dash-grid-empty code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--accent);
+}
+
 .dash-grid {
   /* react-grid-layout override: transparent background */
 }
