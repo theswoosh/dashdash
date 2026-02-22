@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import ReactGridLayout from 'react-grid-layout';
 import type { Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
@@ -32,18 +32,46 @@ export function DashGrid() {
   const droppingItem = useUIStore(s => s.droppingItem);
   const setDroppingItem = useUIStore(s => s.setDroppingItem);
 
-  const { services, reload: reloadServices, addServiceOptimistic } = useServices();
+  const { services, reload: reloadServices } = useServices();
   const { savedLayout, saveLayout, reload: reloadLayout } = useLayout();
+
+  // Locally-managed optimistic services (dropped but not yet confirmed by server).
+  // Avoids relying on SWR's mutate for synchronous UI updates.
+  const [dropQueue, setDropQueue] = useState<ServiceConfig[]>([]);
+
+  // Merge server services with any pending dropped services not yet in server data.
+  const allServices: ServiceConfig[] = [
+    ...services,
+    ...dropQueue.filter(s => !services.find(x => x.id === s.id)),
+  ];
 
   const [layout, setLayout] = useState<Layout[]>([]);
   const [width, setWidth] = useState(window.innerWidth - 32);
 
-  // Initialise / re-merge layout whenever services or savedLayout change
+  // Initialise / re-merge layout whenever services change.
+  // Use a ref for savedLayout so changes to it (from saveLayout) don't re-trigger
+  // the effect and create a feedback loop.
+  const savedLayoutRef = useRef(savedLayout);
+  savedLayoutRef.current = savedLayout;
+
   useEffect(() => {
-    if (services.length > 0) {
-      setLayout(mergeLayout(services, savedLayout));
+    if (allServices.length > 0) {
+      setLayout(prev => {
+        const merged = mergeLayout(allServices, savedLayoutRef.current);
+        // Preserve any layout entries for items already in prev but not yet in
+        // allServices (e.g., brand-new drops still settling through the render cycle).
+        const mergedIds = new Set(merged.map(l => l.i));
+        const extras = prev.filter(l => !mergedIds.has(l.i));
+        return extras.length > 0 ? [...merged, ...extras] : merged;
+      });
     }
-  }, [services, savedLayout]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allServices.length, services, dropQueue]);
+
+  // Track the last known ghost position so we can recover it when RGL's dragleave
+  // counter bug fires removeDroppingPlaceholder() prematurely (cursor moves over
+  // child widget → dragleave fires → counter=0 → ghost removed before drop).
+  const lastGhostRef = useRef<Layout | null>(null);
 
   // Live reload when any config file changes
   useConfigReload(useCallback(() => {
@@ -53,7 +81,21 @@ export function DashGrid() {
 
   const handleLayoutChange = useCallback(
     (newLayout: Layout[]) => {
-      setLayout(newLayout);
+      // Track ghost position — RGL removes the ghost prematurely when cursor
+      // moves over child widgets (dragleave counter bug), so we keep the last
+      // known position for handleDrop fallback.
+      const ghost = newLayout.find(l => l.i === '__dropping-elem__');
+      if (ghost) lastGhostRef.current = ghost;
+
+      // Preserve layout entries for services that are in our local dropQueue
+      // but that RGL doesn't know about yet (RGL's removeDroppingPlaceholder
+      // fires onLayoutChange before the new child has had its first render cycle).
+      setLayout(prev => {
+        const newIds = new Set(newLayout.map(l => l.i));
+        const extras = prev.filter(l => !newIds.has(l.i) && l.i !== '__dropping-elem__');
+        console.log('[handleLayoutChange] newLayout:', newLayout.length, 'extras preserved:', extras.length);
+        return extras.length > 0 ? [...newLayout, ...extras] : newLayout;
+      });
       saveLayout(newLayout);
     },
     [saveLayout]
@@ -61,52 +103,66 @@ export function DashGrid() {
 
   const handleDrop = useCallback(
     (_rglLayout: Layout[], item: Layout, e: Event) => {
+      console.log('[D1] item:', item ? `x${item.x}y${item.y}` : 'undef', 'ghost:', lastGhostRef.current ? `x${lastGhostRef.current.x}y${lastGhostRef.current.y}` : 'null');
+
       const dragEvent = e as DragEvent;
       const raw = dragEvent.dataTransfer?.getData('widget-template');
-      if (!raw) return;
+      if (!raw) { console.warn('[D1] no raw'); return; }
 
       let template: WidgetTemplate;
       try {
         template = JSON.parse(raw) as WidgetTemplate;
-      } catch {
+      } catch (err) {
+        console.error('[D1] parse error:', err, 'raw:', raw);
         return;
       }
+      console.log('[D2] type:', template.type, 'size:', JSON.stringify(template.defaultSize));
 
-      const id = crypto.randomUUID();
+      // crypto.randomUUID() requires a secure context (HTTPS/localhost).
+      // Fall back to a timestamp+random ID so this works over IP too.
+      const id = typeof crypto?.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `uc-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+      console.log('[D2.5] id:', id.slice(-6));
+
+      const w = template.defaultSize?.w ?? 2;
+      const h = template.defaultSize?.h ?? 2;
+      const pos = item ?? lastGhostRef.current;
+      console.log('[D3] pos:', pos ? `x${pos.x}y${pos.y}` : 'NONE', 'w:', w, 'h:', h);
+      if (!pos) { console.warn('[D3] no pos'); return; }
+      lastGhostRef.current = null;
+
       const newService: ServiceConfig = {
         id,
         title: template.label,
         widget: template.type,
-        // Store drop position so mergeLayout can place the widget correctly
-        layout: { x: item.x, y: item.y, w: template.defaultSize.w, h: template.defaultSize.h },
-        options: template.defaultOptions,
+        layout: { x: pos.x, y: pos.y, w, h },
+        options: template.defaultOptions ?? {},
         _userCreated: true,
       };
 
-      // Add to SWR cache — triggers useEffect → mergeLayout, which falls back
-      // to service.layout for items not yet in savedLayout. No manual setLayout
-      // needed: doing so before services updates causes RGL's onLayoutChange to
-      // strip the orphan item (no matching child yet), overwriting our update.
-      addServiceOptimistic(newService);
+      console.log('[D4] calling setLayout + setDropQueue');
+      setLayout(prev => { console.log('[D5] setLayout prev:', prev.length, '→', prev.length + 1); return [...prev, { i: id, x: pos.x, y: pos.y, w, h }]; });
+      setDropQueue(prev => [...prev, newService]);
       setDroppingItem(null);
+      console.log('[D6] done');
 
-      // Persist in background; revert on failure
       void fetch('/api/user-services', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newService),
       }).then(res => {
-        if (!res.ok) void reloadServices();
+        console.log('[D7] POST status:', res.status);
+        void reloadServices();
       });
     },
-    [reloadServices, addServiceOptimistic, setDroppingItem]
+    [reloadServices, setDroppingItem]
   );
 
   const handleDeleteService = useCallback(
     async (id: string) => {
       await fetch(`/api/user-services/${id}`, { method: 'DELETE' });
       await reloadServices();
-      // Also remove from layout
       const updatedLayout = layout.filter(l => l.i !== id);
       setLayout(updatedLayout);
       saveLayout(updatedLayout);
@@ -122,7 +178,9 @@ export function DashGrid() {
     ro.observe(node);
   }, []);
 
-  if (services.length === 0 && !editMode) {
+  console.log('[RENDER] services:', services.length, 'queue:', dropQueue.length, 'all:', allServices.length, 'layout:', layout.length);
+
+  if (allServices.length === 0 && !editMode) {
     return (
       <div className="dash-grid-container dash-grid-empty">
         <p>No services configured. Add widgets to <code>config/services.yml</code> or use Edit mode to drag widgets onto the grid.</p>
@@ -157,7 +215,7 @@ export function DashGrid() {
         onLayoutChange={handleLayoutChange}
         draggableHandle=".widget-drag-handle"
       >
-        {services.map(s => (
+        {allServices.map(s => (
           <div key={s.id}>
             <WidgetCard
               service={s}

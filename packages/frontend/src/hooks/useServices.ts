@@ -13,13 +13,17 @@ export function useServices() {
 
   const addServiceOptimistic = useCallback(
     (service: ServiceConfig) => {
-      void mutate(
-        (current): { services: ServiceConfig[] } =>
-          ({ services: [...(current?.services ?? []), service] }),
+      console.log('[SWR-mutate] called, current len:', (data as { services: ServiceConfig[] } | undefined)?.services?.length ?? 'undef');
+      mutate(
+        (current): { services: ServiceConfig[] } => {
+          console.log('[SWR-mutate] updater current len:', current?.services?.length ?? 'undef');
+          return { services: [...(current?.services ?? []), service] };
+        },
         { revalidate: false }
-      );
+      ).then(r => console.log('[SWR-mutate] result len:', r?.services?.length))
+       .catch(err => console.error('[SWR-mutate] error:', err));
     },
-    [mutate]
+    [mutate, data]
   );
 
   return {
