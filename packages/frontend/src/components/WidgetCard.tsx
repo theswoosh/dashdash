@@ -1,4 +1,5 @@
 import { GripVertical } from 'lucide-react';
+import { LiquidCard } from './LiquidCard';
 import './WidgetCard.css';
 
 interface Props {
@@ -9,7 +10,7 @@ interface Props {
 
 export function WidgetCard({ id, title, editMode }: Props) {
   return (
-    <div className={`widget-card card ${editMode ? 'widget-card--edit' : ''}`}>
+    <LiquidCard className={editMode ? 'widget-card--edit' : ''}>
       <div className="widget-header">
         {editMode && (
           <span className="widget-drag-handle" title="Drag to move">
@@ -22,6 +23,6 @@ export function WidgetCard({ id, title, editMode }: Props) {
         <span className="widget-placeholder-id">{id}</span>
         <p className="widget-placeholder-text">Widget content coming in Phase 3</p>
       </div>
-    </div>
+    </LiquidCard>
   );
 }

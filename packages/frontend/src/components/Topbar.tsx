@@ -6,7 +6,7 @@ export function Topbar() {
   const { editMode, toggleEditMode } = useUIStore();
 
   return (
-    <header className="topbar card">
+    <header className="topbar">
       <div className="topbar-brand">
         <LayoutGrid size={20} className="topbar-logo" />
         <span className="topbar-title">dashdash</span>
