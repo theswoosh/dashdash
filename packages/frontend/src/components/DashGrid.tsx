@@ -43,12 +43,17 @@ export function DashGrid() {
   useEffect(() => {
     if (allServices.length > 0) {
       setLayout(prev => {
+        // Local drag positions take priority over YAML so unsaved drags are not
+        // lost when services reload (e.g., after dropping a new widget).
+        // Only brand-new items (not in prev) fall back to YAML positions.
+        const prevMap = new Map(prev.map(l => [l.i, l]));
         const fromYaml = servicesAsLayout(allServices);
-        // Preserve layout entries already managed locally (e.g., dropped widgets
-        // in the queue whose YAML hasn't been written yet).
-        const yamlIds = new Set(fromYaml.map(l => l.i));
-        const extras = prev.filter(l => !yamlIds.has(l.i) && l.i !== '__dropping-elem__');
-        return extras.length > 0 ? [...fromYaml, ...extras] : fromYaml;
+        const merged = fromYaml.map(item => prevMap.get(item.i) ?? item);
+        // Keep any extra items in prev that aren't in fromYaml yet (e.g., a
+        // widget still settling through the drop queue).
+        const mergedIds = new Set(merged.map(l => l.i));
+        const extras = prev.filter(l => !mergedIds.has(l.i) && l.i !== '__dropping-elem__');
+        return extras.length > 0 ? [...merged, ...extras] : merged;
       });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
