@@ -45,6 +45,18 @@ export function appendService(configDir: string, service: Service): void {
   writeServices(configDir, services);
 }
 
+export function batchPatchLayouts(
+  configDir: string,
+  items: Array<{ id: string; layout: { x: number; y: number; w: number; h: number } }>
+): void {
+  const services = readServices(configDir);
+  for (const item of items) {
+    const svc = services.find(s => s.id === item.id);
+    if (svc) svc.layout = item.layout;
+  }
+  writeServices(configDir, services);
+}
+
 export function removeService(configDir: string, id: string): void {
   const services = readServices(configDir);
   const filtered = services.filter(s => s.id !== id);

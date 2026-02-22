@@ -1,4 +1,4 @@
-import { LayoutGrid, Pencil, Check, Palette } from 'lucide-react';
+import { LayoutGrid, Pencil, Save, Palette } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
 import './Topbar.css';
 
@@ -23,10 +23,10 @@ export function Topbar() {
         <button
           className={`topbar-btn ${editMode ? 'topbar-btn--active' : ''}`}
           onClick={toggleEditMode}
-          title={editMode ? 'Save layout' : 'Edit layout'}
+          title={editMode ? 'Save & exit edit mode' : 'Edit layout'}
         >
-          {editMode ? <Check size={16} /> : <Pencil size={16} />}
-          <span>{editMode ? 'Done' : 'Edit'}</span>
+          {editMode ? <Save size={16} /> : <Pencil size={16} />}
+          <span>{editMode ? 'Save' : 'Edit'}</span>
         </button>
       </nav>
     </header>

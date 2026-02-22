@@ -40,12 +40,6 @@ export function DashGrid() {
   const [layout, setLayout] = useState<Layout[]>([]);
   const [width, setWidth] = useState(window.innerWidth - 32);
 
-  // Rebuild layout from services whenever the list changes.
-  // Use a ref guard so dropQueue updates don't re-merge and discard fresh
-  // positions before the server write completes.
-  const layoutRef = useRef(layout);
-  layoutRef.current = layout;
-
   useEffect(() => {
     if (allServices.length > 0) {
       setLayout(prev => {
@@ -61,6 +55,29 @@ export function DashGrid() {
   }, [allServices.length, services, dropQueue]);
 
   const lastGhostRef = useRef<Layout | null>(null);
+  // Always holds the latest layout so the save-on-close effect can read it
+  // without needing layout in its dependency array (which would re-bind on
+  // every drag move and cause stale closure issues).
+  const layoutRef = useRef<Layout[]>(layout);
+  useEffect(() => { layoutRef.current = layout; });
+
+  // Save all layouts to YAML when edit mode is closed ("Save" button).
+  const prevEditMode = useRef(editMode);
+  useEffect(() => {
+    const wasEditing = prevEditMode.current;
+    prevEditMode.current = editMode;
+    if (wasEditing && !editMode) {
+      const items = layoutRef.current
+        .filter(l => l.i !== '__dropping-elem__')
+        .map(l => ({ id: l.i, layout: { x: l.x, y: l.y, w: l.w, h: l.h } }));
+      void fetch('/api/services/layouts', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items }),
+      }).then(() => reloadServices());
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editMode]);
 
   useConfigReload(useCallback(() => {
     void reloadServices();
@@ -76,28 +93,6 @@ export function DashGrid() {
       return extras.length > 0 ? [...newLayout, ...extras] : newLayout;
     });
   }, []);
-
-  const persistLayout = useCallback((item: Layout) => {
-    void fetch(`/api/services/${item.i}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ layout: { x: item.x, y: item.y, w: item.w, h: item.h } }),
-    });
-  }, []);
-
-  const handleDragStop = useCallback(
-    (_layout: Layout[], _old: Layout, newItem: Layout) => {
-      persistLayout(newItem);
-    },
-    [persistLayout]
-  );
-
-  const handleResizeStop = useCallback(
-    (_layout: Layout[], _old: Layout, newItem: Layout) => {
-      persistLayout(newItem);
-    },
-    [persistLayout]
-  );
 
   const handleDrop = useCallback(
     (_rglLayout: Layout[], item: Layout, e: Event) => {
@@ -197,8 +192,6 @@ export function DashGrid() {
         droppingItem={editMode ? { i: '__dropping-elem__', w: droppingItem?.w ?? 2, h: droppingItem?.h ?? 2 } : undefined}
         onDrop={handleDrop}
         onLayoutChange={handleLayoutChange}
-        onDragStop={handleDragStop}
-        onResizeStop={handleResizeStop}
         draggableHandle=".widget-drag-handle"
       >
         {allServices.map(s => (

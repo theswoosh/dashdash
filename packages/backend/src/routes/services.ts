@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify';
 import type { Service } from '../config/schemas.js';
-import { patchService, appendService, removeService } from '../config/writer.js';
+import { patchService, appendService, removeService, batchPatchLayouts } from '../config/writer.js';
 import { suppressNextBroadcast } from '../config/watcher.js';
 
 interface PatchBody {
@@ -16,6 +16,32 @@ export function createServicesRoutes(
   return async fastify => {
     // GET /api/services
     fastify.get('/services', async () => ({ services: getServices() }));
+
+    // PUT /api/services/layouts — batch update all service layouts in one YAML write
+    fastify.put<{ Body: { items: Array<{ id: string; layout: { x: number; y: number; w: number; h: number } }> } }>(
+      '/services/layouts',
+      {
+        schema: {
+          body: {
+            type: 'object',
+            required: ['items'],
+            properties: {
+              items: { type: 'array' },
+            },
+          },
+        },
+      },
+      async (req, reply) => {
+        try {
+          suppressNextBroadcast();
+          batchPatchLayouts(configDir, req.body.items);
+          return { ok: true };
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          return reply.code(500).send({ error: message });
+        }
+      }
+    );
 
     // POST /api/services — append a new service to services.yml
     fastify.post<{ Body: Service }>(
