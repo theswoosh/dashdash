@@ -100,18 +100,12 @@ export function WidgetConfigModal() {
 
   if (!configTarget || !service) return null;
 
-  const isUserCreated = !!service._userCreated;
-
   const handleOptionChange = (key: string, val: unknown) => {
     setOptions(prev => ({ ...prev, [key]: val }));
   };
 
   const handleSave = async () => {
-    if (!isUserCreated) {
-      setConfigTarget(null);
-      return;
-    }
-    await fetch(`/api/user-services/${service.id}`, {
+    await fetch(`/api/services/${service.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title, options }),
@@ -132,12 +126,6 @@ export function WidgetConfigModal() {
           </button>
         </div>
         <div className="modal-body">
-          {!isUserCreated && (
-            <p className="modal-yaml-note">
-              This widget is configured in <code>services.yml</code>. Changes made here are not saved.
-            </p>
-          )}
-
           <div className="config-field">
             <label className="config-label">Widget title</label>
             <input
@@ -145,7 +133,6 @@ export function WidgetConfigModal() {
               type="text"
               value={title}
               onChange={e => setTitle(e.target.value)}
-              disabled={!isUserCreated}
             />
           </div>
 
@@ -171,7 +158,6 @@ export function WidgetConfigModal() {
           <button
             className="modal-btn modal-btn--primary"
             onClick={() => { void handleSave(); }}
-            disabled={!isUserCreated}
           >
             Save
           </button>

@@ -6,6 +6,14 @@ type WsSocket = { readyState: number; send: (data: string) => void };
 
 const clients = new Set<WsSocket>();
 
+// Counter incremented before a programmatic write to services.yml so the
+// resulting chokidar event doesn't trigger a redundant frontend reload.
+let suppressCount = 0;
+
+export function suppressNextBroadcast(): void {
+  suppressCount++;
+}
+
 export function addWsClient(ws: WsSocket): void {
   clients.add(ws);
   ws.send(JSON.stringify({ type: 'connected' }));
@@ -34,6 +42,10 @@ export function startWatcher(configDir: string) {
   });
 
   watcher.on('change', path => {
+    if (suppressCount > 0) {
+      suppressCount--;
+      return;
+    }
     console.log(`Config changed: ${path}`);
     broadcast({ type: 'config:reload', path });
   });

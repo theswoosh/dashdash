@@ -2,12 +2,19 @@ import { useEffect } from 'react';
 import { X } from 'lucide-react';
 import { THEMES } from '../themes/registry';
 import { useUIStore } from '../store/uiStore';
+import { usePreferences } from '../hooks/usePreferences';
 import './SettingsPanel.css';
 
 export function SettingsPanel() {
   const theme = useUIStore(s => s.theme);
   const setTheme = useUIStore(s => s.setTheme);
   const toggleSettingsPanel = useUIStore(s => s.toggleSettingsPanel);
+  const { savePreferences } = usePreferences();
+
+  const handleThemeChange = (id: string) => {
+    setTheme(id);
+    savePreferences({ theme: id });
+  };
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -47,7 +54,7 @@ export function SettingsPanel() {
             <button
               key={t.id}
               className={`theme-option${theme === t.id ? ' theme-option--active' : ''}`}
-              onClick={() => setTheme(t.id)}
+              onClick={() => handleThemeChange(t.id)}
               aria-pressed={theme === t.id}
             >
               {/* Mini preview — vars are scoped via data-theme-preview */}

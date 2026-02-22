@@ -4,15 +4,13 @@ import websocketPlugin from '@fastify/websocket';
 import type { WebSocket } from 'ws';
 import { createDb, type Db } from './db/index.js';
 import { loadServices, loadSettings } from './config/loader.js';
-import type { Service } from './config/schemas.js';
 import { addWsClient, removeWsClient } from './config/watcher.js';
 import { healthRoutes } from './routes/health.js';
-import { createLayoutRoutes } from './routes/layout.js';
 import { createServicesRoutes } from './routes/services.js';
 import { createSettingsRoutes } from './routes/settings.js';
 import { createWidgetRoutes } from './routes/widget.js';
-import { createUserServicesRoutes } from './routes/userServices.js';
 import { createNotepadRoutes } from './routes/notepad.js';
+import { createPreferencesRoutes } from './routes/preferences.js';
 
 export interface AppOptions {
   dataDir: string;
@@ -40,22 +38,15 @@ export async function buildApp({ dataDir, configDir, logger = false }: AppOption
 
   const db = createDb(dataDir);
   const getSettings = () => loadSettings(configDir);
-
-  // Merge YAML services with user-created services from DB
-  const getServices = (): Service[] => {
-    const yaml = loadServices(configDir);
-    const rows = db.prepare<[], { service_json: string }>('SELECT service_json FROM user_services').all();
-    const userSvcs = rows.map(r => JSON.parse(r.service_json) as Service);
-    return [...yaml, ...userSvcs];
-  };
+  // YAML is the single source of truth for all services
+  const getServices = () => loadServices(configDir);
 
   await server.register(healthRoutes, { prefix: '/api' });
-  await server.register(createLayoutRoutes(db), { prefix: '/api' });
-  await server.register(createServicesRoutes(getServices), { prefix: '/api' });
+  await server.register(createServicesRoutes(getServices, configDir), { prefix: '/api' });
   await server.register(createSettingsRoutes(getSettings), { prefix: '/api' });
   await server.register(createWidgetRoutes({ getServices, configDir }), { prefix: '/api' });
-  await server.register(createUserServicesRoutes(db), { prefix: '/api' });
   await server.register(createNotepadRoutes(db), { prefix: '/api' });
+  await server.register(createPreferencesRoutes(db), { prefix: '/api' });
 
   server.get('/api/ws', { websocket: true }, (socket: WebSocket) => {
     addWsClient(socket);
