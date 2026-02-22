@@ -60,7 +60,7 @@ export function DashGrid() {
   );
 
   const handleDrop = useCallback(
-    (rglLayout: Layout[], item: Layout, e: Event) => {
+    (_rglLayout: Layout[], item: Layout, e: Event) => {
       const dragEvent = e as DragEvent;
       const raw = dragEvent.dataTransfer?.getData('widget-template');
       if (!raw) return;
@@ -77,44 +77,29 @@ export function DashGrid() {
         id,
         title: template.label,
         widget: template.type,
-        layout: { x: item.x, y: item.y, w: item.w, h: item.h },
+        // Store drop position so mergeLayout can place the widget correctly
+        layout: { x: item.x, y: item.y, w: template.defaultSize.w, h: template.defaultSize.h },
         options: template.defaultOptions,
         _userCreated: true,
       };
 
-      // Replace the __dropping-elem__ ghost with the real ID.
-      // Use template.defaultSize for w/h — item.w/h may reflect a stale ghost size.
-      const newLayoutItem: Layout = {
-        i: id,
-        x: item.x,
-        y: item.y,
-        w: template.defaultSize.w,
-        h: template.defaultSize.h,
-      };
-      const updatedLayout = [
-        ...rglLayout.filter(l => l.i !== '__dropping-elem__'),
-        newLayoutItem,
-      ];
-      setLayout(updatedLayout);
-      saveLayout(updatedLayout);
-
-      // Add to SWR cache immediately — widget renders without waiting for the network
+      // Add to SWR cache — triggers useEffect → mergeLayout, which falls back
+      // to service.layout for items not yet in savedLayout. No manual setLayout
+      // needed: doing so before services updates causes RGL's onLayoutChange to
+      // strip the orphan item (no matching child yet), overwriting our update.
       addServiceOptimistic(newService);
       setDroppingItem(null);
 
-      // Persist in background; revert optimistic state on failure
+      // Persist in background; revert on failure
       void fetch('/api/user-services', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newService),
       }).then(res => {
-        if (!res.ok) {
-          console.error('Failed to persist widget, reverting');
-          void reloadServices();
-        }
+        if (!res.ok) void reloadServices();
       });
     },
-    [saveLayout, reloadServices, addServiceOptimistic, setDroppingItem]
+    [reloadServices, addServiceOptimistic, setDroppingItem]
   );
 
   const handleDeleteService = useCallback(
