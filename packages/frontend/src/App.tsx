@@ -8,10 +8,13 @@ import { ThemeProvider } from './themes/registry';
 import { Topbar } from './components/Topbar';
 import { DashGrid } from './components/DashGrid';
 import { SettingsPanel } from './components/SettingsPanel';
+import { WidgetSidebar } from './components/WidgetSidebar';
+import { WidgetConfigModal } from './components/WidgetConfigModal';
 
 export function App() {
   const theme = useUIStore(s => s.theme);
   const settingsPanelOpen = useUIStore(s => s.settingsPanelOpen);
+  const configTarget = useUIStore(s => s.configTarget);
 
   // Apply theme to <html> before first paint — no flash
   useLayoutEffect(() => {
@@ -29,6 +32,8 @@ export function App() {
       <DashGrid />
 
       {settingsPanelOpen && <SettingsPanel />}
+      <WidgetSidebar />
+      {configTarget && <WidgetConfigModal />}
     </ThemeProvider>
   );
 }

@@ -18,6 +18,17 @@ export function createDb(dataDir: string): Db {
       layout_json TEXT NOT NULL,
       updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
     );
+    CREATE TABLE IF NOT EXISTS user_services (
+      id          TEXT PRIMARY KEY,
+      service_json TEXT NOT NULL,
+      created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE TABLE IF NOT EXISTS notepad (
+      service_id  TEXT PRIMARY KEY,
+      content     TEXT NOT NULL DEFAULT '',
+      updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
 
   return db;

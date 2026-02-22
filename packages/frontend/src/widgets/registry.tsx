@@ -7,6 +7,7 @@ import { BookmarksWidget } from './bookmarks/BookmarksWidget';
 import { SearchWidget } from './search/SearchWidget';
 import { IframeWidget } from './iframe/IframeWidget';
 import { FallbackWidget } from './fallback/FallbackWidget';
+import { NotepadWidget } from './notepad/NotepadWidget';
 
 export interface FrontendWidget {
   Component: ComponentType<WidgetProps>;
@@ -20,6 +21,7 @@ const WIDGETS = new Map<string, FrontendWidget>([
   ['iframe',      { Component: IframeWidget,      clientOnly: true }],
   ['healthcheck', { Component: HealthcheckWidget                   }],
   ['stats',       { Component: StatsWidget                         }],
+  ['notepad',     { Component: NotepadWidget,     clientOnly: true }],
 ]);
 
 /** Returns the frontend widget definition. Unknown widget types fall back to FallbackWidget. */

@@ -1,10 +1,10 @@
 import type { FastifyPluginAsync } from 'fastify';
-import type { Services } from '../config/schemas.js';
+import type { Service } from '../config/schemas.js';
 import { loadIntegrations, resolveCredentials } from '../config/integrations.js';
 import { getHandler, isClientOnly } from '../widgets/registry.js';
 
 interface WidgetRouteOptions {
-  getServices: () => Services;
+  getServices: () => Service[];
   configDir: string;
 }
 

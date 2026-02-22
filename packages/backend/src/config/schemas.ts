@@ -15,6 +15,7 @@ export const ServiceSchema = z.object({
   widget: z.string(),
   layout: ServiceLayoutSchema,
   options: z.record(z.unknown()).optional(),
+  _userCreated: z.literal(true).optional(),
 });
 
 export const ServicesSchema = z.array(ServiceSchema);

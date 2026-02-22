@@ -1,7 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
-import type { Services } from '../config/schemas.js';
+import type { Service } from '../config/schemas.js';
 
-export function createServicesRoutes(getServices: () => Services): FastifyPluginAsync {
+export function createServicesRoutes(getServices: () => Service[]): FastifyPluginAsync {
   return async fastify => {
     fastify.get('/services', async () => ({ services: getServices() }));
   };

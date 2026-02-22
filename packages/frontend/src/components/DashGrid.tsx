@@ -9,6 +9,7 @@ import { useLayout } from '../hooks/useLayout';
 import { useConfigReload } from '../hooks/useConfigReload';
 import { WidgetCard } from './WidgetCard';
 import type { ServiceConfig } from '@dashdash/types';
+import type { WidgetTemplate } from '../widgets/catalog';
 import './DashGrid.css';
 
 /** Merge saved layout positions with YAML service defaults. */
@@ -28,6 +29,8 @@ function mergeLayout(services: ServiceConfig[], saved: Layout[] | null): Layout[
 
 export function DashGrid() {
   const editMode = useUIStore(s => s.editMode);
+  const droppingItem = useUIStore(s => s.droppingItem);
+  const setDroppingItem = useUIStore(s => s.setDroppingItem);
 
   const { services, reload: reloadServices } = useServices();
   const { savedLayout, saveLayout, reload: reloadLayout } = useLayout();
@@ -56,6 +59,65 @@ export function DashGrid() {
     [saveLayout]
   );
 
+  const handleDrop = useCallback(
+    async (_layout: Layout[], item: Layout, e: Event) => {
+      const dragEvent = e as DragEvent;
+      const raw = dragEvent.dataTransfer?.getData('widget-template');
+      if (!raw) return;
+
+      let template: WidgetTemplate;
+      try {
+        template = JSON.parse(raw) as WidgetTemplate;
+      } catch {
+        return;
+      }
+
+      const id = crypto.randomUUID();
+      const newService: ServiceConfig = {
+        id,
+        title: template.label,
+        widget: template.type,
+        layout: { x: item.x, y: item.y, w: item.w, h: item.h },
+        options: template.defaultOptions,
+        _userCreated: true,
+      };
+
+      // POST to backend first
+      const res = await fetch('/api/user-services', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newService),
+      });
+      if (!res.ok) {
+        console.error('Failed to create user service:', await res.text());
+        return;
+      }
+
+      // Add new layout item + save
+      const newLayoutItem: Layout = { i: id, x: item.x, y: item.y, w: item.w, h: item.h };
+      const updatedLayout = [...layout, newLayoutItem];
+      setLayout(updatedLayout);
+      saveLayout(updatedLayout);
+
+      // Reload services SWR so the new widget appears
+      await reloadServices();
+      setDroppingItem(null);
+    },
+    [layout, saveLayout, reloadServices, setDroppingItem]
+  );
+
+  const handleDeleteService = useCallback(
+    async (id: string) => {
+      await fetch(`/api/user-services/${id}`, { method: 'DELETE' });
+      await reloadServices();
+      // Also remove from layout
+      const updatedLayout = layout.filter(l => l.i !== id);
+      setLayout(updatedLayout);
+      saveLayout(updatedLayout);
+    },
+    [layout, saveLayout, reloadServices]
+  );
+
   const containerRef = useCallback((node: HTMLDivElement | null) => {
     if (!node) return;
     const ro = new ResizeObserver(([entry]) => {
@@ -64,16 +126,23 @@ export function DashGrid() {
     ro.observe(node);
   }, []);
 
-  if (services.length === 0) {
+  if (services.length === 0 && !editMode) {
     return (
       <div className="dash-grid-container dash-grid-empty">
-        <p>No services configured. Add widgets to <code>config/services.yml</code> to get started.</p>
+        <p>No services configured. Add widgets to <code>config/services.yml</code> or use Edit mode to drag widgets onto the grid.</p>
       </div>
     );
   }
 
   return (
     <div className="dash-grid-container" ref={containerRef}>
+      {editMode && (
+        <div className="grid-overlay" aria-hidden="true">
+          {Array.from({ length: 12 }, (_, i) => (
+            <div key={i} className="grid-overlay__col" />
+          ))}
+        </div>
+      )}
       <ReactGridLayout
         className="dash-grid"
         layout={layout}
@@ -84,12 +153,21 @@ export function DashGrid() {
         containerPadding={[0, 0]}
         isDraggable={editMode}
         isResizable={editMode}
+        isDroppable={editMode}
+        compactType={null}
+        preventCollision={true}
+        droppingItem={droppingItem ?? undefined}
+        onDrop={handleDrop}
         onLayoutChange={handleLayoutChange}
         draggableHandle=".widget-drag-handle"
       >
         {services.map(s => (
           <div key={s.id}>
-            <WidgetCard service={s} editMode={editMode} />
+            <WidgetCard
+              service={s}
+              editMode={editMode}
+              onDelete={s._userCreated ? handleDeleteService : undefined}
+            />
           </div>
         ))}
       </ReactGridLayout>

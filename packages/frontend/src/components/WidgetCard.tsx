@@ -1,8 +1,9 @@
-import { GripVertical } from 'lucide-react';
+import { GripVertical, Settings, X } from 'lucide-react';
 import type { ServiceConfig } from '@dashdash/types';
 import { useThemeCard } from '../themes/registry';
 import { getWidget } from '../widgets/registry';
 import { useWidgetData } from '../hooks/useWidgetData';
+import { useUIStore } from '../store/uiStore';
 import { WidgetSkeleton } from '../widgets/shared/WidgetSkeleton';
 import { WidgetError } from '../widgets/shared/WidgetError';
 import './WidgetCard.css';
@@ -10,10 +11,12 @@ import './WidgetCard.css';
 interface Props {
   service: ServiceConfig;
   editMode: boolean;
+  onDelete?: ((id: string) => void) | undefined;
 }
 
-export function WidgetCard({ service, editMode }: Props) {
+export function WidgetCard({ service, editMode, onDelete }: Props) {
   const Card = useThemeCard();
+  const setConfigTarget = useUIStore(s => s.setConfigTarget);
   const { Component, clientOnly } = getWidget(service.widget);
   const { data, error, loading } = useWidgetData(service.id, !!clientOnly);
 
@@ -40,6 +43,28 @@ export function WidgetCard({ service, editMode }: Props) {
           </span>
         )}
         <span className="widget-title">{service.title}</span>
+        {editMode && (
+          <div className="widget-edit-actions">
+            <button
+              className="widget-edit-btn"
+              title="Configure widget"
+              onClick={() => setConfigTarget(service.id)}
+              aria-label="Configure widget"
+            >
+              <Settings size={13} />
+            </button>
+            {onDelete && (
+              <button
+                className="widget-edit-btn widget-edit-btn--danger"
+                title="Remove widget"
+                onClick={() => onDelete(service.id)}
+                aria-label="Remove widget"
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+        )}
       </div>
       <div className="widget-body">
         {body}
