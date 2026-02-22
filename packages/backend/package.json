@@ -8,7 +8,9 @@
     "dev": "node --watch --loader ts-node/esm src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@dashdash/types": "workspace:*",
@@ -30,6 +32,7 @@
     "@types/ws": "^8.18.1",
     "pino-pretty": "^13.0.0",
     "ts-node": "^10.9.2",
-    "typescript": "*"
+    "typescript": "*",
+    "vitest": "^4.0.18"
   }
 }

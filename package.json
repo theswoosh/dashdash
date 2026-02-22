@@ -8,6 +8,7 @@
     "build": "pnpm -r run build",
     "lint": "eslint packages/*/src --ext .ts,.tsx",
     "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r run test",
     "format": "prettier --write \"packages/*/src/**/*.{ts,tsx,css}\""
   },
   "devDependencies": {
