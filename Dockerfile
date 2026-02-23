@@ -58,6 +58,11 @@ COPY --from=frontend-builder /app/packages/frontend/dist ./public
 
 VOLUME ["/config", "/data"]
 
+# Default config files — copied to /config on first run (never overwrite)
+COPY config/*.example /app/config-defaults/
+COPY docker/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
 ENV NODE_ENV=production \
     PORT=3000 \
     HOST=0.0.0.0 \
@@ -66,4 +71,4 @@ ENV NODE_ENV=production \
 
 EXPOSE 3000
 
-CMD ["node", "dist/server.js"]
+ENTRYPOINT ["/app/entrypoint.sh"]

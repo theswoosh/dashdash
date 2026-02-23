@@ -9,6 +9,8 @@ config/settings.yml
 config/services.yml
 config/integrations.yml
 config/users.yml
+config/behavior.yml
+config/widgets.yml
 config/backgrounds/
 data/
 *.db
