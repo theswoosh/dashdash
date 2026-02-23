@@ -1,0 +1,27 @@
+import { readFileSync, existsSync } from 'fs';
+import { join } from 'path';
+import yaml from 'js-yaml';
+import { z } from 'zod';
+
+const SizeSchema = z.object({
+  w: z.number().int().positive(),
+  h: z.number().int().positive(),
+});
+
+export const WidgetTemplateDef = z.object({
+  type: z.string(),
+  defaultSize: SizeSchema,
+  minSize: SizeSchema.optional(),
+});
+
+export const WidgetTemplatesDef = z.array(WidgetTemplateDef);
+
+export type WidgetTemplateDef = z.infer<typeof WidgetTemplateDef>;
+
+export function loadWidgetTemplates(configDir: string): WidgetTemplateDef[] {
+  const filePath = join(configDir, 'widgets.yml');
+  if (!existsSync(filePath)) return [];
+  const raw = yaml.load(readFileSync(filePath, 'utf8'));
+  const result = WidgetTemplatesDef.safeParse(raw);
+  return result.success ? result.data : [];
+}

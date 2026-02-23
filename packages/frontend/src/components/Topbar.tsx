@@ -1,32 +1,24 @@
-import { LayoutGrid, Pencil, Save, Palette } from 'lucide-react';
+import { LayoutGrid, Settings2, Save } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
 import './Topbar.css';
 
 export function Topbar() {
-  const { editMode, toggleEditMode, toggleSettingsPanel } = useUIStore();
+  const { editMode, toggleEditMode, boardName } = useUIStore();
 
   return (
     <header className="topbar">
       <div className="topbar-brand">
         <LayoutGrid size={20} className="topbar-logo" />
-        <span className="topbar-title">dashdash</span>
+        <span className="topbar-title">{boardName || 'dashdash'}</span>
       </div>
       <nav className="topbar-actions">
         <button
-          className="topbar-btn topbar-btn--icon"
-          onClick={toggleSettingsPanel}
-          title="Appearance settings"
-          aria-label="Open appearance settings"
-        >
-          <Palette size={16} />
-        </button>
-        <button
           className={`topbar-btn ${editMode ? 'topbar-btn--active' : ''}`}
           onClick={toggleEditMode}
-          title={editMode ? 'Save & exit edit mode' : 'Edit layout'}
+          title={editMode ? 'Save & exit' : 'Open config'}
         >
-          {editMode ? <Save size={16} /> : <Pencil size={16} />}
-          <span>{editMode ? 'Save' : 'Edit'}</span>
+          {editMode ? <Save size={16} /> : <Settings2 size={16} />}
+          <span>{editMode ? 'Save' : 'Config'}</span>
         </button>
       </nav>
     </header>

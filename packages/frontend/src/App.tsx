@@ -8,23 +8,23 @@ import { usePreferences } from './hooks/usePreferences';
 import { ThemeProvider } from './themes/registry';
 import { Topbar } from './components/Topbar';
 import { DashGrid } from './components/DashGrid';
-import { SettingsPanel } from './components/SettingsPanel';
-import { WidgetSidebar } from './components/WidgetSidebar';
+import { ConfigPanel } from './components/ConfigPanel';
 import { WidgetConfigModal } from './components/WidgetConfigModal';
 
 export function App() {
   const theme = useUIStore(s => s.theme);
   const setTheme = useUIStore(s => s.setTheme);
-  const settingsPanelOpen = useUIStore(s => s.settingsPanelOpen);
+  const setBoardName = useUIStore(s => s.setBoardName);
   const configTarget = useUIStore(s => s.configTarget);
 
   const { preferences } = usePreferences();
 
-  // Apply persisted theme once preferences load
+  // Apply persisted preferences once they load
   useEffect(() => {
     if (preferences?.theme) setTheme(preferences.theme);
+    if (preferences?.boardName) setBoardName(preferences.boardName);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [preferences?.theme]);
+  }, [preferences?.theme, preferences?.boardName]);
 
   // Apply theme to <html> before first paint — no flash
   useLayoutEffect(() => {
@@ -41,8 +41,7 @@ export function App() {
       <Topbar />
       <DashGrid />
 
-      {settingsPanelOpen && <SettingsPanel />}
-      <WidgetSidebar />
+      <ConfigPanel />
       {configTarget && <WidgetConfigModal />}
     </ThemeProvider>
   );

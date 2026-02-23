@@ -1,0 +1,299 @@
+/* ── Panel shell ─────────────────────────────────────────────────────────── */
+
+.config-panel {
+  position: fixed;
+  top: 56px;
+  right: 0;
+  bottom: 0;
+  width: 300px;
+  background: var(--topbar-bg, rgba(15, 15, 20, 0.92));
+  border-left: 1px solid var(--border-color);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transform: translateX(100%);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+}
+
+.config-panel--open {
+  transform: translateX(0);
+}
+
+/* ── Tab bar ─────────────────────────────────────────────────────────────── */
+
+.config-panel-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.config-tab-btn {
+  flex: 1;
+  padding: 11px 4px;
+  font-size: 12px;
+  font-weight: 500;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: color var(--transition), border-color var(--transition);
+  font-family: var(--font);
+}
+
+.config-tab-btn:hover {
+  color: var(--text-primary);
+}
+
+.config-tab-btn--active {
+  color: var(--text-primary);
+  border-bottom-color: var(--accent);
+}
+
+/* ── Tab body ─────────────────────────────────────────────────────────────── */
+
+.config-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Add Widgets tab ─────────────────────────────────────────────────────── */
+
+.config-tab-hint {
+  font-size: 11px;
+  color: var(--text-faint);
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.config-item-list {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.config-panel-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  border-radius: var(--radius, 8px);
+  cursor: grab;
+  border: 1px solid transparent;
+  transition: background var(--transition), border-color var(--transition);
+  user-select: none;
+}
+
+.config-panel-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--border-color);
+}
+
+.config-panel-item:active {
+  cursor: grabbing;
+}
+
+.config-panel-item__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--accent);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.config-panel-item__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.config-panel-item__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.config-panel-item__desc {
+  font-size: 11px;
+  color: var(--text-faint);
+  line-height: 1.4;
+}
+
+/* ── Options tab ─────────────────────────────────────────────────────────── */
+
+.config-options {
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.config-option-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.config-option-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.config-option-input {
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: var(--font);
+  outline: none;
+  transition: border-color var(--transition);
+}
+
+.config-option-input:focus {
+  border-color: var(--accent);
+}
+
+.config-option-input::placeholder {
+  color: var(--text-faint);
+}
+
+.config-option-hint {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.config-option-group--coming-soon {
+  opacity: 0.45;
+}
+
+.config-option-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+  margin-bottom: 2px;
+}
+
+.config-coming-soon-list {
+  margin: 0;
+  padding: 0 0 0 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  list-style: disc;
+}
+
+.config-coming-soon-list li {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ── Themes tab ──────────────────────────────────────────────────────────── */
+
+.config-theme-list {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.config-theme-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 2px solid transparent;
+  background: var(--bg-secondary);
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  text-align: left;
+  width: 100%;
+}
+
+.config-theme-option:hover {
+  background: var(--bg-elevated);
+  border-color: var(--border-color);
+}
+
+.config-theme-option--active {
+  border-color: var(--accent);
+  background: var(--bg-elevated);
+}
+
+/* Mini preview — vars scoped via data-theme-preview dual selector */
+.config-theme-preview {
+  width: 100%;
+  aspect-ratio: 16 / 8;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  background-color: var(--bg-base);
+  background-image: radial-gradient(circle, var(--bg-dot) 1px, transparent 1px);
+  background-size: 10px 10px;
+}
+
+.config-theme-preview-bar {
+  height: 8px;
+  border-radius: 2px;
+  background: var(--topbar-bg, var(--bg-elevated));
+  border: 1px solid var(--topbar-border, var(--border-color));
+  flex-shrink: 0;
+}
+
+.config-theme-preview-cards {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 3px;
+  flex: 1;
+}
+
+.config-theme-preview-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: calc(var(--radius) * 0.35);
+  min-height: 0;
+}
+
+.config-theme-preview-card--wide {
+  grid-column: 1 / -1;
+}
+
+.config-theme-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-primary);
+}
+
+.config-theme-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.config-theme-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}

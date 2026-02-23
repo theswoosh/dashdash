@@ -9,6 +9,7 @@ interface PreferencesRow {
 interface PutBody {
   theme?: string;
   darkMode?: boolean;
+  boardName?: string;
 }
 
 export function createPreferencesRoutes(db: Db): FastifyPluginAsync {
@@ -20,6 +21,7 @@ export function createPreferencesRoutes(db: Db): FastifyPluginAsync {
       return {
         theme: map['theme'] ?? 'liquid-glass',
         darkMode: map['darkMode'] !== undefined ? map['darkMode'] === 'true' : true,
+        boardName: map['boardName'] ?? '',
       };
     });
 
@@ -33,6 +35,7 @@ export function createPreferencesRoutes(db: Db): FastifyPluginAsync {
             properties: {
               theme: { type: 'string' },
               darkMode: { type: 'boolean' },
+              boardName: { type: 'string' },
             },
           },
         },
@@ -47,6 +50,7 @@ export function createPreferencesRoutes(db: Db): FastifyPluginAsync {
         const update = db.transaction((prefs: PutBody) => {
           if (prefs.theme !== undefined) upsert.run('theme', prefs.theme);
           if (prefs.darkMode !== undefined) upsert.run('darkMode', String(prefs.darkMode));
+          if (prefs.boardName !== undefined) upsert.run('boardName', prefs.boardName);
         });
 
         update(req.body);

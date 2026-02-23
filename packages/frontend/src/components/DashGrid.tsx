@@ -6,20 +6,28 @@ import 'react-resizable/css/styles.css';
 import { useUIStore } from '../store/uiStore';
 import { useServices } from '../hooks/useServices';
 import { useConfigReload } from '../hooks/useConfigReload';
+import { useWidgetTemplates } from '../hooks/useWidgetTemplates';
 import { WidgetCard } from './WidgetCard';
 import type { ServiceConfig } from '@dashdash/types';
 import type { WidgetTemplate } from '../widgets/catalog';
+import type { WidgetTemplateDef } from '../hooks/useWidgetTemplates';
 import './DashGrid.css';
 
-/** Build RGL layout items directly from services (YAML is source of truth). */
-function servicesAsLayout(services: ServiceConfig[]): Layout[] {
-  return services.map(s => ({
-    i: s.id,
-    x: s.layout.x ?? 0,
-    y: s.layout.y ?? 0,
-    w: s.layout.w,
-    h: s.layout.h,
-  }));
+/** Build RGL layout items directly from services (YAML is source of truth).
+ *  Templates supply optional minW/minH constraints per widget type. */
+function servicesAsLayout(services: ServiceConfig[], templates: WidgetTemplateDef[]): Layout[] {
+  return services.map(s => {
+    const tmpl = templates.find(t => t.type === s.widget);
+    return {
+      i: s.id,
+      x: s.layout.x ?? 0,
+      y: s.layout.y ?? 0,
+      w: s.layout.w,
+      h: s.layout.h,
+      minW: tmpl?.minSize?.w ?? 1,
+      minH: tmpl?.minSize?.h ?? 1,
+    };
+  });
 }
 
 export function DashGrid() {
@@ -28,6 +36,7 @@ export function DashGrid() {
   const setDroppingItem = useUIStore(s => s.setDroppingItem);
 
   const { services, reload: reloadServices } = useServices();
+  const widgetTemplates = useWidgetTemplates();
 
   // Optimistic queue: new widgets dropped but not yet confirmed by the server
   const [dropQueue, setDropQueue] = useState<ServiceConfig[]>([]);
@@ -36,6 +45,10 @@ export function DashGrid() {
     ...services,
     ...dropQueue.filter(s => !services.find(x => x.id === s.id)),
   ];
+
+  // Always-current ref so handleDrop can read allServices without a stale closure.
+  const allServicesRef = useRef(allServices);
+  allServicesRef.current = allServices;
 
   const [layout, setLayout] = useState<Layout[]>([]);
   const [width, setWidth] = useState(window.innerWidth - 32);
@@ -48,7 +61,7 @@ export function DashGrid() {
   useEffect(() => {
     if (allServices.length > 0) {
       setLayout(prev => {
-        const fromYaml = servicesAsLayout(allServices);
+        const fromYaml = servicesAsLayout(allServices, widgetTemplates);
 
         // Outside edit mode (initial load, WS reload, post-save): always use
         // YAML positions so the layout is correct after a refresh.
@@ -65,7 +78,7 @@ export function DashGrid() {
       });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allServices.length, services, dropQueue]);
+  }, [allServices.length, services, dropQueue, widgetTemplates]);
 
   const lastGhostRef = useRef<Layout | null>(null);
   // Always holds the latest layout so the save-on-close effect can read it
@@ -128,17 +141,25 @@ export function DashGrid() {
         return;
       }
 
-      const existingIds = allServices.map(s => s.id);
+      // Use allServicesRef to avoid stale closure — handleDrop is only recreated
+      // when reloadServices/setDroppingItem change, but allServices updates every render.
+      const existingIds = allServicesRef.current.map(s => s.id);
       const base = template.type;
       let id = base;
       let n = 2;
       while (existingIds.includes(id)) { id = `${base}-${n++}`; }
 
-      const w = template.defaultSize?.w ?? 2;
-      const h = template.defaultSize?.h ?? 2;
-      const pos = item ?? lastGhostRef.current;
+      // Prefer lastGhostRef (last position we tracked via onLayoutChange) over
+      // the `item` RGL passes to onDrop — RGL resolves collisions before calling
+      // onDrop and may move the item to x=0,y=<bottom> before we see it.
+      const pos = lastGhostRef.current ?? item;
       if (!pos) return;
       lastGhostRef.current = null;
+
+      // Use widgets.yml sizes if available, fall back to catalog defaults.
+      const tmpl = widgetTemplates.find(t => t.type === template.type);
+      const w = tmpl?.defaultSize.w ?? template.defaultSize?.w ?? 2;
+      const h = tmpl?.defaultSize.h ?? template.defaultSize?.h ?? 2;
 
       const newService: ServiceConfig = {
         id,
@@ -161,6 +182,9 @@ export function DashGrid() {
         void reloadServices();
       });
     },
+    // widgetTemplates intentionally omitted — it's slow-changing and the
+    // fallback to catalog defaults is acceptable for the rare stale case.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [reloadServices, setDroppingItem]
   );
 
@@ -184,7 +208,7 @@ export function DashGrid() {
   if (allServices.length === 0 && !editMode) {
     return (
       <div className="dash-grid-container dash-grid-empty">
-        <p>No services configured. Add widgets to <code>config/services.yml</code> or use Edit mode to drag widgets onto the grid.</p>
+        <p>No services configured. Add widgets to <code>config/services.yml</code> or open Config to drag widgets onto the grid.</p>
       </div>
     );
   }
@@ -200,7 +224,7 @@ export function DashGrid() {
       )}
       <ReactGridLayout
         className="dash-grid"
-        layout={layout.length > 0 ? layout : servicesAsLayout(allServices)}
+        layout={layout.length > 0 ? layout : servicesAsLayout(allServices, widgetTemplates)}
         cols={12}
         rowHeight={80}
         width={width}

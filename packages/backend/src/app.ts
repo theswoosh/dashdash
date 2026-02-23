@@ -11,6 +11,7 @@ import { createSettingsRoutes } from './routes/settings.js';
 import { createWidgetRoutes } from './routes/widget.js';
 import { createNotepadRoutes } from './routes/notepad.js';
 import { createPreferencesRoutes } from './routes/preferences.js';
+import { createWidgetTemplatesRoutes } from './routes/widgetTemplates.js';
 
 export interface AppOptions {
   dataDir: string;
@@ -47,6 +48,7 @@ export async function buildApp({ dataDir, configDir, logger = false }: AppOption
   await server.register(createWidgetRoutes({ getServices, configDir }), { prefix: '/api' });
   await server.register(createNotepadRoutes(db), { prefix: '/api' });
   await server.register(createPreferencesRoutes(db), { prefix: '/api' });
+  await server.register(createWidgetTemplatesRoutes(configDir), { prefix: '/api' });
 
   server.get('/api/ws', { websocket: true }, (socket: WebSocket) => {
     addWsClient(socket);

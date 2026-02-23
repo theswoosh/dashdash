@@ -7,7 +7,7 @@ beforeEach(() => {
     editMode: false,
     activeBoardId: null,
     theme: 'liquid-glass',
-    settingsPanelOpen: false,
+    boardName: '',
   });
 });
 
@@ -20,8 +20,8 @@ describe('uiStore — initial state', () => {
     expect(useUIStore.getState().editMode).toBe(false);
   });
 
-  it('starts with settings panel closed', () => {
-    expect(useUIStore.getState().settingsPanelOpen).toBe(false);
+  it('starts with empty board name', () => {
+    expect(useUIStore.getState().boardName).toBe('');
   });
 });
 
@@ -37,16 +37,16 @@ describe('setTheme', () => {
   });
 });
 
-describe('toggleSettingsPanel', () => {
-  it('opens when closed', () => {
-    useUIStore.getState().toggleSettingsPanel();
-    expect(useUIStore.getState().settingsPanelOpen).toBe(true);
+describe('setBoardName', () => {
+  it('sets the board name', () => {
+    useUIStore.getState().setBoardName('My Dashboard');
+    expect(useUIStore.getState().boardName).toBe('My Dashboard');
   });
 
-  it('closes when open', () => {
-    useUIStore.getState().toggleSettingsPanel();
-    useUIStore.getState().toggleSettingsPanel();
-    expect(useUIStore.getState().settingsPanelOpen).toBe(false);
+  it('can be cleared back to empty string', () => {
+    useUIStore.getState().setBoardName('something');
+    useUIStore.getState().setBoardName('');
+    expect(useUIStore.getState().boardName).toBe('');
   });
 });
 

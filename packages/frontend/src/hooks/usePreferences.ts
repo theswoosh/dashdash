@@ -4,6 +4,7 @@ import { useCallback, useRef } from 'react';
 interface Preferences {
   theme: string;
   darkMode: boolean;
+  boardName?: string | undefined;
 }
 
 const fetcher = (url: string) => fetch(url).then(r => r.json()) as Promise<Preferences>;
