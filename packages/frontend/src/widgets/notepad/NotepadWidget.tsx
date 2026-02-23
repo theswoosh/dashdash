@@ -30,11 +30,17 @@ function renderWithLinks(text: string): ReactNode[] {
   return parts;
 }
 
-export function NotepadWidget({ serviceId }: WidgetProps) {
+export function NotepadWidget({ serviceId, options }: WidgetProps) {
+  const rawInterval = options.pollingInterval;
+  const pollingInterval = typeof rawInterval === 'number' ? rawInterval : 60;
+
   const { data, mutate } = useSWR<{ content: string }>(
     `/api/notepad/${serviceId}`,
     fetcher,
-    { revalidateOnFocus: false }
+    {
+      revalidateOnFocus: false,
+      refreshInterval: pollingInterval > 0 ? pollingInterval * 1000 : 0,
+    }
   );
 
   const [focused, setFocused] = useState(false);

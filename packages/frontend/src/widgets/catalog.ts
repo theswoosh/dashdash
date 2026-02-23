@@ -115,8 +115,10 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     icon: FileText,
     description: 'Persistent text notes with clickable links',
     defaultSize: { w: 6, h: 6 },
-    defaultOptions: {},
-    configFields: [],
+    defaultOptions: { pollingInterval: 60 },
+    configFields: [
+      { key: 'pollingInterval', label: 'Auto-refresh interval (seconds, 0 = off)', type: 'number', default: 60 },
+    ],
   },
   {
     type: 'iframe',

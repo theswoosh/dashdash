@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { GripVertical, Settings, X } from 'lucide-react';
+import { GripVertical, Settings, X, RefreshCw } from 'lucide-react';
+import { mutate as swrMutate } from 'swr';
 import type { ServiceConfig } from '@dashdash/types';
 import { useThemeCard } from '../themes/registry';
 import { getWidget } from '../widgets/registry';
@@ -78,6 +79,16 @@ export function WidgetCard({ service, editMode, onDelete }: Props) {
           </span>
         )}
         <span className="widget-title">{service.title}</span>
+        {service.widget === 'notepad' && (
+          <button
+            className="widget-edit-btn"
+            title="Refresh"
+            aria-label="Refresh notepad"
+            onClick={() => void swrMutate(`/api/notepad/${service.id}`)}
+          >
+            <RefreshCw size={13} />
+          </button>
+        )}
         {editMode && (
           <div className="widget-edit-actions">
             <button
