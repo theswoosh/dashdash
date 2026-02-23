@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, CheckCircle, XCircle, Loader } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
 import { useServices } from '../hooks/useServices';
 import { getTemplate } from '../widgets/catalog';
@@ -89,6 +89,7 @@ export function WidgetConfigModal() {
 
   const [title, setTitle] = useState('');
   const [options, setOptions] = useState<Record<string, unknown>>({});
+  const [testResult, setTestResult] = useState<'idle' | 'loading' | 'ok' | 'fail'>('idle');
 
   // Sync state when target changes
   useEffect(() => {
@@ -96,6 +97,7 @@ export function WidgetConfigModal() {
       setTitle(service.title);
       setOptions({ ...(service.options ?? {}) });
     }
+    setTestResult('idle');
   }, [service]);
 
   if (!configTarget || !service) return null;
@@ -115,6 +117,26 @@ export function WidgetConfigModal() {
   };
 
   const configFields = template?.configFields ?? [];
+  const isHealthcheck = service.widget === 'healthcheck';
+
+  const handleTest = async () => {
+    setTestResult('loading');
+    try {
+      const res = await fetch('/api/healthcheck/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: options['url'],
+          port: options['port'],
+          ignoreTls: options['ignoreTls'],
+        }),
+      });
+      const data = await res.json() as { status: string };
+      setTestResult(data.status === 'up' ? 'ok' : 'fail');
+    } catch {
+      setTestResult('fail');
+    }
+  };
 
   return (
     <div className="modal-backdrop" onClick={() => setConfigTarget(null)}>
@@ -152,15 +174,39 @@ export function WidgetConfigModal() {
           )}
         </div>
         <div className="modal-footer">
-          <button className="modal-btn modal-btn--secondary" onClick={() => setConfigTarget(null)}>
-            Cancel
-          </button>
-          <button
-            className="modal-btn modal-btn--primary"
-            onClick={() => { void handleSave(); }}
-          >
-            Save
-          </button>
+          {isHealthcheck && (
+            <div className="modal-test-group">
+              <button
+                className="modal-btn modal-btn--secondary"
+                onClick={() => { void handleTest(); }}
+                disabled={testResult === 'loading'}
+              >
+                {testResult === 'loading' ? <Loader size={13} className="modal-test-spinner" /> : null}
+                Test
+              </button>
+              {testResult === 'ok' && (
+                <span className="modal-test-result modal-test-result--ok" title="Reachable">
+                  <CheckCircle size={16} />
+                </span>
+              )}
+              {testResult === 'fail' && (
+                <span className="modal-test-result modal-test-result--fail" title="Unreachable">
+                  <XCircle size={16} />
+                </span>
+              )}
+            </div>
+          )}
+          <div className="modal-footer-actions">
+            <button className="modal-btn modal-btn--secondary" onClick={() => setConfigTarget(null)}>
+              Cancel
+            </button>
+            <button
+              className="modal-btn modal-btn--primary"
+              onClick={() => { void handleSave(); }}
+            >
+              Save
+            </button>
+          </div>
         </div>
       </div>
     </div>

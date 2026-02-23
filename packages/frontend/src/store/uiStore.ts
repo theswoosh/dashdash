@@ -26,13 +26,16 @@ export const useUIStore = create<UIState>(set => ({
   editMode: false,
   activeBoardId: null,
   theme: 'liquid-glass',
-  boardName: '',
+  boardName: (typeof localStorage !== 'undefined' ? (localStorage.getItem('dashdash-boardName') ?? '') : ''),
   droppingItem: null,
   configTarget: null,
   toggleEditMode: () => set(s => ({ editMode: !s.editMode })),
   setActiveBoard: id => set({ activeBoardId: id }),
   setTheme: id => set({ theme: id }),
-  setBoardName: name => set({ boardName: name }),
+  setBoardName: name => {
+    try { localStorage.setItem('dashdash-boardName', name); } catch { /* ignore */ }
+    set({ boardName: name });
+  },
   setDroppingItem: item => set({ droppingItem: item }),
   setConfigTarget: id => set({ configTarget: id }),
 }));
