@@ -42,7 +42,7 @@ RUN pnpm --filter @dashdash/backend build
 # Bundle into a self-contained deployment directory:
 # - flat node_modules (no virtual-store symlinks) with production deps only
 # - dist/ included via "files": ["dist"] in package.json
-RUN pnpm --filter @dashdash/backend --prod deploy /deploy
+RUN pnpm --filter @dashdash/backend --prod deploy --legacy /deploy
 
 
 # ── Stage 3: Runtime image ────────────────────────────────────────────────────
