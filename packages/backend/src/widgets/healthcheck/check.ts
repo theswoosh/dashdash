@@ -2,7 +2,7 @@ import { execFile } from 'child_process';
 import net from 'net';
 
 /** Strict host validation — prevents any shell/command injection. */
-const SAFE_HOST_RE = /^[a-zA-Z0-9]([a-zA-Z0-9.\-]*[a-zA-Z0-9])?$/;
+const SAFE_HOST_RE = /^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?$/;
 
 function extractHost(input: string): string {
   const normalized = input.includes('://') ? input : `http://${input}`;
