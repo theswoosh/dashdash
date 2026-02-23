@@ -35,11 +35,11 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     label: 'Healthcheck',
     icon: Activity,
     description: 'Monitor a host for uptime and latency',
-    defaultSize: { w: 3, h: 2 },
-    defaultOptions: { url: '', port: 80, ignoreTls: false, timeoutMs: 5000 },
+    defaultSize: { w: 6, h: 4 },
+    defaultOptions: { url: '', ignoreTls: false, timeoutMs: 5000 },
     configFields: [
       { key: 'url', label: 'Host / URL', type: 'text', placeholder: '192.168.1.1 or https://example.com', required: true },
-      { key: 'port', label: 'Port', type: 'number', placeholder: '80', default: 80 },
+      { key: 'port', label: 'Port', type: 'number', placeholder: '80' },
       { key: 'ignoreTls', label: 'Ignore TLS errors (self-signed cert)', type: 'boolean', default: false },
       { key: 'timeoutMs', label: 'Timeout (ms)', type: 'number', default: 5000 },
     ],
@@ -49,7 +49,7 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     label: 'Clock',
     icon: Clock,
     description: 'Display the current time',
-    defaultSize: { w: 2, h: 2 },
+    defaultSize: { w: 4, h: 4 },
     defaultOptions: { format: '24h', showSeconds: true },
     configFields: [
       {
@@ -71,7 +71,7 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     label: 'System Stats',
     icon: BarChart2,
     description: 'CPU, memory and uptime for the server',
-    defaultSize: { w: 3, h: 3 },
+    defaultSize: { w: 6, h: 6 },
     defaultOptions: {},
     configFields: [],
   },
@@ -80,7 +80,7 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     label: 'Bookmarks',
     icon: Bookmark,
     description: 'Quick-access links grid',
-    defaultSize: { w: 3, h: 2 },
+    defaultSize: { w: 6, h: 4 },
     defaultOptions: {
       links: [{ title: 'Example', url: 'https://example.com' }],
     },
@@ -91,7 +91,7 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     label: 'Search',
     icon: Search,
     description: 'Search bar with configurable engine',
-    defaultSize: { w: 4, h: 2 },
+    defaultSize: { w: 8, h: 4 },
     defaultOptions: { engine: 'duckduckgo' },
     configFields: [
       {
@@ -114,7 +114,7 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     label: 'Notepad',
     icon: FileText,
     description: 'Persistent text notes with clickable links',
-    defaultSize: { w: 3, h: 3 },
+    defaultSize: { w: 6, h: 6 },
     defaultOptions: {},
     configFields: [],
   },
@@ -123,7 +123,7 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     label: 'iFrame',
     icon: Globe,
     description: 'Embed any URL in a sandboxed frame',
-    defaultSize: { w: 4, h: 4 },
+    defaultSize: { w: 8, h: 8 },
     defaultOptions: {},
     configFields: [
       { key: 'url', label: 'URL', type: 'url', placeholder: 'https://example.com', required: true },

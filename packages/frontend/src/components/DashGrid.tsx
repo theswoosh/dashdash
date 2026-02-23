@@ -7,6 +7,7 @@ import { useUIStore } from '../store/uiStore';
 import { useServices } from '../hooks/useServices';
 import { useConfigReload } from '../hooks/useConfigReload';
 import { useWidgetTemplates } from '../hooks/useWidgetTemplates';
+import { useGridConfig } from '../hooks/useGridConfig';
 import { WidgetCard } from './WidgetCard';
 import type { ServiceConfig } from '@dashdash/types';
 import type { WidgetTemplate } from '../widgets/catalog';
@@ -37,6 +38,7 @@ export function DashGrid() {
 
   const { services, reload: reloadServices } = useServices();
   const widgetTemplates = useWidgetTemplates();
+  const gridConfig = useGridConfig();
 
   // Optimistic queue: new widgets dropped but not yet confirmed by the server
   const [dropQueue, setDropQueue] = useState<ServiceConfig[]>([]);
@@ -80,10 +82,8 @@ export function DashGrid() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allServices.length, services, dropQueue, widgetTemplates]);
 
-  const lastGhostRef = useRef<Layout | null>(null);
   // Always holds the latest layout so the save-on-close effect can read it
-  // without needing layout in its dependency array (which would re-bind on
-  // every drag move and cause stale closure issues).
+  // without needing layout in its dependency array.
   const layoutRef = useRef<Layout[]>(layout);
   useEffect(() => { layoutRef.current = layout; });
 
@@ -113,12 +113,7 @@ export function DashGrid() {
   }, [reloadServices]));
 
   const handleLayoutChange = useCallback((newLayout: Layout[]) => {
-    const ghost = newLayout.find(l => l.i === '__dropping-elem__');
-    if (ghost) lastGhostRef.current = ghost;
-
-    // Outside edit mode YAML is the source of truth. Ignoring RGL's
-    // auto-generated positions here prevents them from overwriting the
-    // YAML layout that the allServices effect is about to (or just did) set.
+    // Outside edit mode YAML is the source of truth — ignore RGL's positions.
     if (!editModeRef.current) return;
 
     setLayout(prev => {
@@ -141,20 +136,16 @@ export function DashGrid() {
         return;
       }
 
-      // Use allServicesRef to avoid stale closure — handleDrop is only recreated
-      // when reloadServices/setDroppingItem change, but allServices updates every render.
+      // Use allServicesRef to avoid stale closure.
       const existingIds = allServicesRef.current.map(s => s.id);
       const base = template.type;
       let id = base;
       let n = 2;
       while (existingIds.includes(id)) { id = `${base}-${n++}`; }
 
-      // Prefer lastGhostRef (last position we tracked via onLayoutChange) over
-      // the `item` RGL passes to onDrop — RGL resolves collisions before calling
-      // onDrop and may move the item to x=0,y=<bottom> before we see it.
-      const pos = lastGhostRef.current ?? item;
-      if (!pos) return;
-      lastGhostRef.current = null;
+      // With preventCollision=false the ghost always follows the cursor, so
+      // item.x/y from onDrop is the precise grid-cell the user dropped on.
+      const { x, y } = item;
 
       // Use widgets.yml sizes if available, fall back to catalog defaults.
       const tmpl = widgetTemplates.find(t => t.type === template.type);
@@ -165,11 +156,11 @@ export function DashGrid() {
         id,
         title: template.label,
         widget: template.type,
-        layout: { x: pos.x, y: pos.y, w, h },
+        layout: { x, y, w, h },
         options: template.defaultOptions ?? {},
       };
 
-      setLayout(prev => [...prev, { i: id, x: pos.x, y: pos.y, w, h }]);
+      setLayout(prev => [...prev, { i: id, x, y, w, h }]);
       setDropQueue(prev => [...prev, newService]);
       setDroppingItem(null);
 
@@ -213,11 +204,14 @@ export function DashGrid() {
     );
   }
 
+  const { columns: cols, rowHeight, gap } = gridConfig;
+  const margin: [number, number] = [gap, gap];
+
   return (
     <div className="dash-grid-container" ref={containerRef}>
       {editMode && (
         <div className="grid-overlay" aria-hidden="true">
-          {Array.from({ length: 12 }, (_, i) => (
+          {Array.from({ length: cols }, (_, i) => (
             <div key={i} className="grid-overlay__col" />
           ))}
         </div>
@@ -225,17 +219,17 @@ export function DashGrid() {
       <ReactGridLayout
         className="dash-grid"
         layout={layout.length > 0 ? layout : servicesAsLayout(allServices, widgetTemplates)}
-        cols={12}
-        rowHeight={80}
+        cols={cols}
+        rowHeight={rowHeight}
         width={width}
-        margin={[12, 12]}
+        margin={margin}
         containerPadding={[0, 0]}
         isDraggable={editMode}
         isResizable={editMode}
         isDroppable={editMode}
         compactType={null}
-        preventCollision={true}
-        droppingItem={editMode ? { i: '__dropping-elem__', w: droppingItem?.w ?? 2, h: droppingItem?.h ?? 2 } : undefined}
+        preventCollision={false}
+        droppingItem={editMode && droppingItem ? { i: '__dropping-elem__', w: droppingItem.w, h: droppingItem.h } : undefined}
         onDrop={handleDrop}
         onLayoutChange={handleLayoutChange}
         draggableHandle=".widget-drag-handle"

@@ -71,7 +71,9 @@ function FieldInput({
         value={strVal}
         placeholder={field.placeholder}
         onChange={e => {
-          const val = field.type === 'number' ? Number(e.target.value) : e.target.value;
+          const val = field.type === 'number'
+            ? (e.target.value === '' ? undefined : Number(e.target.value))
+            : e.target.value;
           onChange(field.key, val);
         }}
       />
