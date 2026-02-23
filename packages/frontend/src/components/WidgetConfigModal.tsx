@@ -130,7 +130,6 @@ export function WidgetConfigModal() {
         body: JSON.stringify({
           url: options['url'],
           port: options['port'],
-          ignoreTls: options['ignoreTls'],
         }),
       });
       const data = await res.json() as { status: string };

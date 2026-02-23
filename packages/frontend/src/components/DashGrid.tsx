@@ -55,8 +55,8 @@ export function DashGrid() {
   const [layout, setLayout] = useState<Layout[]>([]);
   const [width, setWidth] = useState(window.innerWidth - 32);
 
-  // Synced every render so the layout effect can read the current editMode
-  // without adding it as a dep (which would re-run the effect on toggle).
+  // Synced every render so callbacks can read the current editMode
+  // without adding it as a dep (which would re-run effects on toggle).
   const editModeRef = useRef(editMode);
   editModeRef.current = editMode;
 
@@ -82,18 +82,26 @@ export function DashGrid() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allServices.length, services, dropQueue, widgetTemplates]);
 
-  // Always holds the latest layout so the save-on-close effect can read it
-  // without needing layout in its dependency array.
-  const layoutRef = useRef<Layout[]>(layout);
-  useEffect(() => { layoutRef.current = layout; });
+  // Tracks the latest drag positions for save-on-close.
+  // Updated by handleLayoutChange (never by React state) so it never triggers
+  // re-renders that would interfere with RGL's internal drop state.
+  const dragLayoutRef = useRef<Layout[]>([]);
 
   // Save all layouts to YAML when edit mode is closed ("Save" button).
   const prevEditMode = useRef(editMode);
   useEffect(() => {
     const wasEditing = prevEditMode.current;
     prevEditMode.current = editMode;
+
+    if (!wasEditing && editMode) {
+      // Entering edit mode — seed dragLayoutRef with current layout so a
+      // save without any dragging still writes the correct positions.
+      dragLayoutRef.current = layout.filter(l => l.i !== '__dropping-elem__');
+    }
+
     if (wasEditing && !editMode) {
-      const items = layoutRef.current
+      const source = dragLayoutRef.current.length > 0 ? dragLayoutRef.current : layout;
+      const items = source
         .filter(l => l.i !== '__dropping-elem__')
         .map(l => ({ id: l.i, layout: { x: l.x, y: l.y, w: l.w, h: l.h } }));
       void fetch('/api/services/layouts', {
@@ -113,14 +121,13 @@ export function DashGrid() {
   }, [reloadServices]));
 
   const handleLayoutChange = useCallback((newLayout: Layout[]) => {
-    // Outside edit mode YAML is the source of truth — ignore RGL's positions.
-    if (!editModeRef.current) return;
-
-    setLayout(prev => {
-      const newIds = new Set(newLayout.map(l => l.i));
-      const extras = prev.filter(l => !newIds.has(l.i) && l.i !== '__dropping-elem__');
-      return extras.length > 0 ? [...newLayout, ...extras] : newLayout;
-    });
+    // Track drag positions for save-on-close via ref only — no setLayout call.
+    // Calling setLayout here triggers re-renders that interfere with RGL's
+    // internal drop state tracking (ghost position resets mid-drag).
+    if (editModeRef.current) {
+      const withoutGhost = newLayout.filter(l => l.i !== '__dropping-elem__');
+      if (withoutGhost.length > 0) dragLayoutRef.current = withoutGhost;
+    }
   }, []);
 
   const handleDrop = useCallback(
@@ -143,9 +150,11 @@ export function DashGrid() {
       let n = 2;
       while (existingIds.includes(id)) { id = `${base}-${n++}`; }
 
-      // With preventCollision=false the ghost always follows the cursor, so
-      // item.x/y from onDrop is the precise grid-cell the user dropped on.
-      const { x, y } = item;
+      // With preventCollision=true, item.x/y is always the actual ghost cell —
+      // the ghost can only occupy non-colliding positions, so it matches exactly
+      // what the user saw visually. onLayoutChange only fires once (on ghost
+      // entry before activeDrag is set), so lastGhostRef tracking is unreliable.
+      if (!item) return;
 
       // Use widgets.yml sizes if available, fall back to catalog defaults.
       const tmpl = widgetTemplates.find(t => t.type === template.type);
@@ -156,11 +165,11 @@ export function DashGrid() {
         id,
         title: template.label,
         widget: template.type,
-        layout: { x, y, w, h },
+        layout: { x: item.x, y: item.y, w, h },
         options: template.defaultOptions ?? {},
       };
 
-      setLayout(prev => [...prev, { i: id, x, y, w, h }]);
+      setLayout(prev => [...prev, { i: id, x: item.x, y: item.y, w, h }]);
       setDropQueue(prev => [...prev, newService]);
       setDroppingItem(null);
 
@@ -168,9 +177,14 @@ export function DashGrid() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newService),
-      }).then(() => {
+      }).then(async () => {
+        // Reload first so services contains the new item, THEN clear queue.
+        // If we clear the queue first, allServices momentarily loses the item,
+        // which causes getDerivedStateFromProps to generate a wrong default
+        // layout (x:0, y:bottom, w:1, h:1) because it's in the layout prop
+        // but no longer in the children list.
+        await reloadServices();
         setDropQueue(prev => prev.filter(s => s.id !== id));
-        void reloadServices();
       });
     },
     // widgetTemplates intentionally omitted — it's slow-changing and the
@@ -228,8 +242,8 @@ export function DashGrid() {
         isResizable={editMode}
         isDroppable={editMode}
         compactType={null}
-        preventCollision={false}
-        droppingItem={editMode && droppingItem ? { i: '__dropping-elem__', w: droppingItem.w, h: droppingItem.h } : undefined}
+        preventCollision={true}
+        droppingItem={editMode ? { i: '__dropping-elem__', w: droppingItem?.w ?? 2, h: droppingItem?.h ?? 2 } : undefined}
         onDrop={handleDrop}
         onLayoutChange={handleLayoutChange}
         draggableHandle=".widget-drag-handle"

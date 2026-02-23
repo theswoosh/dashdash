@@ -6,7 +6,6 @@ import './HealthcheckWidget.css';
 
 interface HealthData {
   status: 'up' | 'down';
-  statusCode?: number | undefined;
   latencyMs?: number | undefined;
   error?: string | undefined;
 }
@@ -38,7 +37,7 @@ export function HealthcheckWidget({ options, data, error, loading }: WidgetProps
 
   const statusTooltip = isUp
     ? (d?.latencyMs !== undefined ? `${d.latencyMs}ms` : '')
-    : (d?.statusCode ? `HTTP ${d.statusCode}` : (d?.error ?? ''));
+    : (d?.error ?? '');
 
   return (
     <div className="healthcheck-widget">

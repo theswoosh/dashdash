@@ -1,33 +1,31 @@
 # Widget template defaults — edit to change sizes and constraints for each widget type.
 # defaultSize: initial size when dropped from the sidebar.
 # minSize:     minimum size the user can resize to.
-# Sizes are in grid units (columns / rows). With 24 columns and 40px rows,
-# each unit is roughly half the size of the old 12-column / 80px-row grid.
 
 - type: clock
-  defaultSize: { w: 4, h: 4 }
-  minSize: { w: 4, h: 4 }
+  defaultSize: { w: 2, h: 2 }
+  minSize: { w: 2, h: 2 }
 
 - type: healthcheck
-  defaultSize: { w: 6, h: 4 }
-  minSize: { w: 4, h: 4 }
+  defaultSize: { w: 2, h: 2 }
+  minSize: { w: 2, h: 2 }
 
 - type: stats
-  defaultSize: { w: 6, h: 6 }
-  minSize: { w: 4, h: 4 }
+  defaultSize: { w: 3, h: 3 }
+  minSize: { w: 2, h: 2 }
 
 - type: bookmarks
-  defaultSize: { w: 6, h: 4 }
-  minSize: { w: 4, h: 4 }
+  defaultSize: { w: 2, h: 2 }
+  minSize: { w: 2, h: 2 }
 
 - type: search
-  defaultSize: { w: 8, h: 4 }
-  minSize: { w: 6, h: 4 }
+  defaultSize: { w: 3, h: 2 }
+  minSize: { w: 3, h: 2 }
 
 - type: notepad
-  defaultSize: { w: 6, h: 6 }
-  minSize: { w: 4, h: 4 }
+  defaultSize: { w: 3, h: 3 }
+  minSize: { w: 2, h: 2 }
 
 - type: iframe
-  defaultSize: { w: 8, h: 8 }
-  minSize: { w: 4, h: 4 }
+  defaultSize: { w: 4, h: 4 }
+  minSize: { w: 2, h: 2 }

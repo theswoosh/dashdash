@@ -6,11 +6,12 @@ import { useThemeCard } from '../themes/registry';
 import { getWidget } from '../widgets/registry';
 import { useWidgetData } from '../hooks/useWidgetData';
 import { useUIStore } from '../store/uiStore';
+import { useBehavior } from '../hooks/useBehavior';
 import { WidgetSkeleton } from '../widgets/shared/WidgetSkeleton';
 import { WidgetError } from '../widgets/shared/WidgetError';
 import './WidgetCard.css';
 
-function HoldDeleteButton({ id, onDelete }: { id: string; onDelete: (id: string) => void }) {
+function HoldDeleteButton({ id, holdToDeleteMs, onDelete }: { id: string; holdToDeleteMs: number; onDelete: (id: string) => void }) {
   const [holding, setHolding] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -19,7 +20,7 @@ function HoldDeleteButton({ id, onDelete }: { id: string; onDelete: (id: string)
   const start = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     setHolding(true);
-    timer.current = setTimeout(() => { onDelete(id); }, 2000);
+    timer.current = setTimeout(() => { onDelete(id); }, holdToDeleteMs);
   };
 
   const cancel = () => {
@@ -30,6 +31,7 @@ function HoldDeleteButton({ id, onDelete }: { id: string; onDelete: (id: string)
   return (
     <button
       className={`widget-delete-btn${holding ? ' widget-delete-btn--holding' : ''}`}
+      style={{ '--hold-delete-duration': `${holdToDeleteMs}ms` } as React.CSSProperties}
       onMouseDown={start}
       onMouseUp={cancel}
       onMouseLeave={cancel}
@@ -53,6 +55,7 @@ interface Props {
 export function WidgetCard({ service, editMode, onDelete }: Props) {
   const Card = useThemeCard();
   const setConfigTarget = useUIStore(s => s.setConfigTarget);
+  const { holdToDeleteMs } = useBehavior();
   const { Component, clientOnly } = getWidget(service.widget);
   const { data, error, loading } = useWidgetData(service.id, !!clientOnly);
 
@@ -99,7 +102,7 @@ export function WidgetCard({ service, editMode, onDelete }: Props) {
             >
               <Settings size={13} />
             </button>
-            {onDelete && <HoldDeleteButton id={service.id} onDelete={onDelete} />}
+            {onDelete && <HoldDeleteButton id={service.id} holdToDeleteMs={holdToDeleteMs} onDelete={onDelete} />}
           </div>
         )}
       </div>

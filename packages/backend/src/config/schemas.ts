@@ -69,6 +69,10 @@ export const SettingsSchema = z.object({
   grid: GridSchema.default({}),
 });
 
+export const BehaviorSchema = z.object({
+  holdToDeleteMs: z.number().int().positive().default(1000),
+});
+
 export const IntegrationSchema = z.object({
   id: z.string(),
   type: z.string(),
@@ -78,6 +82,7 @@ export const IntegrationSchema = z.object({
 
 export const IntegrationsSchema = z.array(IntegrationSchema);
 
+export type Behavior = z.infer<typeof BehaviorSchema>;
 export type Services = z.infer<typeof ServicesSchema>;
 export type Settings = z.infer<typeof SettingsSchema>;
 export type Service = z.infer<typeof ServiceSchema>;

@@ -38,9 +38,8 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     defaultSize: { w: 6, h: 4 },
     defaultOptions: { url: '', ignoreTls: false, timeoutMs: 5000 },
     configFields: [
-      { key: 'url', label: 'Host / URL', type: 'text', placeholder: '192.168.1.1 or https://example.com', required: true },
-      { key: 'port', label: 'Port', type: 'number', placeholder: '80' },
-      { key: 'ignoreTls', label: 'Ignore TLS errors (self-signed cert)', type: 'boolean', default: false },
+      { key: 'url', label: 'Host / URL', type: 'text', placeholder: '192.168.1.1 or example.com', required: true },
+      { key: 'port', label: 'Port (TCP check — leave empty for ICMP ping)', type: 'number', placeholder: '80' },
       { key: 'timeoutMs', label: 'Timeout (ms)', type: 'number', default: 5000 },
     ],
   },

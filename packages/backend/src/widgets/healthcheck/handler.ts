@@ -6,7 +6,6 @@ export const healthcheckHandler: WidgetHandler = {
     return runHealthcheck({
       url: (options['url'] as string | undefined) ?? '',
       port: options['port'] as number | undefined,
-      ignoreTls: options['ignoreTls'] === true,
       timeoutMs: options['timeoutMs'] as number | undefined,
     });
   },

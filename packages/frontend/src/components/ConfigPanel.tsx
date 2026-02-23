@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useUIStore } from '../store/uiStore';
 import { WIDGET_CATALOG } from '../widgets/catalog';
 import { THEMES } from '../themes/registry';
 import { usePreferences } from '../hooks/usePreferences';
 import { useWidgetTemplates } from '../hooks/useWidgetTemplates';
+import { useBoard } from '../hooks/useBoard';
 import type { WidgetTemplate } from '../widgets/catalog';
 import './ConfigPanel.css';
 
@@ -58,6 +59,74 @@ function WidgetsTab() {
   );
 }
 
+// ── Background toggle ─────────────────────────────────────────────────────────
+
+function BackgroundToggle() {
+  const { board, setWallpaperEnabled, upload } = useBoard();
+  const [uploading, setUploading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const enabled = board?.wallpaperEnabled ?? false;
+  const busy = uploading || !board;
+
+  const handleToggle = () => {
+    if (busy) return;
+    if (!enabled) {
+      if (board!.hasBackground) {
+        // Image already stored — just enable it.
+        void setWallpaperEnabled(true);
+      } else {
+        // No image yet — open file picker.
+        inputRef.current?.click();
+      }
+    } else {
+      void setWallpaperEnabled(false);
+    }
+  };
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setUploading(true);
+    try {
+      await upload(file);
+      await setWallpaperEnabled(true);
+    } catch {
+      // ignore — toggle stays off
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="config-option-group">
+      <div className="bg-toggle-row">
+        <label className="config-option-label" htmlFor="bg-toggle-btn">Custom wallpaper</label>
+        <button
+          id="bg-toggle-btn"
+          role="switch"
+          aria-checked={enabled}
+          className={`bg-toggle${enabled ? ' bg-toggle--on' : ''}${uploading ? ' bg-toggle--busy' : ''}`}
+          onClick={handleToggle}
+          disabled={busy}
+          aria-label={uploading ? 'Uploading…' : 'Toggle custom wallpaper'}
+        >
+          <span className="bg-toggle__thumb" />
+        </button>
+      </div>
+      {uploading && <span className="config-option-hint">Uploading…</span>}
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".jpg,.jpeg,.png,.webp,.avif,image/jpeg,image/png,image/webp,image/avif"
+        style={{ display: 'none' }}
+        onChange={e => void handleFile(e)}
+      />
+    </div>
+  );
+}
+
 // ── Options tab ──────────────────────────────────────────────────────────────
 
 function OptionsTab() {
@@ -87,11 +156,12 @@ function OptionsTab() {
         <span className="config-option-hint">Shown in the top-left corner</span>
       </div>
 
+      <BackgroundToggle />
+
       <div className="config-option-group config-option-group--coming-soon">
         <span className="config-option-section-label">Coming soon</span>
         <ul className="config-coming-soon-list">
           <li>Grid columns &amp; row height</li>
-          <li>Background image or color</li>
           <li>Widget border style</li>
         </ul>
       </div>

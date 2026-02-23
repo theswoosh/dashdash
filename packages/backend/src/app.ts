@@ -3,19 +3,22 @@ import { join } from 'path';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import fastifyStatic from '@fastify/static';
+import multipart from '@fastify/multipart';
 import websocketPlugin from '@fastify/websocket';
 import type { WebSocket } from 'ws';
 import { createDb, type Db } from './db/index.js';
-import { loadServices, loadSettings } from './config/loader.js';
+import { loadServices, loadSettings, loadBehavior } from './config/loader.js';
 import { addWsClient, removeWsClient } from './config/watcher.js';
 import { healthRoutes } from './routes/health.js';
 import { createServicesRoutes } from './routes/services.js';
 import { createSettingsRoutes } from './routes/settings.js';
+import { createBehaviorRoutes } from './routes/behavior.js';
 import { createWidgetRoutes } from './routes/widget.js';
 import { createNotepadRoutes } from './routes/notepad.js';
 import { createPreferencesRoutes } from './routes/preferences.js';
 import { createWidgetTemplatesRoutes } from './routes/widgetTemplates.js';
 import { healthcheckTestRoutes } from './routes/healthcheckTest.js';
+import { createBoardRoutes } from './routes/boards.js';
 
 export interface AppOptions {
   dataDir: string;
@@ -41,21 +44,25 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
     credentials: true,
   });
 
+  await server.register(multipart);
   await server.register(websocketPlugin);
 
   const db = createDb(dataDir);
   const getSettings = () => loadSettings(configDir);
+  const getBehavior = () => loadBehavior(configDir);
   // YAML is the single source of truth for all services
   const getServices = () => loadServices(configDir);
 
   await server.register(healthRoutes, { prefix: '/api' });
   await server.register(createServicesRoutes(getServices, configDir), { prefix: '/api' });
   await server.register(createSettingsRoutes(getSettings), { prefix: '/api' });
+  await server.register(createBehaviorRoutes(getBehavior), { prefix: '/api' });
   await server.register(createWidgetRoutes({ getServices, configDir }), { prefix: '/api' });
   await server.register(createNotepadRoutes(db), { prefix: '/api' });
   await server.register(createPreferencesRoutes(db), { prefix: '/api' });
   await server.register(createWidgetTemplatesRoutes(configDir), { prefix: '/api' });
   await server.register(healthcheckTestRoutes, { prefix: '/api' });
+  await server.register(createBoardRoutes(db, configDir), { prefix: '/api' });
 
   server.get('/api/ws', { websocket: true }, (socket: WebSocket) => {
     addWsClient(socket);

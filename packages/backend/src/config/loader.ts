@@ -1,8 +1,8 @@
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import yaml from 'js-yaml';
-import { RawServicesSchema, SettingsSchema, assignIds } from './schemas.js';
-import type { Services, Settings } from './schemas.js';
+import { RawServicesSchema, SettingsSchema, BehaviorSchema, assignIds } from './schemas.js';
+import type { Services, Settings, Behavior } from './schemas.js';
 
 function readYaml(filePath: string): unknown {
   if (!existsSync(filePath)) return null;
@@ -23,6 +23,16 @@ export function loadServices(configDir: string): Services {
     return [];
   }
   return assignIds(result.data);
+}
+
+export function loadBehavior(configDir: string): Behavior {
+  const raw = readYaml(join(configDir, 'behavior.yml'));
+  const result = BehaviorSchema.safeParse(raw ?? {});
+  if (!result.success) {
+    console.warn('behavior.yml validation errors:', result.error.format());
+    return BehaviorSchema.parse({});
+  }
+  return result.data;
 }
 
 export function loadSettings(configDir: string): Settings {

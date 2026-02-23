@@ -5,6 +5,7 @@ import './themes/ascii.css';
 import './themes/base.css';
 import { useUIStore } from './store/uiStore';
 import { usePreferences } from './hooks/usePreferences';
+import { useBoard } from './hooks/useBoard';
 import { ThemeProvider } from './themes/registry';
 import { Topbar } from './components/Topbar';
 import { DashGrid } from './components/DashGrid';
@@ -18,6 +19,22 @@ export function App() {
   const configTarget = useUIStore(s => s.configTarget);
 
   const { preferences } = usePreferences();
+  const { backgroundUrl } = useBoard();
+
+  // Prevent browser navigation when an image/URL is dragged onto the page.
+  // Skip for widget-template drags — those are handled by RGL on the grid.
+  useEffect(() => {
+    const isExternal = (e: DragEvent) =>
+      !Array.from(e.dataTransfer?.types ?? []).includes('widget-template');
+    const handleDragOver = (e: DragEvent) => { if (isExternal(e)) e.preventDefault(); };
+    const handleDrop    = (e: DragEvent) => { if (isExternal(e)) e.preventDefault(); };
+    document.addEventListener('dragover', handleDragOver);
+    document.addEventListener('drop',     handleDrop);
+    return () => {
+      document.removeEventListener('dragover', handleDragOver);
+      document.removeEventListener('drop',     handleDrop);
+    };
+  }, []);
 
   // Apply persisted preferences once they load
   useEffect(() => {
@@ -34,7 +51,13 @@ export function App() {
   return (
     <ThemeProvider themeId={theme}>
       {/* Background layers — styled via CSS vars set by data-theme */}
-      <div className="bg-layer" />
+      {backgroundUrl && (
+        <div className="bg-image" style={{ backgroundImage: `url(${backgroundUrl})` }} />
+      )}
+      <div
+        className="bg-layer"
+        style={backgroundUrl ? { '--bg-base': 'transparent' } as React.CSSProperties : undefined}
+      />
       <div className="bg-overlay" />
 
       {/* App shell */}

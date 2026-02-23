@@ -94,7 +94,7 @@
 
 .widget-delete-btn--holding .widget-delete-btn__fill {
   width: 100%;
-  transition: width 2s linear;
+  transition: width var(--hold-delete-duration, 1000ms) linear;
 }
 
 .widget-delete-btn__icon {

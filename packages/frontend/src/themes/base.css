@@ -20,6 +20,18 @@ body {
   transition: background-color 300ms ease, color 300ms ease;
 }
 
+/* Background image — rendered below the dot layer */
+.bg-image {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: opacity 400ms ease;
+}
+
 /* Background: dot pattern driven by theme CSS vars */
 .bg-layer {
   position: fixed;
