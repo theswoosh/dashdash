@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "main": "dist/server.js",
+  "files": ["dist"],
   "scripts": {
     "dev": "node --watch --loader ts-node/esm src/server.ts",
     "build": "tsc",

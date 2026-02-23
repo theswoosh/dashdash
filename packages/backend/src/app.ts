@@ -1,5 +1,8 @@
+import { readFileSync, existsSync } from 'fs';
+import { join } from 'path';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import fastifyStatic from '@fastify/static';
 import websocketPlugin from '@fastify/websocket';
 import type { WebSocket } from 'ws';
 import { createDb, type Db } from './db/index.js';
@@ -17,10 +20,12 @@ import { healthcheckTestRoutes } from './routes/healthcheckTest.js';
 export interface AppOptions {
   dataDir: string;
   configDir: string;
+  /** When provided, the backend serves the frontend SPA from this directory. */
+  publicDir?: string | undefined;
   logger?: boolean | undefined;
 }
 
-export async function buildApp({ dataDir, configDir, logger = false }: AppOptions): Promise<{ server: ReturnType<typeof Fastify>; db: Db }> {
+export async function buildApp({ dataDir, configDir, publicDir, logger = false }: AppOptions): Promise<{ server: ReturnType<typeof Fastify>; db: Db }> {
   const isDev = process.env['NODE_ENV'] !== 'production';
 
   const server = Fastify({
@@ -57,6 +62,23 @@ export async function buildApp({ dataDir, configDir, logger = false }: AppOption
     socket.on('close', () => removeWsClient(socket));
     socket.on('error', () => removeWsClient(socket));
   });
+
+  // Serve the frontend SPA in production (publicDir is set when ./public exists).
+  if (publicDir && existsSync(publicDir)) {
+    const indexHtml = readFileSync(join(publicDir, 'index.html'), 'utf8');
+
+    await server.register(fastifyStatic, {
+      root: publicDir,
+      prefix: '/',
+      // Don't intercept 404s — we handle them below so /api 404s return JSON.
+      wildcard: false,
+    });
+
+    // SPA catch-all: any route not matched by API handlers → index.html.
+    server.setNotFoundHandler((_req, reply) => {
+      void reply.type('text/html').send(indexHtml);
+    });
+  }
 
   return { server, db };
 }

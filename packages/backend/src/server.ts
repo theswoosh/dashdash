@@ -1,16 +1,23 @@
+import { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 import { buildApp } from './app.js';
 import { startWatcher } from './config/watcher.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-// src/ → backend/ → packages/ → repo root
+// src/ → backend/ → packages/ → repo root  (dev)
+// dist/          → app/       → /           (prod, absolute env vars used instead)
 const repoRoot = resolve(__dirname, '../../..');
 
 const DATA_DIR = resolve(repoRoot, process.env['DATA_DIR'] ?? 'data');
 const CONFIG_DIR = resolve(repoRoot, process.env['CONFIG_DIR'] ?? 'config');
 
-const { server, db } = await buildApp({ dataDir: DATA_DIR, configDir: CONFIG_DIR, logger: true });
+// In production (Docker), the frontend is built into ./public next to dist/.
+// This resolves to /app/public when running from /app/dist/server.js.
+const PUBLIC_DIR = resolve(__dirname, '../public');
+const publicDir = existsSync(PUBLIC_DIR) ? PUBLIC_DIR : undefined;
+
+const { server, db } = await buildApp({ dataDir: DATA_DIR, configDir: CONFIG_DIR, publicDir, logger: true });
 
 startWatcher(CONFIG_DIR);
 server.log.info(`Watching config dir: ${CONFIG_DIR}`);
@@ -32,6 +39,7 @@ try {
   await server.listen({ port, host });
   server.log.info(`Data dir:   ${DATA_DIR}`);
   server.log.info(`Config dir: ${CONFIG_DIR}`);
+  if (publicDir) server.log.info(`Serving UI: ${PUBLIC_DIR}`);
 } catch (err) {
   server.log.error(err);
   process.exit(1);

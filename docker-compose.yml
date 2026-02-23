@@ -1,23 +1,20 @@
 services:
   dashdash:
-    build: .
+    image: ghcr.io/theswoosh/dashdash:latest
+    # To build locally instead of pulling:
+    # build: .
     ports:
       - "3000:3000"
     volumes:
-      - ./config:/config:ro
+      - ./config:/config
       - dashdash-data:/data
     environment:
       NODE_ENV: production
       PORT: 3000
       DATA_DIR: /data
       CONFIG_DIR: /config
-      # Auth
-      # DASHDASH_SESSION_SECRET: changeme-generate-with-openssl-rand-hex-32
-      # OIDC (if enabled in settings.yml)
-      # DASHDASH_OIDC_SECRET: your-oidc-client-secret
-      # Integration API keys (format: DASHDASH_INTEGRATION_<ID_UPPERCASE>_KEY)
+      # Integration API keys (format: DASHDASH_INTEGRATION_<ID_UPPERCASE>_<FIELD>)
       # DASHDASH_INTEGRATION_SONARR_MAIN_KEY: your-sonarr-api-key
-      # DASHDASH_INTEGRATION_RADARR_MAIN_KEY: your-radarr-api-key
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]

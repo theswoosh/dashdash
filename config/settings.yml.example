@@ -12,9 +12,9 @@ background:
   parallax: false
 
 grid:
-  columns: 12
-  rowHeight: 80        # px per row unit
-  gap: 12              # px gap between widgets
+  columns: 24          # increase for finer horizontal placement
+  rowHeight: 40        # px per row unit — decrease for finer vertical placement
+  gap: 10              # px gap between widgets
 
 auth:
   oidc:
