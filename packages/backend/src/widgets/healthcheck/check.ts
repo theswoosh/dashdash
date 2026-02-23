@@ -69,13 +69,24 @@ export async function runHealthcheck(opts: CheckOptions): Promise<CheckResult> {
     return { status: 'down', error: 'No URL configured', latencyMs: 0 };
   }
 
-  const host = extractHost(urlInput.trim());
+  const trimmed = urlInput.trim();
+  const host = extractHost(trimmed);
 
   if (!SAFE_HOST_RE.test(host) || host.length > 253) {
     return { status: 'down', error: 'Invalid host', latencyMs: 0 };
   }
 
-  return port !== undefined
-    ? tcpCheck(host, port, timeoutMs)
+  // Extract port from URL if not provided as an explicit option.
+  let effectivePort = port;
+  if (effectivePort === undefined) {
+    try {
+      const normalized = trimmed.includes('://') ? trimmed : `http://${trimmed}`;
+      const urlPort = new URL(normalized).port;
+      if (urlPort) effectivePort = parseInt(urlPort, 10);
+    } catch { /* ignore */ }
+  }
+
+  return effectivePort !== undefined
+    ? tcpCheck(host, effectivePort, timeoutMs)
     : pingHost(host, timeoutMs);
 }

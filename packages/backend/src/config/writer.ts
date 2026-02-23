@@ -36,7 +36,7 @@ export function patchService(
 
   const svc = services[idx]!;
   if (patch.title !== undefined) svc.title = patch.title;
-  if (patch.options !== undefined) svc.options = patch.options;
+  if (patch.options !== undefined) svc.options = { ...svc.options, ...patch.options };
   if (patch.layout !== undefined) svc.layout = patch.layout;
 
   writeServices(configDir, services);
