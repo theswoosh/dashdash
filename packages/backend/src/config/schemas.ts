@@ -62,11 +62,42 @@ export const BackgroundSchema = z.object({
   parallax: z.boolean().default(false),
 });
 
+const AuthSessionSchema = z.object({
+  maxAgeSeconds: z.number().int().nonnegative().default(604800),
+  slidingWindow: z.boolean().default(true),
+}).default({});
+
+const AuthRegistrationSchema = z.object({
+  enabled: z.boolean().default(true),
+}).default({});
+
+export const AuthConfigSchema = z.object({
+  registration: AuthRegistrationSchema,
+  session: AuthSessionSchema,
+  oidc: z.object({
+    enabled: z.boolean().default(false),
+    issuer: z.string().default(''),
+    clientId: z.string().default(''),
+    scopes: z.string().default('openid profile email'),
+  }).default({}),
+}).default({});
+
+export const MailConfigSchema = z.object({
+  smtp: z.object({
+    host: z.string().default(''),
+    port: z.number().int().default(587),
+    secure: z.boolean().default(false),
+  }).default({}),
+  from: z.string().default(''),
+}).default({});
+
 export const SettingsSchema = z.object({
   title: z.string().default('dashdash'),
   theme: z.enum(['dark', 'light']).default('dark'),
   background: BackgroundSchema.optional(),
   grid: GridSchema.default({}),
+  auth: AuthConfigSchema,
+  mail: MailConfigSchema,
 });
 
 export const BehaviorSchema = z.object({
@@ -88,3 +119,5 @@ export type Settings = z.infer<typeof SettingsSchema>;
 export type Service = z.infer<typeof ServiceSchema>;
 export type Integration = z.infer<typeof IntegrationSchema>;
 export type Integrations = z.infer<typeof IntegrationsSchema>;
+export type AuthConfig = z.infer<typeof AuthConfigSchema>;
+export type MailConfig = z.infer<typeof MailConfigSchema>;

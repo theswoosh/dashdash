@@ -1,5 +1,7 @@
 import { useState, useRef } from 'react';
+import { LogOut, User, Shield } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
+import { useAuth } from '../hooks/use-auth.hook';
 import { WIDGET_CATALOG } from '../widgets/catalog';
 import { THEMES } from '../themes/registry';
 import { usePreferences } from '../hooks/use-preferences.hook';
@@ -209,6 +211,35 @@ function ThemesTab() {
   );
 }
 
+// ── User section ─────────────────────────────────────────────────────────────
+
+function UserSection() {
+  const { user, logout } = useAuth();
+  const setAdminPanelOpen = useUIStore(s => s.setAdminPanelOpen);
+  const setProfileOpen = useUIStore(s => s.setProfileOpen);
+
+  if (!user) return null;
+
+  return (
+    <div className="cp-user-section">
+      <span className="cp-user-name">{user.name}</span>
+      <div className="cp-user-actions">
+        <button className="cp-user-btn" onClick={() => setProfileOpen(true)}>
+          <User size={12} /> Profile
+        </button>
+        {user.role === 'admin' && (
+          <button className="cp-user-btn" onClick={() => setAdminPanelOpen(true)}>
+            <Shield size={12} /> Admin
+          </button>
+        )}
+        <button className="cp-user-btn cp-user-btn--danger" onClick={() => { void logout(); }}>
+          <LogOut size={12} /> Logout
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── ConfigPanel ──────────────────────────────────────────────────────────────
 
 const TABS: { id: Tab; label: string }[] = [
@@ -239,6 +270,7 @@ export function ConfigPanel() {
         {activeTab === 'options' && <OptionsTab />}
         {activeTab === 'themes' && <ThemesTab />}
       </div>
+      <UserSection />
     </aside>
   );
 }

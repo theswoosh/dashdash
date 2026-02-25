@@ -11,10 +11,10 @@
 -- SAFE_ALTER: ALTER TABLE boards ADD COLUMN yaml_path    TEXT NOT NULL DEFAULT 'services.yml';
 -- SAFE_ALTER: ALTER TABLE boards ADD COLUMN theme         TEXT NOT NULL DEFAULT 'liquid-glass';
 -- SAFE_ALTER: ALTER TABLE boards ADD COLUMN wallpaper_url TEXT;
--- SAFE_ALTER: ALTER TABLE boards ADD COLUMN brightness    INTEGER NOT NULL DEFAULT 100 CHECK (brightness BETWEEN 0 AND 100);
+-- SAFE_ALTER: ALTER TABLE boards ADD COLUMN brightness    INTEGER NOT NULL DEFAULT 100;
 -- SAFE_ALTER: ALTER TABLE boards ADD COLUMN settings      TEXT NOT NULL DEFAULT '{}';
 -- SAFE_ALTER: ALTER TABLE boards ADD COLUMN is_active     INTEGER NOT NULL DEFAULT 1;
--- SAFE_ALTER: ALTER TABLE boards ADD COLUMN updated_at    TEXT NOT NULL DEFAULT (datetime('now'));
+-- SAFE_ALTER: ALTER TABLE boards ADD COLUMN updated_at    TEXT;
 
 -- ============================================================
 -- USERS

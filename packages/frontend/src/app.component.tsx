@@ -7,11 +7,20 @@ import './themes/base.css';
 import { useUIStore } from './store/uiStore';
 import { usePreferences } from './hooks/use-preferences.hook';
 import { useBoard } from './hooks/use-board.hook';
+import { useAuth } from './hooks/use-auth.hook';
 import { ThemeProvider } from './themes/registry';
 import { Topbar } from './components/topbar.component';
 import { DashGrid } from './components/dash-grid.component';
 import { ConfigPanel } from './components/config-panel.component';
 import { WidgetConfigModal } from './components/widget-config-modal.component';
+import { AdminPanel } from './components/admin-panel.component';
+import { ProfilePopup } from './components/profile-popup.component';
+import { LoginPage } from './pages/login.page';
+import { ResetPasswordPage } from './pages/reset-password.page';
+
+function hasResetToken(): boolean {
+  return new URLSearchParams(window.location.search).has('token');
+}
 
 export function App() {
   const theme = useUIStore(s => s.theme);
@@ -19,6 +28,7 @@ export function App() {
   const setBoardName = useUIStore(s => s.setBoardName);
   const configTarget = useUIStore(s => s.configTarget);
 
+  const { user, isLoading: isAuthLoading } = useAuth();
   const { preferences } = usePreferences();
   const { backgroundUrl } = useBoard();
 
@@ -49,6 +59,9 @@ export function App() {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
+  if (isAuthLoading) return null;
+  if (!user) return hasResetToken() ? <ResetPasswordPage /> : <LoginPage />;
+
   return (
     <ThemeProvider themeId={theme}>
       {/* Background layers — styled via CSS vars set by data-theme */}
@@ -67,6 +80,8 @@ export function App() {
 
       <ConfigPanel />
       {configTarget && <WidgetConfigModal />}
+      <AdminPanel />
+      <ProfilePopup />
     </ThemeProvider>
   );
 }
