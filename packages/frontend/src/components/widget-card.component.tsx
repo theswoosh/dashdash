@@ -52,6 +52,17 @@ interface Props {
   onDelete?: ((id: string) => void) | undefined;
 }
 
+interface PingStatus {
+  status: 'up' | 'down';
+  latencyMs?: number | undefined;
+  error?: string | undefined;
+}
+
+function buildPingTooltip(ping: PingStatus): string {
+  if (ping.status === 'up') return ping.latencyMs !== undefined ? `${ping.latencyMs}ms` : 'Up';
+  return ping.error ?? 'Offline';
+}
+
 export function WidgetCard({ service, editMode, onDelete }: Props) {
   const Card = useThemeCard();
   const setConfigTarget = useUIStore(s => s.setConfigTarget);
@@ -59,13 +70,16 @@ export function WidgetCard({ service, editMode, onDelete }: Props) {
   const { Component, clientOnly } = getWidget(service.widget);
   const { data, error, loading } = useWidgetData(service.id, !!clientOnly);
 
+  const isHealthcheckWithPing = service.widget === 'healthcheck' && service.options?.['ping'] !== false;
+  const pingData = isHealthcheckWithPing && !loading && data ? data as PingStatus : null;
+
   const body = (() => {
     if (!clientOnly && loading) return <WidgetSkeleton />;
     if (!clientOnly && error) return <WidgetError message={error} />;
     return (
       <Component
         serviceId={service.id}
-        options={{ ...service.options, _widgetId: service.widget }}
+        options={{ ...service.options, _widgetId: service.widget, _title: service.title }}
         data={data}
         error={error}
         loading={loading}
@@ -80,6 +94,13 @@ export function WidgetCard({ service, editMode, onDelete }: Props) {
           <span className="widget-drag-handle" title="Drag to move">
             <GripVertical size={16} />
           </span>
+        )}
+        {pingData && (
+          <span
+            className={`widget-ping-dot widget-ping-dot--${pingData.status}`}
+            title={buildPingTooltip(pingData)}
+            aria-label={pingData.status === 'up' ? 'Up' : 'Down'}
+          />
         )}
         <span className="widget-title">{service.title}</span>
         {service.widget === 'notepad' && (

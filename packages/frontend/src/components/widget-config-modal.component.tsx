@@ -15,6 +15,10 @@ function FieldInput({
   value: unknown;
   onChange: (key: string, val: unknown) => void;
 }) {
+  if (field.type === 'separator') {
+    return <hr className="config-separator" />;
+  }
+
   const strVal = value === undefined || value === null ? '' : String(value);
 
   if (field.type === 'boolean') {
@@ -33,13 +37,19 @@ function FieldInput({
   if (field.type === 'textarea') {
     return (
       <div className="config-field">
-        <label className="config-label">{field.label}{field.required && ' *'}</label>
+        <label className="config-label">
+          {field.label}{field.required && ' *'}
+          {field.maxLength !== undefined && (
+            <span className="config-label__counter">{strVal.length} / {field.maxLength}</span>
+          )}
+        </label>
         <textarea
           className="config-input config-textarea"
           value={strVal}
           placeholder={field.placeholder}
+          maxLength={field.maxLength}
           onChange={e => onChange(field.key, e.target.value)}
-          rows={3}
+          rows={2}
         />
       </div>
     );

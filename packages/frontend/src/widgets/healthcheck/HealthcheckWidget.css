@@ -1,40 +1,60 @@
+/* ───────────────────────────── Base ───────────────────────────────── */
+
 .healthcheck-widget {
   display: flex;
   flex-direction: column;
+  height: 100%;
+  padding: 10px 12px;
+  box-sizing: border-box;
+}
+
+/* ───────────────────────────── Icon placeholder ────────────────────── */
+/* No background — just reserved space for a future app icon            */
+
+.healthcheck-widget__icon-area {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+/* ───────────────────────────── Description ─────────────────────────── */
+
+.healthcheck-widget__description {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+/* ───────────────────────────── Tiny layout ─────────────────────────── */
+/* Header carries the dot + title; body is intentionally empty           */
+
+.healthcheck-widget--tiny {
+  padding: 0;
+}
+
+/* ───────────────────────────── Normal layout ───────────────────────── */
+
+.healthcheck-widget--normal {
+  align-items: flex-start;
+  gap: 4px;
+}
+
+/* ───────────────────────────── Big layout ──────────────────────────── */
+
+.healthcheck-widget--big {
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  height: 100%;
-  padding: 12px;
 }
 
-.healthcheck-widget__icon {
-  color: var(--text-faint);
-  line-height: 0;
-}
-
-.healthcheck-widget__host {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-muted);
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.healthcheck-widget__status {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+.healthcheck-widget--big .healthcheck-widget__icon-area {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
   cursor: default;
-}
-
-.healthcheck-widget__status--up {
-  color: #22c55e;
-}
-
-.healthcheck-widget__status--down {
-  color: #ef4444;
 }

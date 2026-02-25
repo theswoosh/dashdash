@@ -28,7 +28,7 @@ export const useUIStore = create<UIState>(set => ({
   editMode: false,
   activeBoardId: null,
   theme: 'liquid-glass',
-  boardName: (typeof localStorage !== 'undefined' ? (localStorage.getItem(STORAGE_KEY_BOARD_NAME) ?? '') : ''),
+  boardName: (() => { try { return localStorage.getItem(STORAGE_KEY_BOARD_NAME) ?? ''; } catch { return ''; } })(),
   droppingItem: null,
   configTarget: null,
   toggleEditMode: () => set(s => ({ editMode: !s.editMode })),

@@ -12,10 +12,11 @@ import {
 export interface ConfigField {
   key: string;
   label: string;
-  type: 'text' | 'url' | 'number' | 'boolean' | 'textarea' | 'select';
+  type: 'text' | 'url' | 'number' | 'boolean' | 'textarea' | 'select' | 'separator';
   placeholder?: string | undefined;
   required?: boolean | undefined;
   default?: unknown;
+  maxLength?: number | undefined;
   options?: { value: string; label: string }[] | undefined;
 }
 
@@ -36,11 +37,26 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     icon: Activity,
     description: 'Monitor a host for uptime and latency',
     defaultSize: { w: 6, h: 4 },
-    defaultOptions: { url: '', ignoreTls: false, timeoutMs: 5000 },
+    defaultOptions: { url: '', ignoreTls: false, timeoutMs: 5000, ping: true, layoutSize: 'normal', showDescription: false },
     configFields: [
+      { key: 'description', label: 'Description', type: 'textarea', placeholder: 'What does it do', maxLength: 50 },
+      { key: 'showDescription', label: 'Show description', type: 'boolean', default: false },
+      {
+        key: 'layoutSize',
+        label: 'Layout size',
+        type: 'select',
+        options: [
+          { value: 'tiny', label: 'Tiny' },
+          { value: 'normal', label: 'Normal' },
+          { value: 'big', label: 'Big' },
+        ],
+        default: 'normal',
+      },
+      { key: '_sep_network', label: '', type: 'separator' },
       { key: 'url', label: 'Host / URL', type: 'text', placeholder: '192.168.1.1 or example.com', required: true },
       { key: 'port', label: 'Port (TCP check — leave empty for ICMP ping)', type: 'number', placeholder: '80' },
       { key: 'timeoutMs', label: 'Timeout (ms)', type: 'number', default: 5000 },
+      { key: 'ping', label: 'Enable ping', type: 'boolean', default: true },
     ],
   },
   {
