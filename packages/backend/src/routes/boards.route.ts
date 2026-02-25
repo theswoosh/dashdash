@@ -3,7 +3,7 @@ import { join, extname } from 'path';
 import { pipeline } from 'stream/promises';
 import type { FastifyPluginAsync } from 'fastify';
 import type { Db } from '../db/index.js';
-import { getDefaultBoard, getBoard, setBackgroundExt, setWallpaperEnabled } from '../db/boards.js';
+import { getDefaultBoard, getBoard, setBackgroundExt, setWallpaperEnabled } from '../db/boards.db.js';
 
 const ALLOWED_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.avif']);
 const MIME_TO_EXT: Record<string, string> = {
