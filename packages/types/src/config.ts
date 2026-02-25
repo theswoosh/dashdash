@@ -1,9 +1,9 @@
 export type ThemeId = 'glass' | 'dark' | 'light' | 'custom';
 
-export type BackgroundType = 'image' | 'gradient' | 'color' | 'unsplash' | 'video';
+export type BackgroundKind = 'image' | 'gradient' | 'color' | 'unsplash' | 'video';
 
 export interface BackgroundConfig {
-  type: BackgroundType;
+  type: BackgroundKind;
   url?: string;
   blur?: number;
   overlay?: string;

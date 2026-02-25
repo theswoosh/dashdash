@@ -1,7 +1,7 @@
 import { Globe } from 'lucide-react';
 import type { WidgetProps } from '@dashdash/types';
-import { WidgetSkeleton } from '../shared/WidgetSkeleton';
-import { WidgetError } from '../shared/WidgetError';
+import { WidgetSkeleton } from '../shared/widget-skeleton.component';
+import { WidgetError } from '../shared/widget-error.component';
 import './HealthcheckWidget.css';
 
 interface HealthData {
@@ -26,8 +26,8 @@ export function HealthcheckWidget({ options, data, error, loading }: WidgetProps
   if (loading) return <WidgetSkeleton />;
   if (error) return <WidgetError message={error} />;
 
-  const d = data as HealthData | null;
-  const status = d?.status ?? 'down';
+  const healthData = data as HealthData | null;
+  const status = healthData?.status ?? 'down';
   const isUp = status === 'up';
 
   const host = hostLabel(
@@ -36,8 +36,8 @@ export function HealthcheckWidget({ options, data, error, loading }: WidgetProps
   );
 
   const statusTooltip = isUp
-    ? (d?.latencyMs !== undefined ? `${d.latencyMs}ms` : '')
-    : (d?.error ?? '');
+    ? (healthData?.latencyMs !== undefined ? `${healthData.latencyMs}ms` : '')
+    : (healthData?.error ?? '');
 
   return (
     <div className="healthcheck-widget">

@@ -2,9 +2,9 @@ import { useState, useRef } from 'react';
 import { useUIStore } from '../store/uiStore';
 import { WIDGET_CATALOG } from '../widgets/catalog';
 import { THEMES } from '../themes/registry';
-import { usePreferences } from '../hooks/usePreferences';
-import { useWidgetTemplates } from '../hooks/useWidgetTemplates';
-import { useBoard } from '../hooks/useBoard';
+import { usePreferences } from '../hooks/use-preferences.hook';
+import { useWidgetTemplates } from '../hooks/use-widget-templates.hook';
+import { useBoard } from '../hooks/use-board.hook';
 import type { WidgetTemplate } from '../widgets/catalog';
 import './ConfigPanel.css';
 
@@ -17,22 +17,22 @@ function SidebarItem({ template }: { template: WidgetTemplate }) {
   const widgetTemplates = useWidgetTemplates();
   const Icon = template.icon;
 
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+  const prepareWidgetTemplateDrag = (e: React.DragEvent<HTMLDivElement>) => {
     e.dataTransfer.effectAllowed = 'copy';
     e.dataTransfer.setData('widget-template', JSON.stringify(template));
     // Use widgets.yml sizes if available, fall back to catalog defaults.
     const tmpl = widgetTemplates.find(t => t.type === template.type);
-    const w = tmpl?.defaultSize.w ?? template.defaultSize.w;
-    const h = tmpl?.defaultSize.h ?? template.defaultSize.h;
+    const templateWidth = tmpl?.defaultSize.w ?? template.defaultSize.w;
+    const templateHeight = tmpl?.defaultSize.h ?? template.defaultSize.h;
     // Must use '__dropping-elem__' — RGL's internal default ID for ghost placement.
-    setDroppingItem({ i: '__dropping-elem__', w, h });
+    setDroppingItem({ i: '__dropping-elem__', w: templateWidth, h: templateHeight });
   };
 
   return (
     <div
       className="config-panel-item"
       draggable
-      onDragStart={handleDragStart}
+      onDragStart={prepareWidgetTemplateDrag}
       title={template.description}
     >
       <span className="config-panel-item__icon">
@@ -66,12 +66,12 @@ function BackgroundToggle() {
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const enabled = board?.wallpaperEnabled ?? false;
-  const busy = uploading || !board;
+  const isWallpaperEnabled = board?.wallpaperEnabled ?? false;
+  const isBusy = uploading || !board;
 
-  const handleToggle = () => {
-    if (busy) return;
-    if (!enabled) {
+  const toggleWallpaper = () => {
+    if (isBusy) return;
+    if (!isWallpaperEnabled) {
       if (board!.hasBackground) {
         // Image already stored — just enable it.
         void setWallpaperEnabled(true);
@@ -84,7 +84,7 @@ function BackgroundToggle() {
     }
   };
 
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const uploadWallpaperFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
@@ -106,10 +106,10 @@ function BackgroundToggle() {
         <button
           id="bg-toggle-btn"
           role="switch"
-          aria-checked={enabled}
-          className={`bg-toggle${enabled ? ' bg-toggle--on' : ''}${uploading ? ' bg-toggle--busy' : ''}`}
-          onClick={handleToggle}
-          disabled={busy}
+          aria-checked={isWallpaperEnabled}
+          className={`bg-toggle${isWallpaperEnabled ? ' bg-toggle--on' : ''}${uploading ? ' bg-toggle--busy' : ''}`}
+          onClick={toggleWallpaper}
+          disabled={isBusy}
           aria-label={uploading ? 'Uploading…' : 'Toggle custom wallpaper'}
         >
           <span className="bg-toggle__thumb" />
@@ -121,7 +121,7 @@ function BackgroundToggle() {
         type="file"
         accept=".jpg,.jpeg,.png,.webp,.avif,image/jpeg,image/png,image/webp,image/avif"
         style={{ display: 'none' }}
-        onChange={e => void handleFile(e)}
+        onChange={e => void uploadWallpaperFile(e)}
       />
     </div>
   );
@@ -134,7 +134,7 @@ function OptionsTab() {
   const setBoardName = useUIStore(s => s.setBoardName);
   const { savePreferences } = usePreferences();
 
-  const handleBoardNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const updateBoardName = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setBoardName(val);
     savePreferences({ boardName: val });
@@ -149,7 +149,7 @@ function OptionsTab() {
           type="text"
           className="config-option-input"
           value={boardName}
-          onChange={handleBoardNameChange}
+          onChange={updateBoardName}
           placeholder="dashdash"
           maxLength={48}
         />
@@ -176,7 +176,7 @@ function ThemesTab() {
   const setTheme = useUIStore(s => s.setTheme);
   const { savePreferences } = usePreferences();
 
-  const handleThemeChange = (id: string) => {
+  const applyTheme = (id: string) => {
     setTheme(id);
     savePreferences({ theme: id });
   };
@@ -187,7 +187,7 @@ function ThemesTab() {
         <button
           key={t.id}
           className={`config-theme-option${theme === t.id ? ' config-theme-option--active' : ''}`}
-          onClick={() => handleThemeChange(t.id)}
+          onClick={() => applyTheme(t.id)}
           aria-pressed={theme === t.id}
         >
           <div className="config-theme-preview" data-theme-preview={t.id}>

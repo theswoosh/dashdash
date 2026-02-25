@@ -1,6 +1,6 @@
 import type { WidgetProps } from '@dashdash/types';
-import { WidgetSkeleton } from '../shared/WidgetSkeleton';
-import { WidgetError } from '../shared/WidgetError';
+import { WidgetSkeleton } from '../shared/widget-skeleton.component';
+import { WidgetError } from '../shared/widget-error.component';
 import './StatsWidget.css';
 
 const SECONDS_PER_DAY = 86400;
@@ -67,19 +67,19 @@ export function StatsWidget({ data, error, loading }: WidgetProps) {
   if (loading) return <WidgetSkeleton />;
   if (error) return <WidgetError message={error} />;
 
-  const d = data as StatsData | null;
-  if (!d) return <WidgetError message="No data" />;
+  const statsData = data as StatsData | null;
+  if (!statsData) return <WidgetError message="No data" />;
 
   return (
     <div className="stats-widget">
-      <StatBar label="CPU" value={d.cpuLoadPct} />
+      <StatBar label="CPU" value={statsData.cpuLoadPct} />
       <StatBar
         label="RAM"
-        value={d.memUsedPct}
-        subtitle={`${d.memUsedMb} / ${d.memTotalMb} MB`}
+        value={statsData.memUsedPct}
+        subtitle={`${statsData.memUsedMb} / ${statsData.memTotalMb} MB`}
       />
       <div className="stats-widget__uptime">
-        Uptime: {formatUptime(d.uptimeSecs)}
+        Uptime: {formatUptime(statsData.uptimeSecs)}
       </div>
     </div>
   );

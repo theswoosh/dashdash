@@ -4,11 +4,11 @@ import { mutate as swrMutate } from 'swr';
 import type { ServiceConfig } from '@dashdash/types';
 import { useThemeCard } from '../themes/registry';
 import { getWidget } from '../widgets/registry';
-import { useWidgetData } from '../hooks/useWidgetData';
+import { useWidgetData } from '../hooks/use-widget-data.hook';
 import { useUIStore } from '../store/uiStore';
-import { useBehavior } from '../hooks/useBehavior';
-import { WidgetSkeleton } from '../widgets/shared/WidgetSkeleton';
-import { WidgetError } from '../widgets/shared/WidgetError';
+import { useBehavior } from '../hooks/use-behavior.hook';
+import { WidgetSkeleton } from '../widgets/shared/widget-skeleton.component';
+import { WidgetError } from '../widgets/shared/widget-error.component';
 import './WidgetCard.css';
 
 function HoldDeleteButton({ id, holdToDeleteMs, onDelete }: { id: string; holdToDeleteMs: number; onDelete: (id: string) => void }) {

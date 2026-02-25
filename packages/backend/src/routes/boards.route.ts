@@ -82,16 +82,16 @@ export function createBoardRoutes(db: Db, configDir: string): FastifyPluginAsync
         const board = getBoard(db, req.params.id);
         if (!board) return reply.code(404).send({ error: 'Board not found' });
 
-        const data = await req.file({ limits: { fileSize: MAX_UPLOAD_BYTES } });
-        if (!data) return reply.code(400).send({ error: 'No file uploaded' });
+        const uploadedFile = await req.file({ limits: { fileSize: MAX_UPLOAD_BYTES } });
+        if (!uploadedFile) return reply.code(400).send({ error: 'No file uploaded' });
 
-        const ext = extname(data.filename).toLowerCase() || `.${data.mimetype.split('/')[1]}`;
+        const ext = extname(uploadedFile.filename).toLowerCase() || `.${uploadedFile.mimetype.split('/')[1]}`;
         if (!ALLOWED_EXTS.has(ext)) {
           return reply.code(415).send({ error: `Unsupported file type: ${ext}` });
         }
 
         removeOldBg(configDir, board.id, board.background_ext);
-        await pipeline(data.file, createWriteStream(bgPath(configDir, board.id, ext)));
+        await pipeline(uploadedFile.file, createWriteStream(bgPath(configDir, board.id, ext)));
         setBackgroundExt(db, board.id, ext);
         return { ok: true };
       }

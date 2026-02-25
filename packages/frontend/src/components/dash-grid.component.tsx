@@ -4,14 +4,14 @@ import type { Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import { useUIStore } from '../store/uiStore';
-import { useServices } from '../hooks/useServices';
-import { useConfigReload } from '../hooks/useConfigReload';
-import { useWidgetTemplates } from '../hooks/useWidgetTemplates';
-import { useGridConfig } from '../hooks/useGridConfig';
-import { WidgetCard } from './WidgetCard';
+import { useServices } from '../hooks/use-services.hook';
+import { useConfigReload } from '../hooks/use-config-reload.hook';
+import { useWidgetTemplates } from '../hooks/use-widget-templates.hook';
+import { useGridConfig } from '../hooks/use-grid-config.hook';
+import { WidgetCard } from './widget-card.component';
 import type { ServiceConfig } from '@dashdash/types';
 import type { WidgetTemplate } from '../widgets/catalog';
-import type { WidgetTemplateDef } from '../hooks/useWidgetTemplates';
+import type { WidgetTemplateDef } from '../hooks/use-widget-templates.hook';
 import './DashGrid.css';
 
 /** Build RGL layout items directly from services (YAML is source of truth).
@@ -122,7 +122,7 @@ export function DashGrid() {
     void reloadServices();
   }, [reloadServices]));
 
-  const handleLayoutChange = useCallback((newLayout: Layout[]) => {
+  const recordDragPositions = useCallback((newLayout: Layout[]) => {
     // Track drag positions for save-on-close via ref only — no setLayout call.
     // Calling setLayout here triggers re-renders that interfere with RGL's
     // internal drop state tracking (ghost position resets mid-drag).
@@ -132,7 +132,7 @@ export function DashGrid() {
     }
   }, []);
 
-  const handleDrop = useCallback(
+  const createWidgetFromDrop = useCallback(
     (_rglLayout: Layout[], item: Layout, e: Event) => {
       const dragEvent = e as DragEvent;
       const raw = dragEvent.dataTransfer?.getData('widget-template');
@@ -149,8 +149,8 @@ export function DashGrid() {
       const existingIds = allServicesRef.current.map(s => s.id);
       const base = template.type;
       let id = base;
-      let n = 2;
-      while (existingIds.includes(id)) { id = `${base}-${n++}`; }
+      let suffix = 2;
+      while (existingIds.includes(id)) { id = `${base}-${suffix++}`; }
 
       // With preventCollision=true, item.x/y is always the actual ghost cell —
       // the ghost can only occupy non-colliding positions, so it matches exactly
@@ -160,18 +160,18 @@ export function DashGrid() {
 
       // Use widgets.yml sizes if available, fall back to catalog defaults.
       const tmpl = widgetTemplates.find(t => t.type === template.type);
-      const w = tmpl?.defaultSize.w ?? template.defaultSize?.w ?? 2;
-      const h = tmpl?.defaultSize.h ?? template.defaultSize?.h ?? 2;
+      const dropWidth = tmpl?.defaultSize.w ?? template.defaultSize?.w ?? 2;
+      const dropHeight = tmpl?.defaultSize.h ?? template.defaultSize?.h ?? 2;
 
       const newService: ServiceConfig = {
         id,
         title: template.label,
         widget: template.type,
-        layout: { x: item.x, y: item.y, w, h },
+        layout: { x: item.x, y: item.y, w: dropWidth, h: dropHeight },
         options: template.defaultOptions ?? {},
       };
 
-      setLayout(prev => [...prev, { i: id, x: item.x, y: item.y, w, h }]);
+      setLayout(prev => [...prev, { i: id, x: item.x, y: item.y, w: dropWidth, h: dropHeight }]);
       setDropQueue(prev => [...prev, newService]);
       setDroppingItem(null);
 
@@ -198,7 +198,7 @@ export function DashGrid() {
     [reloadServices, setDroppingItem]
   );
 
-  const handleDeleteService = useCallback(
+  const deleteService = useCallback(
     async (id: string) => {
       await fetch(`/api/services/${id}`, { method: 'DELETE' });
       await reloadServices();
@@ -249,8 +249,8 @@ export function DashGrid() {
         compactType={null}
         preventCollision={true}
         droppingItem={editMode ? { i: '__dropping-elem__', w: droppingItem?.w ?? 2, h: droppingItem?.h ?? 2 } : undefined}
-        onDrop={handleDrop}
-        onLayoutChange={handleLayoutChange}
+        onDrop={createWidgetFromDrop}
+        onLayoutChange={recordDragPositions}
         draggableHandle=".widget-drag-handle"
       >
         {allServices.map(s => (
@@ -258,7 +258,7 @@ export function DashGrid() {
             <WidgetCard
               service={s}
               editMode={editMode}
-              onDelete={handleDeleteService}
+              onDelete={deleteService}
             />
           </div>
         ))}

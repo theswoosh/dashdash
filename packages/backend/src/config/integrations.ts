@@ -17,12 +17,12 @@ function readYaml(filePath: string): unknown {
 export function loadIntegrations(configDir: string): Integration[] {
   const raw = readYaml(join(configDir, 'integrations.yml'));
   if (raw === null) return [];
-  const result = IntegrationsSchema.safeParse(raw);
-  if (!result.success) {
-    console.warn('integrations.yml validation errors:', result.error.format());
+  const parseResult = IntegrationsSchema.safeParse(raw);
+  if (!parseResult.success) {
+    console.warn('integrations.yml validation errors:', parseResult.error.format());
     return [];
   }
-  return result.data;
+  return parseResult.data;
 }
 
 /**

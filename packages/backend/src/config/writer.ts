@@ -8,8 +8,8 @@ function readServices(configDir: string): Service[] {
   const filePath = join(configDir, 'services.yml');
   if (!existsSync(filePath)) return [];
   const raw = yaml.load(readFileSync(filePath, 'utf8'));
-  const result = RawServicesSchema.safeParse(raw);
-  return result.success ? assignIds(result.data) : [];
+  const parseResult = RawServicesSchema.safeParse(raw);
+  return parseResult.success ? assignIds(parseResult.data) : [];
 }
 
 function writeServices(configDir: string, services: Service[]): void {
