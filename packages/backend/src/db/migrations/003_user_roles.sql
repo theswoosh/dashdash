@@ -2,7 +2,7 @@
 
 -- Add role column to users (admin | user).
 -- SAFE_ALTER is parsed by the migration runner and wrapped in try/catch.
--- SAFE_ALTER: ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'user'));
+-- SAFE_ALTER: ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user';
 
 -- Password reset tokens (SHA-256 of the raw token stored, never raw).
 CREATE TABLE IF NOT EXISTS password_reset_tokens (
