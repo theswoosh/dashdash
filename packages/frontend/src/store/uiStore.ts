@@ -21,6 +21,8 @@ interface UIState {
   setBoardName: (name: string) => void;
   setDroppingItem: (item: DroppingItem | null) => void;
   setConfigTarget: (id: string | null) => void;
+  isAdminPanelOpen: boolean;
+  setAdminPanelOpen: (open: boolean) => void;
   // TODO Phase 2: persist theme to user profile via PATCH /api/me
 }
 
@@ -40,4 +42,6 @@ export const useUIStore = create<UIState>(set => ({
   },
   setDroppingItem: item => set({ droppingItem: item }),
   setConfigTarget: id => set({ configTarget: id }),
+  isAdminPanelOpen: false,
+  setAdminPanelOpen: open => set({ isAdminPanelOpen: open }),
 }));

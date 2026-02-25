@@ -5,6 +5,7 @@ import { join } from 'path';
 import type { FastifyInstance } from 'fastify';
 import type { Db } from '../db/index.js';
 import { buildApp } from '../app.js';
+import { loginAsAdmin } from './test-helpers.js';
 
 const SERVICES_YML = `
 - id: health-test
@@ -28,12 +29,14 @@ const SERVICES_YML = `
 let server: FastifyInstance;
 let db: Db;
 let tmpDir: string;
+let authCookie: string;
 
 beforeAll(async () => {
   tmpDir = mkdtempSync(join(tmpdir(), 'dashdash-widget-test-'));
   writeFileSync(join(tmpDir, 'services.yml'), SERVICES_YML);
   ({ server, db } = await buildApp({ dataDir: tmpDir, configDir: tmpDir }));
   await server.ready();
+  authCookie = await loginAsAdmin(server);
 });
 
 afterAll(async () => {
@@ -44,19 +47,19 @@ afterAll(async () => {
 
 describe('GET /api/widget/:serviceId/data', () => {
   it('returns 404 for unknown serviceId', async () => {
-    const res = await server.inject({ method: 'GET', url: '/api/widget/nonexistent/data' });
+    const res = await server.inject({ method: 'GET', url: '/api/widget/nonexistent/data', headers: { cookie: authCookie } });
     expect(res.statusCode).toBe(404);
     expect(res.json()).toMatchObject({ ok: false });
   });
 
   it('returns 400 for clientOnly widget (clock)', async () => {
-    const res = await server.inject({ method: 'GET', url: '/api/widget/clock-test/data' });
+    const res = await server.inject({ method: 'GET', url: '/api/widget/clock-test/data', headers: { cookie: authCookie } });
     expect(res.statusCode).toBe(400);
     expect(res.json()).toMatchObject({ ok: false });
   });
 
   it('returns 200 for stats widget', async () => {
-    const res = await server.inject({ method: 'GET', url: '/api/widget/stats-test/data' });
+    const res = await server.inject({ method: 'GET', url: '/api/widget/stats-test/data', headers: { cookie: authCookie } });
     expect(res.statusCode).toBe(200);
     const body = res.json() as { ok: boolean; data: { cpuLoadPct: number; memUsedPct: number; uptimeSecs: number } };
     expect(body.ok).toBe(true);
@@ -66,7 +69,7 @@ describe('GET /api/widget/:serviceId/data', () => {
   });
 
   it('returns 200 with down status for unreachable healthcheck', async () => {
-    const res = await server.inject({ method: 'GET', url: '/api/widget/health-test/data' });
+    const res = await server.inject({ method: 'GET', url: '/api/widget/health-test/data', headers: { cookie: authCookie } });
     expect(res.statusCode).toBe(200);
     const body = res.json() as { ok: boolean; data: { status: string } };
     expect(body.ok).toBe(true);

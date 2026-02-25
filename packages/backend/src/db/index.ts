@@ -11,6 +11,7 @@ const MIGRATIONS_DIR = join(dirname(fileURLToPath(import.meta.url)), 'migrations
 const MIGRATIONS = [
   { version: 1, file: '001_initial.sql' },
   { version: 2, file: '002_boards_v2.sql' },
+  { version: 3, file: '003_user_roles.sql' },
 ] as const;
 
 // SQLite ALTER TABLE ADD COLUMN does not support IF NOT EXISTS.

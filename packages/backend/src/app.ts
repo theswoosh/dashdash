@@ -2,6 +2,7 @@ import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import fastifyCookie from '@fastify/cookie';
 import fastifyStatic from '@fastify/static';
 import multipart from '@fastify/multipart';
 import websocketPlugin from '@fastify/websocket';
@@ -19,6 +20,10 @@ import { createPreferencesRoutes } from './routes/preferences.route.js';
 import { createWidgetTemplatesRoutes } from './routes/widget-templates.route.js';
 import { healthcheckTestRoutes } from './routes/healthcheck-test.route.js';
 import { createBoardRoutes } from './routes/boards.route.js';
+import { createAuthRoutes } from './routes/auth.route.js';
+import { createUsersRoutes } from './routes/users.route.js';
+import { registerAuthMiddleware } from './middleware/auth.middleware.js';
+import { cleanupExpiredSessions } from './db/sessions.db.js';
 
 export interface AppOptions {
   dataDir: string;
@@ -27,6 +32,8 @@ export interface AppOptions {
   publicDir?: string | undefined;
   logger?: boolean | undefined;
 }
+
+const SESSION_CLEANUP_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
 
 export async function buildApp({ dataDir, configDir, publicDir, logger = false }: AppOptions): Promise<{ server: ReturnType<typeof Fastify>; db: Db }> {
   const isDev = process.env['NODE_ENV'] !== 'production';
@@ -44,6 +51,7 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
     credentials: true,
   });
 
+  await server.register(fastifyCookie);
   await server.register(multipart);
   await server.register(websocketPlugin);
 
@@ -51,10 +59,25 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
   const log = server.log;
   const getSettings = () => loadSettings(configDir, log);
   const getBehavior = () => loadBehavior(configDir, log);
-  // YAML is the single source of truth for all services
   const getServices = () => loadServices(configDir, log);
 
+  const settings = getSettings();
+  const { auth: authConfig, mail: mailConfig } = settings;
+
+  // Auth middleware runs before all route handlers.
+  registerAuthMiddleware(server, db, authConfig.session.slidingWindow ? authConfig.session.maxAgeSeconds : 0);
+
+  // Session cleanup scheduled every 15 minutes.
+  const cleanupTimer = setInterval(() => {
+    const deleted = cleanupExpiredSessions(db);
+    if (deleted > 0) log.info({ deleted }, 'Cleaned up expired sessions');
+  }, SESSION_CLEANUP_INTERVAL_MS);
+  // Don't keep process alive just for cleanup.
+  cleanupTimer.unref();
+
   await server.register(healthRoutes, { prefix: '/api' });
+  await server.register(createAuthRoutes(db, authConfig, mailConfig), { prefix: '/api' });
+  await server.register(createUsersRoutes(db, mailConfig), { prefix: '/api' });
   await server.register(createServicesRoutes(getServices, configDir), { prefix: '/api' });
   await server.register(createSettingsRoutes(getSettings), { prefix: '/api' });
   await server.register(createBehaviorRoutes(getBehavior), { prefix: '/api' });
@@ -78,11 +101,9 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
     await server.register(fastifyStatic, {
       root: publicDir,
       prefix: '/',
-      // Don't intercept 404s — we handle them below so /api 404s return JSON.
       wildcard: false,
     });
 
-    // SPA catch-all: any route not matched by API handlers → index.html.
     server.setNotFoundHandler((_req, reply) => {
       void reply.type('text/html').send(indexHtml);
     });

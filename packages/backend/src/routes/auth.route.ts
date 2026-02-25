@@ -1,0 +1,266 @@
+import { randomUUID } from 'crypto';
+import type { FastifyPluginAsync } from 'fastify';
+import { z } from 'zod';
+import type { Db } from '../db/index.js';
+import { findUserByEmail, findUserById, createUser, updateUser, isFirstUser } from '../db/users.db.js';
+import { createSession, destroySession } from '../db/sessions.db.js';
+import { hashPassword, verifyPassword, generateResetToken, hashResetToken } from '../services/password.service.js';
+import { sendPasswordResetEmail, isMailConfigured } from '../services/mail.service.js';
+import type { AuthConfig, MailConfig } from '../config/schemas.js';
+
+const COOKIE_NAME = 'dashdash_session';
+const RESET_TOKEN_EXPIRES_SECONDS = 3600; // 1 hour
+
+const RATE_WINDOWS = {
+  login:    { maxAttempts: 5,  windowMs: 15 * 60 * 1000 },
+  register: { maxAttempts: 3,  windowMs: 60 * 60 * 1000 },
+  forgot:   { maxAttempts: 3,  windowMs: 60 * 60 * 1000 },
+} as const;
+
+function checkRateLimit(store: Map<string, { count: number; windowStart: number }>, key: string, limitKey: keyof typeof RATE_WINDOWS): boolean {
+  const { maxAttempts, windowMs } = RATE_WINDOWS[limitKey]!;
+  const now = Date.now();
+  const entry = store.get(key);
+
+  if (!entry || now - entry.windowStart > windowMs) {
+    store.set(key, { count: 1, windowStart: now });
+    return true;
+  }
+
+  if (entry.count >= maxAttempts) return false;
+  entry.count++;
+  return true;
+}
+
+const RegisterBodySchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8).max(128),
+  name: z.string().min(1).max(100).trim(),
+});
+
+const LoginBodySchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+});
+
+const UpdateMeBodySchema = z.object({
+  name: z.string().min(1).max(100).trim().optional(),
+  password: z.string().min(8).max(128).optional(),
+  currentPassword: z.string().optional(),
+});
+
+const ForgotPasswordBodySchema = z.object({
+  email: z.string().email(),
+});
+
+const ResetPasswordBodySchema = z.object({
+  token: z.string().min(1),
+  password: z.string().min(8).max(128),
+});
+
+export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: MailConfig): FastifyPluginAsync {
+  // Rate limiter stores are per-server-instance — reset when server restarts or test teardown.
+  const loginAttempts = new Map<string, { count: number; windowStart: number }>();
+  const registerAttempts = new Map<string, { count: number; windowStart: number }>();
+  const forgotAttempts = new Map<string, { count: number; windowStart: number }>();
+
+  return async (fastify) => {
+    const cookieOpts = {
+      httpOnly: true,
+      secure: process.env['NODE_ENV'] === 'production',
+      sameSite: 'strict' as const,
+      path: '/',
+      maxAge: authConfig.session.maxAgeSeconds,
+    };
+
+    // GET /api/auth/config — public, tells the frontend what to show
+    fastify.get('/auth/config', async () => ({
+      registrationEnabled: authConfig.registration.enabled,
+      smtpConfigured: isMailConfigured({ host: mailConfig.smtp.host, port: mailConfig.smtp.port, secure: mailConfig.smtp.secure, from: mailConfig.from }),
+    }));
+
+    // POST /api/auth/register
+    fastify.post('/auth/register', async (request, reply) => {
+      if (!authConfig.registration.enabled) {
+        return reply.code(403).send({ error: 'Registration is disabled' });
+      }
+
+      const ip = request.ip;
+      if (!checkRateLimit(registerAttempts, ip, 'register')) {
+        return reply.code(429).send({ error: 'Too many registration attempts' });
+      }
+
+      const parsed = RegisterBodySchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(400).send({ error: 'Validation failed', details: parsed.error.issues });
+      }
+
+      const { email, password, name } = parsed.data;
+
+      if (findUserByEmail(db, email)) {
+        return reply.code(409).send({ error: 'Email already registered' });
+      }
+
+      const role = isFirstUser(db) ? 'admin' : 'user';
+      const passwordHash = await hashPassword(password);
+      const userId = createUser(db, { email, name, passwordHash, role });
+
+      const sessionId = createSession(db, userId, authConfig.session.maxAgeSeconds);
+      void reply.setCookie(COOKIE_NAME, sessionId, cookieOpts);
+
+      const user = findUserById(db, userId)!;
+      return reply.code(201).send({ id: user.id, email: user.email, name: user.name, role: user.role });
+    });
+
+    // POST /api/auth/login
+    fastify.post('/auth/login', async (request, reply) => {
+      const parsed = LoginBodySchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(400).send({ error: 'Validation failed', details: parsed.error.issues });
+      }
+
+      const { email, password } = parsed.data;
+
+      if (!checkRateLimit(loginAttempts, email.toLowerCase(), 'login')) {
+        return reply.code(429).send({ error: 'Too many login attempts. Try again later.' });
+      }
+
+      const user = findUserByEmail(db, email);
+      // Always run password verification to prevent timing attacks even when user not found.
+      const hashToCheck = user?.password_hash ?? '$2b$12$invalidhashsowerunverifyanyway00000000000000000000000000';
+      const isValid = await verifyPassword(password, hashToCheck);
+
+      if (!user || !isValid || user.is_active === 0) {
+        return reply.code(401).send({ error: 'Invalid email or password' });
+      }
+
+      const sessionId = createSession(db, user.id, authConfig.session.maxAgeSeconds);
+      void reply.setCookie(COOKIE_NAME, sessionId, cookieOpts);
+
+      return reply.send({ id: user.id, email: user.email, name: user.name, role: user.role });
+    });
+
+    // POST /api/auth/logout (requires auth via middleware)
+    fastify.post('/auth/logout', async (request, reply) => {
+      const sessionId = request.cookies?.[COOKIE_NAME];
+      if (sessionId) destroySession(db, sessionId);
+      void reply.clearCookie(COOKIE_NAME, { path: '/' });
+      return reply.send({ ok: true });
+    });
+
+    // GET /api/auth/me (requires auth via middleware)
+    fastify.get('/auth/me', async (request, reply) => {
+      const user = findUserById(db, request.userId);
+      if (!user) return reply.code(401).send({ error: 'User not found' });
+      return reply.send({ id: user.id, email: user.email, name: user.name, role: user.role });
+    });
+
+    // PATCH /api/auth/me (requires auth via middleware)
+    fastify.patch('/auth/me', async (request, reply) => {
+      const parsed = UpdateMeBodySchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(400).send({ error: 'Validation failed', details: parsed.error.issues });
+      }
+
+      const { name, password, currentPassword } = parsed.data;
+      const user = findUserById(db, request.userId);
+      if (!user) return reply.code(401).send({ error: 'User not found' });
+
+      const updates: Parameters<typeof updateUser>[2] = {};
+
+      if (name !== undefined) updates.name = name;
+
+      if (password !== undefined) {
+        if (!currentPassword) {
+          return reply.code(400).send({ error: 'currentPassword is required to change password' });
+        }
+        const isValid = await verifyPassword(currentPassword, user.password_hash ?? '');
+        if (!isValid) {
+          return reply.code(403).send({ error: 'Current password is incorrect' });
+        }
+        updates.passwordHash = await hashPassword(password);
+      }
+
+      updateUser(db, request.userId, updates);
+      return reply.send({ ok: true });
+    });
+
+    // POST /api/auth/forgot-password
+    fastify.post('/auth/forgot-password', async (request, reply) => {
+      const parsed = ForgotPasswordBodySchema.safeParse(request.body);
+      if (!parsed.success) {
+        // Always 200 — no enumeration
+        return reply.send({ ok: true });
+      }
+
+      const { email } = parsed.data;
+      if (!checkRateLimit(forgotAttempts, email.toLowerCase(), 'forgot')) {
+        // Still return 200 to prevent enumeration
+        return reply.send({ ok: true });
+      }
+
+      const smtpConfig = { host: mailConfig.smtp.host, port: mailConfig.smtp.port, secure: mailConfig.smtp.secure, from: mailConfig.from };
+
+      if (!isMailConfigured(smtpConfig)) {
+        fastify.log.warn('Forgot-password request received but SMTP is not configured');
+        return reply.send({ ok: true });
+      }
+
+      const user = findUserByEmail(db, email);
+      if (!user || user.is_active === 0) {
+        // No user — return 200 silently (no enumeration)
+        return reply.send({ ok: true });
+      }
+
+      const { raw, hash } = generateResetToken();
+      const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRES_SECONDS * 1000).toISOString();
+
+      db.prepare(`
+        INSERT INTO password_reset_tokens (id, user_id, token_hash, expires_at)
+        VALUES (?, ?, ?, ?)
+      `).run(randomUUID(), user.id, hash, expiresAt);
+
+      const baseUrl = process.env['DASHDASH_BASE_URL'] ?? 'http://localhost:3000';
+      const resetUrl = `${baseUrl}/reset-password?token=${raw}`;
+
+      try {
+        await sendPasswordResetEmail(smtpConfig, user.email, resetUrl);
+      } catch (err) {
+        fastify.log.error({ err }, 'Failed to send password reset email');
+      }
+
+      return reply.send({ ok: true });
+    });
+
+    // POST /api/auth/reset-password
+    fastify.post('/auth/reset-password', async (request, reply) => {
+      const parsed = ResetPasswordBodySchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(400).send({ error: 'Invalid or expired token' });
+      }
+
+      const { token, password } = parsed.data;
+      const tokenHash = hashResetToken(token);
+
+      const row = db.prepare(`
+        SELECT id, user_id FROM password_reset_tokens
+        WHERE token_hash = ?
+          AND expires_at > datetime('now')
+          AND used_at IS NULL
+      `).get(tokenHash) as { id: string; user_id: string } | undefined;
+
+      if (!row) {
+        return reply.code(400).send({ error: 'Invalid or expired token' });
+      }
+
+      const passwordHash = await hashPassword(password);
+      updateUser(db, row.user_id, { passwordHash });
+
+      // Mark token as used and invalidate all existing sessions for this user.
+      db.prepare("UPDATE password_reset_tokens SET used_at = datetime('now') WHERE id = ?").run(row.id);
+      db.prepare('DELETE FROM sessions WHERE user_id = ?').run(row.user_id);
+
+      return reply.send({ ok: true });
+    });
+  };
+}

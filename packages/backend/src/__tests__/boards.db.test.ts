@@ -280,6 +280,7 @@ describe('migration runner', () => {
     ).map((r) => r.version);
     expect(versions).toContain(1);
     expect(versions).toContain(2);
+    expect(versions).toContain(3);
   });
 
   it('is idempotent — running createDb twice does not duplicate migrations', () => {
@@ -289,7 +290,7 @@ describe('migration runner', () => {
     const count = (
       db2.prepare('SELECT COUNT(*) AS n FROM schema_migrations').get() as { n: number }
     ).n;
-    expect(count).toBe(2);
+    expect(count).toBe(3); // migrations 1, 2, 3
     db = db2; // afterEach will close it
   });
 });

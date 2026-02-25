@@ -1,5 +1,6 @@
 import { LayoutGrid, Settings2, Save } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
+import { UserMenu } from './user-menu.component';
 import './Topbar.css';
 
 export function Topbar() {
@@ -20,6 +21,7 @@ export function Topbar() {
           {editMode ? <Save size={16} /> : <Settings2 size={16} />}
           <span>{editMode ? 'Save' : 'Config'}</span>
         </button>
+        <UserMenu />
       </nav>
     </header>
   );
