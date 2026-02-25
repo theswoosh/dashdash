@@ -62,6 +62,8 @@ export function useAuth() {
   async function logout(): Promise<void> {
     await fetch('/api/auth/logout', { method: 'POST' });
     await mutate(ME_KEY, null, { revalidate: false });
+    // Hard reload clears all SWR cache and other module-level state.
+    window.location.assign('/');
   }
 
   async function updateProfile(data: { name?: string; password?: string; currentPassword?: string }): Promise<void> {

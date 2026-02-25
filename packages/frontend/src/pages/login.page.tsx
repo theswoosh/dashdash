@@ -13,6 +13,7 @@ export function LoginPage({ initialView = 'login' }: LoginPageProps) {
   const [view, setView] = useState<LoginView>(initialView);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
@@ -33,6 +34,10 @@ export function LoginPage({ initialView = 'login' }: LoginPageProps) {
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
     setError('');
     setIsSubmitting(true);
     try {
@@ -65,6 +70,8 @@ export function LoginPage({ initialView = 'login' }: LoginPageProps) {
   function switchView(newView: LoginView) {
     setError('');
     setInfo('');
+    setPassword('');
+    setConfirmPassword('');
     setView(newView);
   }
 
@@ -163,6 +170,17 @@ export function LoginPage({ initialView = 'login' }: LoginPageProps) {
               minLength={8}
             />
             <span className="login-hint">Minimum 8 characters</span>
+
+            <label className="login-label" htmlFor="reg-confirm-password">Confirm password</label>
+            <input
+              id="reg-confirm-password"
+              className="login-input"
+              type="password"
+              autoComplete="new-password"
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              required
+            />
 
             <button className="login-btn" type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Creating account…' : 'Create account'}
