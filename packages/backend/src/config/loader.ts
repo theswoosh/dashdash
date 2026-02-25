@@ -4,43 +4,47 @@ import yaml from 'js-yaml';
 import { RawServicesSchema, SettingsSchema, BehaviorSchema, assignIds } from './schemas.js';
 import type { Services, Settings, Behavior } from './schemas.js';
 
-function readYaml(filePath: string): unknown {
+interface Logger { warn: (msg: string, ...args: unknown[]) => void }
+
+const defaultLogger: Logger = console;
+
+function readYaml(filePath: string, logger: Logger): unknown {
   if (!existsSync(filePath)) return null;
   try {
     return yaml.load(readFileSync(filePath, 'utf8'));
   } catch (err) {
-    console.warn(`Failed to parse ${filePath}:`, err);
+    logger.warn(`Failed to parse ${filePath}:`, err);
     return null;
   }
 }
 
-export function loadServices(configDir: string): Services {
-  const raw = readYaml(join(configDir, 'services.yml'));
+export function loadServices(configDir: string, logger: Logger = defaultLogger): Services {
+  const raw = readYaml(join(configDir, 'services.yml'), logger);
   if (raw === null) return [];
-  const result = RawServicesSchema.safeParse(raw);
-  if (!result.success) {
-    console.warn('services.yml validation errors:', result.error.format());
+  const parseResult = RawServicesSchema.safeParse(raw);
+  if (!parseResult.success) {
+    logger.warn('services.yml validation errors:', parseResult.error.format());
     return [];
   }
-  return assignIds(result.data);
+  return assignIds(parseResult.data);
 }
 
-export function loadBehavior(configDir: string): Behavior {
-  const raw = readYaml(join(configDir, 'behavior.yml'));
-  const result = BehaviorSchema.safeParse(raw ?? {});
-  if (!result.success) {
-    console.warn('behavior.yml validation errors:', result.error.format());
+export function loadBehavior(configDir: string, logger: Logger = defaultLogger): Behavior {
+  const raw = readYaml(join(configDir, 'behavior.yml'), logger);
+  const parseResult = BehaviorSchema.safeParse(raw ?? {});
+  if (!parseResult.success) {
+    logger.warn('behavior.yml validation errors:', parseResult.error.format());
     return BehaviorSchema.parse({});
   }
-  return result.data;
+  return parseResult.data;
 }
 
-export function loadSettings(configDir: string): Settings {
-  const raw = readYaml(join(configDir, 'settings.yml'));
-  const result = SettingsSchema.safeParse(raw ?? {});
-  if (!result.success) {
-    console.warn('settings.yml validation errors:', result.error.format());
+export function loadSettings(configDir: string, logger: Logger = defaultLogger): Settings {
+  const raw = readYaml(join(configDir, 'settings.yml'), logger);
+  const parseResult = SettingsSchema.safeParse(raw ?? {});
+  if (!parseResult.success) {
+    logger.warn('settings.yml validation errors:', parseResult.error.format());
     return SettingsSchema.parse({});
   }
-  return result.data;
+  return parseResult.data;
 }

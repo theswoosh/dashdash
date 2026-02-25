@@ -1,7 +1,8 @@
 import chokidar from 'chokidar';
 import { join } from 'path';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface Logger { info: (msg: string) => void }
+
 type WsSocket = { readyState: number; send: (data: string) => void };
 
 const clients = new Set<WsSocket>();
@@ -29,12 +30,12 @@ function broadcast(data: unknown): void {
     if (ws.readyState === 1) {
       try {
         ws.send(msg);
-      } catch { /* client may have disconnected */ }
+      } catch { /* client disconnected between readyState check and send */ }
     }
   }
 }
 
-export function startWatcher(configDir: string) {
+export function startWatcher(configDir: string, logger?: Logger | undefined) {
   const watcher = chokidar.watch(join(configDir, '*.yml'), {
     ignoreInitial: true,
     persistent: true,
@@ -46,7 +47,7 @@ export function startWatcher(configDir: string) {
       suppressCount--;
       return;
     }
-    console.log(`Config changed: ${path}`);
+    (logger ?? console).info(`Config changed: ${path}`);
     broadcast({ type: 'config:reload', path });
   });
 

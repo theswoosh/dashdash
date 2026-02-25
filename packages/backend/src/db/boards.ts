@@ -1,6 +1,6 @@
 import type { Db } from './index.js';
 
-export interface Board {
+export interface BoardRow {
   id: string;
   name: string;
   slug: string;
@@ -9,12 +9,12 @@ export interface Board {
   created_at: string;
 }
 
-export function getDefaultBoard(db: Db): Board | undefined {
-  return db.prepare('SELECT * FROM boards ORDER BY created_at LIMIT 1').get() as Board | undefined;
+export function getDefaultBoard(db: Db): BoardRow | undefined {
+  return db.prepare('SELECT * FROM boards ORDER BY created_at LIMIT 1').get() as BoardRow | undefined;
 }
 
-export function getBoard(db: Db, id: string): Board | undefined {
-  return db.prepare('SELECT * FROM boards WHERE id = ?').get(id) as Board | undefined;
+export function getBoard(db: Db, id: string): BoardRow | undefined {
+  return db.prepare('SELECT * FROM boards WHERE id = ?').get(id) as BoardRow | undefined;
 }
 
 export function setBackgroundExt(db: Db, boardId: string, ext: string | null): void {

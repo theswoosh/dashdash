@@ -9,16 +9,16 @@ import type { WebSocket } from 'ws';
 import { createDb, type Db } from './db/index.js';
 import { loadServices, loadSettings, loadBehavior } from './config/loader.js';
 import { addWsClient, removeWsClient } from './config/watcher.js';
-import { healthRoutes } from './routes/health.js';
-import { createServicesRoutes } from './routes/services.js';
-import { createSettingsRoutes } from './routes/settings.js';
-import { createBehaviorRoutes } from './routes/behavior.js';
-import { createWidgetRoutes } from './routes/widget.js';
-import { createNotepadRoutes } from './routes/notepad.js';
-import { createPreferencesRoutes } from './routes/preferences.js';
-import { createWidgetTemplatesRoutes } from './routes/widgetTemplates.js';
-import { healthcheckTestRoutes } from './routes/healthcheckTest.js';
-import { createBoardRoutes } from './routes/boards.js';
+import { healthRoutes } from './routes/health.route.js';
+import { createServicesRoutes } from './routes/services.route.js';
+import { createSettingsRoutes } from './routes/settings.route.js';
+import { createBehaviorRoutes } from './routes/behavior.route.js';
+import { createWidgetRoutes } from './routes/widget.route.js';
+import { createNotepadRoutes } from './routes/notepad.route.js';
+import { createPreferencesRoutes } from './routes/preferences.route.js';
+import { createWidgetTemplatesRoutes } from './routes/widget-templates.route.js';
+import { healthcheckTestRoutes } from './routes/healthcheck-test.route.js';
+import { createBoardRoutes } from './routes/boards.route.js';
 
 export interface AppOptions {
   dataDir: string;
@@ -48,10 +48,11 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
   await server.register(websocketPlugin);
 
   const db = createDb(dataDir);
-  const getSettings = () => loadSettings(configDir);
-  const getBehavior = () => loadBehavior(configDir);
+  const log = server.log;
+  const getSettings = () => loadSettings(configDir, log);
+  const getBehavior = () => loadBehavior(configDir, log);
   // YAML is the single source of truth for all services
-  const getServices = () => loadServices(configDir);
+  const getServices = () => loadServices(configDir, log);
 
   await server.register(healthRoutes, { prefix: '/api' });
   await server.register(createServicesRoutes(getServices, configDir), { prefix: '/api' });

@@ -1,13 +1,13 @@
 import type { ComponentType } from 'react';
 import type { WidgetProps } from '@dashdash/types';
-import { ClockWidget } from './clock/ClockWidget';
-import { HealthcheckWidget } from './healthcheck/HealthcheckWidget';
-import { StatsWidget } from './stats/StatsWidget';
-import { BookmarksWidget } from './bookmarks/BookmarksWidget';
-import { SearchWidget } from './search/SearchWidget';
-import { IframeWidget } from './iframe/IframeWidget';
-import { FallbackWidget } from './fallback/FallbackWidget';
-import { NotepadWidget } from './notepad/NotepadWidget';
+import { ClockWidget } from './clock/clock.component';
+import { HealthcheckWidget } from './healthcheck/healthcheck.component';
+import { StatsWidget } from './stats/stats.component';
+import { BookmarksWidget } from './bookmarks/bookmarks.component';
+import { SearchWidget } from './search/search.component';
+import { IframeWidget } from './iframe/iframe.component';
+import { FallbackWidget } from './fallback/fallback.component';
+import { NotepadWidget } from './notepad/notepad.component';
 
 export interface FrontendWidget {
   Component: ComponentType<WidgetProps>;

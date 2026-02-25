@@ -14,9 +14,9 @@ import { createContext, useContext, useMemo } from 'react';
 import type { ComponentType, ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { Droplets, LayoutDashboard, Terminal } from 'lucide-react';
-import { LiquidCard } from '../components/LiquidCard';
-import { ClassicCard } from '../components/ClassicCard';
-import { AsciiCard } from '../components/AsciiCard';
+import { LiquidCard } from '../components/liquid-card.component';
+import { ClassicCard } from '../components/classic-card.component';
+import { AsciiCard } from '../components/ascii-card.component';
 
 /** Props that every card component must accept. */
 export interface CardProps {

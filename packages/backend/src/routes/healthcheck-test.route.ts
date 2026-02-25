@@ -1,6 +1,8 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { runHealthcheck } from '../widgets/healthcheck/check.js';
 
+const MAX_TEST_TIMEOUT_MS = 3000;
+
 interface TestBody {
   url: string;
   port?: number;
@@ -27,8 +29,8 @@ export const healthcheckTestRoutes: FastifyPluginAsync = async fastify => {
       return runHealthcheck({
         url: req.body.url,
         port: req.body.port,
-        // Cap test timeout at 3s so the UI doesn't wait too long.
-        timeoutMs: Math.min(req.body.timeoutMs ?? 3000, 3000),
+        // Cap test timeout so the UI doesn't wait too long.
+        timeoutMs: Math.min(req.body.timeoutMs ?? MAX_TEST_TIMEOUT_MS, MAX_TEST_TIMEOUT_MS),
       });
     }
   );

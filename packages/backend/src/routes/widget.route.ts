@@ -57,8 +57,8 @@ export const createWidgetRoutes = (opts: WidgetRouteOptions): FastifyPluginAsync
         }
 
         try {
-          const data = await handler.fetchData(options, { integration: resolvedIntegration });
-          return { ok: true, data };
+          const widgetPayload = await handler.fetchData(options, { integration: resolvedIntegration });
+          return { ok: true, data: widgetPayload };
         } catch (err) {
           const message = err instanceof Error ? err.message : 'Unknown error';
           request.log.error({ err, serviceId, widgetId }, 'Widget handler failed');

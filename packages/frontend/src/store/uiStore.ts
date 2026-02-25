@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+const STORAGE_KEY_BOARD_NAME = 'dashdash-boardName';
+
 interface DroppingItem {
   i: string;
   w: number;
@@ -26,14 +28,14 @@ export const useUIStore = create<UIState>(set => ({
   editMode: false,
   activeBoardId: null,
   theme: 'liquid-glass',
-  boardName: (typeof localStorage !== 'undefined' ? (localStorage.getItem('dashdash-boardName') ?? '') : ''),
+  boardName: (typeof localStorage !== 'undefined' ? (localStorage.getItem(STORAGE_KEY_BOARD_NAME) ?? '') : ''),
   droppingItem: null,
   configTarget: null,
   toggleEditMode: () => set(s => ({ editMode: !s.editMode })),
   setActiveBoard: id => set({ activeBoardId: id }),
   setTheme: id => set({ theme: id }),
   setBoardName: name => {
-    try { localStorage.setItem('dashdash-boardName', name); } catch { /* ignore */ }
+    try { localStorage.setItem(STORAGE_KEY_BOARD_NAME, name); } catch { /* quota exceeded — non-critical */ }
     set({ boardName: name });
   },
   setDroppingItem: item => set({ droppingItem: item }),

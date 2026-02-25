@@ -19,7 +19,7 @@ const publicDir = existsSync(PUBLIC_DIR) ? PUBLIC_DIR : undefined;
 
 const { server, db } = await buildApp({ dataDir: DATA_DIR, configDir: CONFIG_DIR, publicDir, logger: true });
 
-startWatcher(CONFIG_DIR);
+startWatcher(CONFIG_DIR, server.log);
 server.log.info(`Watching config dir: ${CONFIG_DIR}`);
 
 const shutdown = async (signal: string) => {

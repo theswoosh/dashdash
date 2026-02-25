@@ -8,13 +8,13 @@ function readServices(configDir: string): Service[] {
   const filePath = join(configDir, 'services.yml');
   if (!existsSync(filePath)) return [];
   const raw = yaml.load(readFileSync(filePath, 'utf8'));
-  const result = RawServicesSchema.safeParse(raw);
-  return result.success ? assignIds(result.data) : [];
+  const parseResult = RawServicesSchema.safeParse(raw);
+  return parseResult.success ? assignIds(parseResult.data) : [];
 }
 
 function writeServices(configDir: string, services: Service[]): void {
   const filePath = join(configDir, 'services.yml');
-  const tmpPath = filePath + '.tmp';
+  const tmpPath = `${filePath}.tmp`;
   // Strip runtime id — it is derived at load time, never stored in YAML.
   const output = services.map(({ id: _id, ...rest }) => rest);
   // js-yaml quotes 'y' as a mapping key for YAML 1.1 compat; undo it since

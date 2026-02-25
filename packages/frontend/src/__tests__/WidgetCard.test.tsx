@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import type { ServiceConfig } from '@dashdash/types';
 import { ThemeProvider } from '../themes/registry';
-import { WidgetCard } from '../components/WidgetCard';
+import { WidgetCard } from '../components/widget-card.component';
 
 function wrap(ui: ReactNode, themeId = 'classic') {
   // Use 'classic' by default — ClassicCard has no canvas/ResizeObserver complexity

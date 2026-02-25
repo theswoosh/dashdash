@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, CheckCircle, XCircle, Loader } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
-import { useServices } from '../hooks/useServices';
+import { useServices } from '../hooks/use-services.hook';
 import { getTemplate } from '../widgets/catalog';
 import type { ConfigField } from '../widgets/catalog';
 import './WidgetConfigModal.css';
@@ -108,7 +108,7 @@ export function WidgetConfigModal() {
     setOptions(prev => ({ ...prev, [key]: val }));
   };
 
-  const handleSave = async () => {
+  const saveWidgetConfiguration = async () => {
     await fetch(`/api/services/${service.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -121,7 +121,7 @@ export function WidgetConfigModal() {
   const configFields = template?.configFields ?? [];
   const isHealthcheck = service.widget === 'healthcheck';
 
-  const handleTest = async () => {
+  const runHealthcheckTest = async () => {
     setTestResult('loading');
     try {
       const res = await fetch('/api/healthcheck/test', {
@@ -132,10 +132,10 @@ export function WidgetConfigModal() {
           port: options['port'],
         }),
       });
-      const data = await res.json() as { status: string };
-      setTestResult(data.status === 'up' ? 'ok' : 'fail');
+      const healthcheckResult = await res.json() as { status: string };
+      setTestResult(healthcheckResult.status === 'up' ? 'ok' : 'fail');
     } catch {
-      setTestResult('fail');
+      setTestResult('fail'); // network error during healthcheck test
     }
   };
 
@@ -179,7 +179,7 @@ export function WidgetConfigModal() {
             <div className="modal-test-group">
               <button
                 className="modal-btn modal-btn--secondary"
-                onClick={() => { void handleTest(); }}
+                onClick={() => { void runHealthcheckTest(); }}
                 disabled={testResult === 'loading'}
               >
                 {testResult === 'loading' ? <Loader size={13} className="modal-test-spinner" /> : null}
@@ -203,7 +203,7 @@ export function WidgetConfigModal() {
             </button>
             <button
               className="modal-btn modal-btn--primary"
-              onClick={() => { void handleSave(); }}
+              onClick={() => { void saveWidgetConfiguration(); }}
             >
               Save
             </button>

@@ -49,7 +49,7 @@ function buildDisplacementMap(
   if (!ctx) return 0;
 
   const total = w * h;
-  const data = new Uint8ClampedArray(total * 4);
+  const pixelBuffer = new Uint8ClampedArray(total * 4);
   const raw = new Float32Array(total * 2);
   let maxScale = 0;
 
@@ -58,11 +58,11 @@ function buildDisplacementMap(
     const py = Math.floor(i / w);
     const ix = px / w - 0.5;
     const iy = py / h - 0.5;
-    const d = squircleSDF(ix, iy, 0.3, 0.2, 0.6);
-    const disp = smoothStep(0.8, 0, d - 0.15);
-    const s = smoothStep(0, 1, disp);
-    const dx = (ix * s + 0.5) * w - px;
-    const dy = (iy * s + 0.5) * h - py;
+    const sdfDistance = squircleSDF(ix, iy, 0.3, 0.2, 0.6);
+    const disp = smoothStep(0.8, 0, sdfDistance - 0.15);
+    const smoothFactor = smoothStep(0, 1, disp);
+    const dx = (ix * smoothFactor + 0.5) * w - px;
+    const dy = (iy * smoothFactor + 0.5) * h - py;
     if (Math.abs(dx) > maxScale) maxScale = Math.abs(dx);
     if (Math.abs(dy) > maxScale) maxScale = Math.abs(dy);
     raw[i * 2] = dx;
@@ -73,13 +73,13 @@ function buildDisplacementMap(
   if (maxScale === 0) return 0;
 
   for (let i = 0; i < total; i++) {
-    data[i * 4] = Math.round(((raw[i * 2] ?? 0) / maxScale + 0.5) * 255);
-    data[i * 4 + 1] = Math.round(((raw[i * 2 + 1] ?? 0) / maxScale + 0.5) * 255);
-    data[i * 4 + 2] = 0;
-    data[i * 4 + 3] = 255;
+    pixelBuffer[i * 4] = Math.round(((raw[i * 2] ?? 0) / maxScale + 0.5) * 255);
+    pixelBuffer[i * 4 + 1] = Math.round(((raw[i * 2 + 1] ?? 0) / maxScale + 0.5) * 255);
+    pixelBuffer[i * 4 + 2] = 0;
+    pixelBuffer[i * 4 + 3] = 255;
   }
 
-  ctx.putImageData(new ImageData(data, w, h), 0, 0);
+  ctx.putImageData(new ImageData(pixelBuffer, w, h), 0, 0);
   return maxScale;
 }
 
@@ -123,13 +123,13 @@ export function LiquidCard({ children, className = '', radius = 20 }: Props) {
       canvasRef.current = document.createElement('canvas');
     }
 
-    const update = () => {
-      const w = el.offsetWidth;
-      const h = el.offsetHeight;
-      if (w === 0 || h === 0) return;
+    const recalculateGlassEffect = () => {
+      const cardWidth = el.offsetWidth;
+      const cardHeight = el.offsetHeight;
+      if (cardWidth === 0 || cardHeight === 0) return;
 
       // Rebuild displacement map on canvas
-      const scale = buildDisplacementMap(canvasRef.current!, w, h);
+      const scale = buildDisplacementMap(canvasRef.current!, cardWidth, cardHeight);
 
       // Update SVG refs imperatively to avoid React re-render on every resize
       if (feImageRef.current && canvasRef.current) {
@@ -138,30 +138,30 @@ export function LiquidCard({ children, className = '', radius = 20 }: Props) {
           'href',
           canvasRef.current.toDataURL()
         );
-        feImageRef.current.setAttribute('width', String(w));
-        feImageRef.current.setAttribute('height', String(h));
+        feImageRef.current.setAttribute('width', String(cardWidth));
+        feImageRef.current.setAttribute('height', String(cardHeight));
       }
       if (feDispRef.current) {
         feDispRef.current.setAttribute('scale', String(scale));
       }
       if (maskPathRef.current) {
-        maskPathRef.current.setAttribute('d', squirclePath(w, h, radius));
+        maskPathRef.current.setAttribute('d', squirclePath(cardWidth, cardHeight, radius));
       }
       if (rimPathRef.current) {
-        rimPathRef.current.setAttribute('d', squirclePath(w, h, radius, 0.5));
+        rimPathRef.current.setAttribute('d', squirclePath(cardWidth, cardHeight, radius, 0.5));
       }
       if (svgRef.current) {
-        svgRef.current.setAttribute('viewBox', `0 0 ${w} ${h}`);
-        svgRef.current.setAttribute('width', String(w));
-        svgRef.current.setAttribute('height', String(h));
+        svgRef.current.setAttribute('viewBox', `0 0 ${cardWidth} ${cardHeight}`);
+        svgRef.current.setAttribute('width', String(cardWidth));
+        svgRef.current.setAttribute('height', String(cardHeight));
       }
 
-      setState({ w, h, scale });
+      setState({ w: cardWidth, h: cardHeight, scale });
       setReady(true);
     };
 
-    update();
-    const ro = new ResizeObserver(update);
+    recalculateGlassEffect();
+    const ro = new ResizeObserver(recalculateGlassEffect);
     ro.observe(el);
     return () => ro.disconnect();
   }, [radius]);

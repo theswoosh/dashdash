@@ -42,7 +42,7 @@ export function createDb(dataDir: string): Db {
   // Migrate: add wallpaper_enabled if upgrading from an older schema.
   try {
     db.exec(`ALTER TABLE boards ADD COLUMN wallpaper_enabled INTEGER NOT NULL DEFAULT 0`);
-  } catch { /* column already exists */ }
+  } catch { /* column already exists — expected on subsequent starts */ }
 
   // Seed the default board if none exists yet.
   const boardCount = (db.prepare('SELECT COUNT(*) AS n FROM boards').get() as { n: number }).n;

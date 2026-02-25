@@ -1,11 +1,15 @@
 import useSWR from 'swr';
 import { useCallback, useRef } from 'react';
 
+const SAVE_DEBOUNCE_MS = 300;
+
 interface Preferences {
   theme: string;
   darkMode: boolean;
   boardName?: string | undefined;
 }
+
+const DEFAULT_PREFERENCES: Preferences = { theme: 'liquid-glass', darkMode: true };
 
 const fetcher = (url: string) => fetch(url).then(r => r.json()) as Promise<Preferences>;
 
@@ -18,7 +22,7 @@ export function usePreferences() {
 
   const savePreferences = useCallback(
     (patch: Partial<Preferences>) => {
-      void mutate(current => ({ ...(current ?? { theme: 'liquid-glass', darkMode: true }), ...patch }), {
+      void mutate(current => ({ ...(current ?? DEFAULT_PREFERENCES), ...patch }), {
         revalidate: false,
       });
 
@@ -28,8 +32,8 @@ export function usePreferences() {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(patch),
-        });
-      }, 300);
+        }).catch(() => { /* preference save is best-effort */ });
+      }, SAVE_DEBOUNCE_MS);
     },
     [mutate]
   );

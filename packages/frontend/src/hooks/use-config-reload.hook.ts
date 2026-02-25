@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
 
+const WS_RECONNECT_DELAY_MS = 3000;
+
 export function useConfigReload(onReload: () => void) {
   // Stable ref so the WS handler always calls the latest version of onReload
   // without needing to reconnect when the callback identity changes
@@ -24,12 +26,12 @@ export function useConfigReload(onReload: () => void) {
           if (msg.type === 'config:reload') {
             onReloadRef.current();
           }
-        } catch { /* ignore malformed messages */ }
+        } catch { /* malformed JSON from WebSocket — non-critical, skip */ }
       };
 
       ws.onclose = () => {
         if (!destroyed) {
-          retryTimer = setTimeout(connect, 3000);
+          retryTimer = setTimeout(connect, WS_RECONNECT_DELAY_MS);
         }
       };
 

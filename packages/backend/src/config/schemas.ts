@@ -28,8 +28,8 @@ export function assignIds(
   return services.map(s => {
     if (s.id) return s as Service;
     let id = s.widget;
-    let n = 2;
-    while (usedIds.has(id)) { id = `${s.widget}-${n++}`; }
+    let suffix = 2;
+    while (usedIds.has(id)) { id = `${s.widget}-${suffix++}`; }
     usedIds.add(id);
     return { ...s, id };
   });

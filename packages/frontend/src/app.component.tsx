@@ -4,13 +4,13 @@ import './themes/classic.css';
 import './themes/ascii.css';
 import './themes/base.css';
 import { useUIStore } from './store/uiStore';
-import { usePreferences } from './hooks/usePreferences';
-import { useBoard } from './hooks/useBoard';
+import { usePreferences } from './hooks/use-preferences.hook';
+import { useBoard } from './hooks/use-board.hook';
 import { ThemeProvider } from './themes/registry';
-import { Topbar } from './components/Topbar';
-import { DashGrid } from './components/DashGrid';
-import { ConfigPanel } from './components/ConfigPanel';
-import { WidgetConfigModal } from './components/WidgetConfigModal';
+import { Topbar } from './components/topbar.component';
+import { DashGrid } from './components/dash-grid.component';
+import { ConfigPanel } from './components/config-panel.component';
+import { WidgetConfigModal } from './components/widget-config-modal.component';
 
 export function App() {
   const theme = useUIStore(s => s.theme);
