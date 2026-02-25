@@ -1,34 +1,34 @@
-/* ── ASCII theme — terminal aesthetic on near-black ──────────────────────── */
+/* ── ASCII theme — Commodore 64 PETSCII on classic blue ───────────────────── */
 
 [data-theme='ascii'],
 [data-theme-preview='ascii'] {
-  --bg-primary: rgba(0, 255, 65, 0.04);
-  --bg-secondary: rgba(0, 255, 65, 0.02);
-  --bg-elevated: rgba(0, 255, 65, 0.07);
-  --border-color: rgba(0, 255, 65, 0.25);
+  --bg-primary: rgba(68, 111, 255, 0.08);
+  --bg-secondary: rgba(68, 111, 255, 0.04);
+  --bg-elevated: rgba(68, 111, 255, 0.12);
+  --border-color: rgba(136, 159, 255, 0.40);
   --backdrop-blur: 0px;
-  --text-primary: rgba(0, 255, 65, 0.92);
-  --text-muted: rgba(0, 255, 65, 0.55);
-  --text-faint: rgba(0, 255, 65, 0.28);
-  --accent: #00ff41;
-  --accent-hover: #00cc33;
-  --accent-fg: #0a0a0a;
-  --danger: #ff4444;
+  --text-primary: #8899ff;
+  --text-muted: rgba(136, 153, 255, 0.60);
+  --text-faint: rgba(136, 153, 255, 0.30);
+  --accent: #8899ff;
+  --accent-hover: #aabbff;
+  --accent-fg: #191970;
+  --danger: #ff6666;
   --radius: 0px;
   --radius-sm: 0px;
   --shadow: none;
   --shadow-sm: none;
   --font: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
   --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
-  --transition: 80ms steps(2);
-  /* Background dot canvas */
-  --bg-base: #0a0a0a;
-  --bg-dot: rgba(0, 255, 65, 0.08);
+  --transition: 0ms steps(1);
+  /* Background — C64 blue */
+  --bg-base: #191970;
+  --bg-dot: rgba(136, 153, 255, 0.14);
   --bg-overlay: rgba(0, 0, 0, 0);
-  /* Card background */
-  --card-bg: rgba(0, 255, 65, 0.03);
+  /* Card */
+  --card-bg: #191970;
   /* Topbar */
-  --topbar-bg: rgba(0, 0, 0, 0.85);
-  --topbar-border: rgba(0, 255, 65, 0.20);
+  --topbar-bg: #191970;
+  --topbar-border: rgba(136, 153, 255, 0.40);
   --topbar-blur: 0px;
 }

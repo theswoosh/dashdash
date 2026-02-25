@@ -51,9 +51,9 @@ describe('WidgetCard — edit mode', () => {
 });
 
 describe('WidgetCard — theme switching', () => {
-  it('renders with ascii theme', () => {
-    wrap(<WidgetCard service={{ ...clockService, title: 'ASCII Widget' }} editMode={false} />, 'ascii');
-    expect(screen.getByText('ASCII Widget')).toBeInTheDocument();
+  it('renders with atom theme', () => {
+    wrap(<WidgetCard service={{ ...clockService, title: 'ATOM Widget' }} editMode={false} />, 'atom');
+    expect(screen.getByText('ATOM Widget')).toBeInTheDocument();
   });
 
   it('renders with liquid-glass theme (with canvas mock)', () => {

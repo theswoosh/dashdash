@@ -1,0 +1,134 @@
+/*
+ * ASCII card — box-drawing border using Unicode characters.
+ *
+ * The border is faked with four ::before / ::after pseudo-elements on inner
+ * wrapper divs, each contributing one side of:
+ *
+ *   /---------\
+ *   |         |
+ *   \---------/
+ *
+ * We use two wrappers so we get four pseudo-element slots.
+ */
+
+.ascii-card {
+  background: var(--card-bg);
+  border: none;
+  border-radius: 0;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  font-family: var(--font-mono);
+  padding: 0;
+  box-sizing: border-box;
+  color: var(--text-primary);
+}
+
+/* ── Top border: /---------\ ─────────────────────────────────────────────── */
+.ascii-card__top {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  white-space: pre;
+  color: var(--accent);
+  line-height: 1;
+  font-family: var(--font-mono);
+  font-size: 1em;
+}
+
+.ascii-card__top::before { content: '/'; }
+.ascii-card__top::after  { content: '\\'; }
+
+.ascii-card__top-fill {
+  flex: 1;
+  overflow: hidden;
+  /* A row of dashes — rendered via gradient mask so it scales with width */
+  position: relative;
+  height: 1em;
+}
+
+.ascii-card__top-fill::before {
+  content: '------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------';
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  line-height: 1;
+  color: var(--accent);
+}
+
+/* ── Middle row: | content | ─────────────────────────────────────────────── */
+.ascii-card__middle {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ascii-card__side {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  width: 1ch;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Stack pipe characters vertically via newlines in CSS content (\A = newline).
+   200 pipes is more than any realistic card height; overflow: hidden clips the rest. */
+.ascii-card__side::before {
+  content: "|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|";
+  white-space: pre;
+  display: block;
+  line-height: 1em;
+  color: var(--accent);
+}
+
+.ascii-card__content {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  padding: 4px 6px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Bottom border: \---------/ ──────────────────────────────────────────── */
+.ascii-card__bottom {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  white-space: pre;
+  color: var(--accent);
+  line-height: 1;
+  font-family: var(--font-mono);
+  font-size: 1em;
+}
+
+.ascii-card__bottom::before { content: '\\'; }
+.ascii-card__bottom::after  { content: '/'; }
+
+.ascii-card__bottom-fill {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  height: 1em;
+}
+
+.ascii-card__bottom-fill::before {
+  content: '------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------';
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  line-height: 1;
+  color: var(--accent);
+}
+
+/* ── Edit mode highlight ──────────────────────────────────────────────────── */
+.ascii-card.widget-card--edit .ascii-card__top,
+.ascii-card.widget-card--edit .ascii-card__bottom,
+.ascii-card.widget-card--edit .ascii-card__side::before {
+  color: var(--accent-hover);
+}

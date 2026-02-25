@@ -1,7 +1,8 @@
-import { useLayoutEffect, useEffect } from 'react';
+import { useLayoutEffect, useEffect, type CSSProperties } from 'react';
 import './themes/liquid-glass.css';
 import './themes/classic.css';
 import './themes/ascii.css';
+import './themes/atom.css';
 import './themes/base.css';
 import { useUIStore } from './store/uiStore';
 import { usePreferences } from './hooks/use-preferences.hook';
@@ -56,7 +57,7 @@ export function App() {
       )}
       <div
         className="bg-layer"
-        style={backgroundUrl ? { '--bg-base': 'transparent' } as React.CSSProperties : undefined}
+        style={backgroundUrl ? { '--bg-base': 'transparent', backgroundImage: 'none' } as CSSProperties : undefined}
       />
       <div className="bg-overlay" />
 

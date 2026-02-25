@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import './AsciiCard.css';
+import './ascii-card.css';
 
 interface Props {
   children: ReactNode;
@@ -9,7 +9,17 @@ interface Props {
 export function AsciiCard({ children, className = '' }: Props) {
   return (
     <div className={`ascii-card ${className}`}>
-      {children}
+      <div className="ascii-card__top">
+        <div className="ascii-card__top-fill" />
+      </div>
+      <div className="ascii-card__middle">
+        <div className="ascii-card__side" />
+        <div className="ascii-card__content">{children}</div>
+        <div className="ascii-card__side" />
+      </div>
+      <div className="ascii-card__bottom">
+        <div className="ascii-card__bottom-fill" />
+      </div>
     </div>
   );
 }

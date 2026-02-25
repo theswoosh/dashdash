@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { THEMES, getTheme } from '../themes/registry';
 
 describe('THEMES', () => {
-  it('has 3 entries', () => {
-    expect(THEMES).toHaveLength(3);
+  it('has 4 entries', () => {
+    expect(THEMES).toHaveLength(4);
   });
 
   it('liquid-glass is first (the default)', () => {
@@ -29,6 +29,7 @@ describe('THEMES', () => {
 describe('getTheme', () => {
   it('returns the matching theme by id', () => {
     expect(getTheme('ascii').id).toBe('ascii');
+    expect(getTheme('atom').id).toBe('atom');
     expect(getTheme('classic').id).toBe('classic');
     expect(getTheme('liquid-glass').id).toBe('liquid-glass');
   });

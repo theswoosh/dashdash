@@ -8,12 +8,12 @@
   --bg-secondary: rgba(255, 255, 255, 0.03);
   --bg-elevated: rgba(255, 255, 255, 0.10);
   --border-color: rgba(255, 255, 255, 0.12);
-  --backdrop-blur: 20px;
+  --backdrop-blur: 10px;
   --text-primary: rgba(255, 255, 255, 0.92);
   --text-muted: rgba(255, 255, 255, 0.50);
   --text-faint: rgba(255, 255, 255, 0.22);
-  --accent: #7c3aed;
-  --accent-hover: #6d28d9;
+  --accent: #8a8a9a;
+  --accent-hover: #6f6f80;
   --accent-fg: #fff;
   --danger: #ef4444;
   --radius: 16px;
@@ -27,10 +27,12 @@
   --bg-base: #000;
   --bg-dot: rgba(255, 255, 255, 0.14);
   --bg-overlay: rgba(0, 0, 0, 0.18);
-  /* LiquidCard glass tint */
+  /* LiquidCard glass tint + physics */
   --card-bg: rgba(255, 255, 255, 0.05);
+  --glass-refraction: 1.0;
+  --glass-rim-brightness: 0.5;
   /* Topbar */
   --topbar-bg: rgba(255, 255, 255, 0.04);
   --topbar-border: rgba(255, 255, 255, 0.08);
-  --topbar-blur: 20px;
+  --topbar-blur: 10px;
 }

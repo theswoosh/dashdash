@@ -27,8 +27,8 @@ describe('uiStore — initial state', () => {
 
 describe('setTheme', () => {
   it('updates the theme id', () => {
-    useUIStore.getState().setTheme('ascii');
-    expect(useUIStore.getState().theme).toBe('ascii');
+    useUIStore.getState().setTheme('atom');
+    expect(useUIStore.getState().theme).toBe('atom');
   });
 
   it('accepts any string (registry validates at render time)', () => {

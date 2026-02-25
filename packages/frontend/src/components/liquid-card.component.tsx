@@ -5,12 +5,12 @@
 import { useRef, useLayoutEffect, useId, useState, type ReactNode } from 'react';
 import './LiquidCard.css';
 
-// ── Math ─────────────────────────────────────────────────────────────────────
+// ── Feature detection (computed once at module load) ─────────────────────────
+const supportsBackdropUrl =
+  typeof CSS !== 'undefined' &&
+  CSS.supports('backdrop-filter', 'url(#x)');
 
-function smoothStep(a: number, b: number, t: number): number {
-  t = Math.max(0, Math.min(1, (t - a) / (b - a)));
-  return t * t * (3 - 2 * t);
-}
+// ── Math ─────────────────────────────────────────────────────────────────────
 
 function squircleSDF(x: number, y: number, w: number, h: number, r: number): number {
   const qx = Math.max(Math.abs(x) - w + r, 0) / r;
@@ -34,14 +34,22 @@ function squirclePath(w: number, h: number, r: number, o = 0): string {
 }
 
 /**
- * Render the lens-distortion displacement map onto a canvas.
- * The fragment function maps UV → UV such that pixels near the card
- * edge are bent inward, creating a magnifying-glass / liquid-glass refraction.
+ * Build a displacement map encoding a Gaussian refraction ring around the
+ * squircle boundary. Each pixel's R/G channels store the outward surface
+ * normal scaled by a Gaussian bell, so feDisplacementMap bends the backdrop
+ * outward near each edge/corner — the 3D glass lens effect.
+ *
+ * Encoding: R=128/G=128 → neutral (no shift).
+ * feDisplacementMap formula: shift = (channel/255 − 0.5) × scale.
+ * We return scale = sigma × refractionMultiplier × 2, giving a peak shift
+ * of sigma × refractionMultiplier pixels at the card boundary.
  */
 function buildDisplacementMap(
   canvas: HTMLCanvasElement,
   w: number,
-  h: number
+  h: number,
+  refractionMultiplier: number,
+  cardRadius: number
 ): number {
   canvas.width = w;
   canvas.height = h;
@@ -50,37 +58,59 @@ function buildDisplacementMap(
 
   const total = w * h;
   const pixelBuffer = new Uint8ClampedArray(total * 4);
-  const raw = new Float32Array(total * 2);
-  let maxScale = 0;
+
+  // sigma: width of the Gaussian refraction band. Proportional to corner
+  // radius so small-radius cards stay crisp and large ones spread gracefully.
+  const sigma = Math.max(cardRadius, 8);
+  const twoSigmaSq = 2 * sigma * sigma;
+
+  // SDF half-extents in pixel space, matching squirclePath's geometry exactly.
+  const hw = w / 2 - cardRadius;
+  const hh = h / 2 - cardRadius;
+
+  // feDisplacementMap scale: shift = (R/255 − 0.5) × scale.
+  // Peak dispX/dispY values are ±1 (from normX/normY × edgeMask ≈ 1).
+  // We want peak pixel shift = sigma × refractionMultiplier.
+  // Encoding: R = dispX × 127 + 128 → at R=255, dispX=1.
+  // Shift at R=255 = (255/255 − 0.5) × scale = 0.5 × scale.
+  // So: 0.5 × scale = sigma × refractionMultiplier → scale = sigma × mult × 2.
+  const scale = sigma * refractionMultiplier * 2;
 
   for (let i = 0; i < total; i++) {
     const px = i % w;
     const py = Math.floor(i / w);
-    const ix = px / w - 0.5;
-    const iy = py / h - 0.5;
-    const sdfDistance = squircleSDF(ix, iy, 0.3, 0.2, 0.6);
-    const disp = smoothStep(0.8, 0, sdfDistance - 0.15);
-    const smoothFactor = smoothStep(0, 1, disp);
-    const dx = (ix * smoothFactor + 0.5) * w - px;
-    const dy = (iy * smoothFactor + 0.5) * h - py;
-    if (Math.abs(dx) > maxScale) maxScale = Math.abs(dx);
-    if (Math.abs(dy) > maxScale) maxScale = Math.abs(dy);
-    raw[i * 2] = dx;
-    raw[i * 2 + 1] = dy;
-  }
 
-  maxScale *= 0.5;
-  if (maxScale === 0) return 0;
+    // Pixel coordinates centered at card origin.
+    const cx = px - w / 2;
+    const cy = py - h / 2;
 
-  for (let i = 0; i < total; i++) {
-    pixelBuffer[i * 4] = Math.round(((raw[i * 2] ?? 0) / maxScale + 0.5) * 255);
-    pixelBuffer[i * 4 + 1] = Math.round(((raw[i * 2 + 1] ?? 0) / maxScale + 0.5) * 255);
+    // Squircle SDF in pixel space: negative inside, 0 at boundary, positive outside.
+    const sdf = squircleSDF(cx, cy, hw, hh, cardRadius);
+
+    // Gaussian bell centered on boundary (sdf = 0).
+    // Falls to ~0 deep inside (no distortion at card centre) and outside.
+    const edgeMask = Math.exp(-(sdf * sdf) / twoSigmaSq);
+
+    // Outward surface normal via 1-pixel forward finite difference.
+    const gradX = squircleSDF(cx + 1, cy, hw, hh, cardRadius) - sdf;
+    const gradY = squircleSDF(cx, cy + 1, hw, hh, cardRadius) - sdf;
+    const gradLen = Math.sqrt(gradX * gradX + gradY * gradY) || 1;
+    const normX = gradX / gradLen; // ∈ [−1, 1]
+    const normY = gradY / gradLen;
+
+    // Displacement vector: outward normal × edge proximity weight.
+    const dispX = normX * edgeMask; // ∈ [−1, 1]
+    const dispY = normY * edgeMask;
+
+    // Encode: 128 = neutral, 1 = −peak, 255 = +peak.
+    pixelBuffer[i * 4]     = Math.max(0, Math.min(255, Math.round(dispX * 127 + 128)));
+    pixelBuffer[i * 4 + 1] = Math.max(0, Math.min(255, Math.round(dispY * 127 + 128)));
     pixelBuffer[i * 4 + 2] = 0;
     pixelBuffer[i * 4 + 3] = 255;
   }
 
   ctx.putImageData(new ImageData(pixelBuffer, w, h), 0, 0);
-  return maxScale;
+  return scale;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -89,7 +119,6 @@ interface GlassState {
   w: number;
   h: number;
   scale: number;
-  // squircle path strings recomputed on resize
 }
 
 interface Props {
@@ -110,6 +139,7 @@ export function LiquidCard({ children, className = '', radius = 20 }: Props) {
   const uid = useId().replace(/:/g, '');
   const maskId = `lg-mask-${uid}`;
   const filterId = `lg-filter-${uid}`;
+  const edgeGradId = `lg-edge-${uid}`;
   const rimId = `lg-rim-${uid}`;
 
   const [ready, setReady] = useState(false);
@@ -128,16 +158,21 @@ export function LiquidCard({ children, className = '', radius = 20 }: Props) {
       const cardHeight = el.offsetHeight;
       if (cardWidth === 0 || cardHeight === 0) return;
 
-      // Rebuild displacement map on canvas
-      const scale = buildDisplacementMap(canvasRef.current!, cardWidth, cardHeight);
+      // Read physics vars from CSS custom properties.
+      const computedStyle = getComputedStyle(el);
+      const refractionMultiplier =
+        parseFloat(computedStyle.getPropertyValue('--glass-refraction').trim()) || 1.0;
 
-      // Update SVG refs imperatively to avoid React re-render on every resize
+      // Rebuild displacement map on canvas.
+      const scale = buildDisplacementMap(
+        canvasRef.current!, cardWidth, cardHeight, refractionMultiplier, radius
+      );
+
+      // Update SVG refs imperatively to avoid React re-render on every resize.
       if (feImageRef.current && canvasRef.current) {
-        feImageRef.current.setAttributeNS(
-          'http://www.w3.org/1999/xlink',
-          'href',
-          canvasRef.current.toDataURL()
-        );
+        // Use plain href (not xlink:href which is deprecated in SVG 2.0 and
+        // silently ignored by modern Chromium).
+        feImageRef.current.setAttribute('href', canvasRef.current.toDataURL());
         feImageRef.current.setAttribute('width', String(cardWidth));
         feImageRef.current.setAttribute('height', String(cardHeight));
       }
@@ -148,7 +183,7 @@ export function LiquidCard({ children, className = '', radius = 20 }: Props) {
         maskPathRef.current.setAttribute('d', squirclePath(cardWidth, cardHeight, radius));
       }
       if (rimPathRef.current) {
-        rimPathRef.current.setAttribute('d', squirclePath(cardWidth, cardHeight, radius, 0.5));
+        rimPathRef.current.setAttribute('d', squirclePath(cardWidth, cardHeight, radius, 0.75));
       }
       if (svgRef.current) {
         svgRef.current.setAttribute('viewBox', `0 0 ${cardWidth} ${cardHeight}`);
@@ -166,9 +201,9 @@ export function LiquidCard({ children, className = '', radius = 20 }: Props) {
     return () => ro.disconnect();
   }, [radius]);
 
-  // Initial squircle paths (will be updated imperatively on resize)
-  const initPath = state.w > 0 ? squirclePath(state.w, state.h, radius) : '';
-  const initRimPath = state.w > 0 ? squirclePath(state.w, state.h, radius, 0.5) : '';
+  // Initial squircle paths (updated imperatively on resize).
+  const initPath    = state.w > 0 ? squirclePath(state.w, state.h, radius)        : '';
+  const initRimPath = state.w > 0 ? squirclePath(state.w, state.h, radius, 0.75)  : '';
 
   return (
     <div
@@ -177,9 +212,12 @@ export function LiquidCard({ children, className = '', radius = 20 }: Props) {
       style={ready ? {
         WebkitMaskImage: `url(#${maskId})`,
         maskImage: `url(#${maskId})`,
+        ...(supportsBackdropUrl && {
+          backdropFilter: `url(#${filterId}) blur(4px) saturate(140%)`,
+        }),
       } : undefined}
     >
-      {/* SVG: displacement filter + squircle mask + rim */}
+      {/* SVG: displacement filter + squircle mask + rim + inner edge shadow */}
       <svg
         ref={svgRef}
         className="liquid-overlay"
@@ -190,12 +228,12 @@ export function LiquidCard({ children, className = '', radius = 20 }: Props) {
         aria-hidden="true"
       >
         <defs>
-          {/* Squircle mask */}
+          {/* Squircle clip mask */}
           <mask id={maskId} maskUnits="userSpaceOnUse">
             <path ref={maskPathRef} d={initPath} fill="white" />
           </mask>
 
-          {/* Displacement filter */}
+          {/* Displacement filter — drives backdrop-filter on Chromium */}
           <filter
             id={filterId}
             filterUnits="userSpaceOnUse"
@@ -220,6 +258,17 @@ export function LiquidCard({ children, className = '', radius = 20 }: Props) {
             />
           </filter>
 
+          {/* Radial gradient for edge vignette — center clear, edges darken. */}
+          <radialGradient id={edgeGradId} cx="50%" cy="50%" r="65%">
+            <stop offset="45%" stopColor="rgba(0,0,0,0)" />
+            <stop offset="100%" stopColor="rgba(0,0,0,0.14)" />
+          </radialGradient>
+
+          {/* Soft blur filter for the edge shadow stroke */}
+          <filter id={`${edgeGradId}-blur`} x="-10%" y="-10%" width="120%" height="120%">
+            <feGaussianBlur stdDeviation="6" />
+          </filter>
+
           {/* Rim gradient: bright top-left → transparent → soft bottom-right */}
           <linearGradient
             id={rimId}
@@ -227,31 +276,54 @@ export function LiquidCard({ children, className = '', radius = 20 }: Props) {
             x2={state.w || 1} y2={state.h || 1}
             gradientUnits="userSpaceOnUse"
           >
-            <stop offset="0%" stopColor="rgba(255,255,255,0.5)" />
-            <stop offset="40%" stopColor="rgba(255,255,255,0)" />
-            <stop offset="60%" stopColor="rgba(255,255,255,0)" />
-            <stop offset="100%" stopColor="rgba(255,255,255,0.3)" />
+            <stop offset="0%"   stopColor="rgba(255,255,255,0.75)" />
+            <stop offset="35%"  stopColor="rgba(255,255,255,0)" />
+            <stop offset="65%"  stopColor="rgba(255,255,255,0)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0.45)" />
           </linearGradient>
         </defs>
 
-        {/* Distorted glass layer — feDisplacementMap distorts this rect */}
+        {/* Glass tint layer.
+            On Chromium: backdrop-filter on the div handles refraction — plain fill here.
+            On other browsers: apply the displacement filter to the fill as a fallback. */}
         {ready && (
           <rect
             width={state.w}
             height={state.h}
             fill="var(--card-bg, rgba(255,255,255,0.05))"
-            filter={`url(#${filterId})`}
+            filter={supportsBackdropUrl ? undefined : `url(#${filterId})`}
           />
         )}
 
-        {/* Rim stroke */}
+        {/* Edge depth — two layers:
+            1. Radial vignette rect: broad dome falloff from center.
+            2. Blurred stroke path: soft shadow band tracing the actual squircle
+               boundary. Large blur (6px) spreads it inward without a hard line. */}
+        {ready && (
+          <>
+            <rect
+              width={state.w}
+              height={state.h}
+              fill={`url(#${edgeGradId})`}
+            />
+            <path
+              d={squirclePath(state.w, state.h, radius, 1)}
+              fill="none"
+              stroke="rgba(0,0,0,0.10)"
+              strokeWidth="8"
+              filter={`url(#${edgeGradId}-blur)`}
+            />
+          </>
+        )}
+
+        {/* Rim specular highlight — simulates upper-left light source */}
         {ready && (
           <path
             ref={rimPathRef}
             d={initRimPath}
             fill="none"
             stroke={`url(#${rimId})`}
-            strokeWidth="1"
+            strokeWidth="1.5"
           />
         )}
       </svg>

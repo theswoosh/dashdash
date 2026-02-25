@@ -13,10 +13,11 @@
 import { createContext, useContext, useMemo } from 'react';
 import type { ComponentType, ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { Droplets, LayoutDashboard, Terminal } from 'lucide-react';
+import { Droplets, LayoutDashboard, Terminal, Radiation } from 'lucide-react';
 import { LiquidCard } from '../components/liquid-card.component';
 import { ClassicCard } from '../components/classic-card.component';
 import { AsciiCard } from '../components/ascii-card.component';
+import { AtomCard } from '../components/atom-card.component';
 
 /** Props that every card component must accept. */
 export interface CardProps {
@@ -53,9 +54,16 @@ export const THEMES: ThemeDefinition[] = [
   {
     id: 'ascii',
     name: 'ASCII',
-    description: 'Terminal aesthetic with monospace font and sharp corners',
+    description: 'Commodore 64 PETSCII — box-drawing borders on midnight blue',
     Icon: Terminal,
     Card: AsciiCard,
+  },
+  {
+    id: 'atom',
+    name: 'ATOM',
+    description: 'Pip-Boy phosphor CRT with scanlines, vignette, and phosphor glow',
+    Icon: Radiation,
+    Card: AtomCard,
   },
 ];
 

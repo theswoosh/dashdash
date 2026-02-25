@@ -1,0 +1,38 @@
+/* ── ATOM theme — Pip-Boy phosphor CRT on irradiated black ────────────────── */
+
+[data-theme='atom'],
+[data-theme-preview='atom'] {
+  --bg-primary: rgba(57, 255, 110, 0.04);
+  --bg-secondary: rgba(57, 255, 110, 0.02);
+  --bg-elevated: rgba(57, 255, 110, 0.08);
+  --border-color: rgba(57, 255, 110, 0.30);
+  --backdrop-blur: 0px;
+  --text-primary: rgba(57, 255, 110, 0.95);
+  --text-muted: rgba(57, 255, 110, 0.55);
+  --text-faint: rgba(57, 255, 110, 0.28);
+  --accent: #39ff6e;
+  --accent-hover: #2ecc58;
+  --accent-fg: #020802;
+  --danger: #ff4444;
+  --radius: 0px;
+  --radius-sm: 0px;
+  --shadow: 0 0 16px rgba(57, 255, 110, 0.18), 0 0 4px rgba(57, 255, 110, 0.10);
+  --shadow-sm: 0 0 8px rgba(57, 255, 110, 0.12);
+  --font: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
+  --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
+  --transition: 80ms steps(2);
+  /* Background dot canvas */
+  --bg-base: #020802;
+  --bg-dot: rgba(57, 255, 110, 0.10);
+  --bg-overlay: rgba(0, 0, 0, 0);
+  /* Card */
+  --card-bg: rgba(57, 255, 110, 0.03);
+  /* Topbar */
+  --topbar-bg: rgba(2, 8, 2, 0.94);
+  --topbar-border: rgba(57, 255, 110, 0.25);
+  --topbar-blur: 0px;
+  /* Phosphor glow — midpoint between original and reduced; lighter green gives more contrast */
+  --phosphor-glow: 0 0 5px rgba(57, 255, 110, 0.62), 0 0 11px rgba(57, 255, 110, 0.22);
+  --phosphor-glow-strong: 0 0 8px rgba(57, 255, 110, 0.90), 0 0 20px rgba(57, 255, 110, 0.40);
+  --card-glow: 0 0 12px rgba(57, 255, 110, 0.14), inset 0 0 40px rgba(57, 255, 110, 0.03);
+}

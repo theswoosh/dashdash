@@ -1,8 +1,10 @@
 .liquid-card {
   position: relative;
-  /* Glass backdrop — the core of the effect */
-  backdrop-filter: blur(20px) saturate(180%) brightness(1.06);
-  -webkit-backdrop-filter: blur(20px) saturate(180%) brightness(1.06);
+  /* Fallback blur for browsers that don't support backdrop-filter: url().
+     On Chromium the component injects url(#filterId) blur(4px) as inline style,
+     which overrides these declarations with SVG displacement refraction. */
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
   background: var(--card-bg, rgba(255, 255, 255, 0.05));
   transition: background 300ms ease;
   /* Fallback shape before squircle mask kicks in */
