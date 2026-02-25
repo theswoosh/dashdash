@@ -5,7 +5,7 @@ import './HealthcheckWidget.css';
 
 type HealthcheckLayoutSize = 'tiny' | 'normal' | 'big';
 
-export function HealthcheckWidget({ options, data, error, loading }: WidgetProps) {
+export function HealthcheckWidget({ options, error, loading }: WidgetProps) {
   if (loading) return <WidgetSkeleton />;
   if (error) return <WidgetError message={error} />;
 

@@ -284,7 +284,6 @@ describe('migration runner', () => {
 
   it('is idempotent — running createDb twice does not duplicate migrations', () => {
     // Close current DB and reopen — migration runner should skip already-applied versions
-    const dbPath = join(tmpDir, 'dashdash.db');
     db.close();
     const db2 = createDb(tmpDir);
     const count = (
