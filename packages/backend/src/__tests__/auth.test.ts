@@ -304,7 +304,7 @@ describe('Password reset flow', () => {
     const user = db.prepare("SELECT id FROM users WHERE email = 'admin@test.local'").get() as { id: string };
 
     // Manually insert a reset token.
-    const { generateResetToken, hashResetToken } = await import('../services/password.service.js');
+    const { generateResetToken } = await import('../services/password.service.js');
     const { raw, hash } = generateResetToken();
     const expiresAt = new Date(Date.now() + 3600000).toISOString();
     db.prepare(`INSERT INTO password_reset_tokens (id, user_id, token_hash, expires_at) VALUES (?, ?, ?, ?)`)

@@ -12,7 +12,7 @@ import {
 } from '../db/users.db.js';
 import { hashPassword } from '../services/password.service.js';
 import { destroyAllUserSessions } from '../db/sessions.db.js';
-import { generateResetToken, hashResetToken } from '../services/password.service.js';
+import { generateResetToken } from '../services/password.service.js';
 import { sendPasswordResetEmail, isMailConfigured } from '../services/mail.service.js';
 import type { MailConfig } from '../config/schemas.js';
 import { randomUUID } from 'crypto';
