@@ -3,6 +3,9 @@ import useSWR from 'swr';
 import type { WidgetProps } from '@dashdash/types';
 import './NotepadWidget.css';
 
+const SAVE_DEBOUNCE_MS = 600;
+const DEFAULT_POLLING_INTERVAL_SEC = 60;
+
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 const URL_RE = /https?:\/\/[^\s<>"{}|\\^`[\]]+/g;
@@ -32,7 +35,7 @@ function renderWithLinks(text: string): ReactNode[] {
 
 export function NotepadWidget({ serviceId, options }: WidgetProps) {
   const rawInterval = options.pollingInterval;
-  const pollingInterval = typeof rawInterval === 'number' ? rawInterval : 60;
+  const pollingInterval = typeof rawInterval === 'number' ? rawInterval : DEFAULT_POLLING_INTERVAL_SEC;
 
   const { data, mutate } = useSWR<{ content: string }>(
     `/api/notepad/${serviceId}`,
@@ -60,8 +63,8 @@ export function NotepadWidget({ serviceId, options }: WidgetProps) {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ content: value }),
-        });
-      }, 600);
+        }).catch(() => { /* notepad save is best-effort */ });
+      }, SAVE_DEBOUNCE_MS);
     },
     [serviceId, mutate]
   );

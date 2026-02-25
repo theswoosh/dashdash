@@ -12,7 +12,18 @@ const MIME_TO_EXT: Record<string, string> = {
   'image/webp': '.webp',
   'image/avif': '.avif',
 };
-const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
+const URL_FETCH_TIMEOUT_MS = 15_000;
+
+function parseHttpUrl(raw: string): URL | null {
+  try {
+    const parsed = new URL(raw);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
 
 function uploadsDir(configDir: string): string {
   const dir = join(configDir, 'uploads');
@@ -71,7 +82,7 @@ export function createBoardRoutes(db: Db, configDir: string): FastifyPluginAsync
         const board = getBoard(db, req.params.id);
         if (!board) return reply.code(404).send({ error: 'Board not found' });
 
-        const data = await req.file({ limits: { fileSize: MAX_BYTES } });
+        const data = await req.file({ limits: { fileSize: MAX_UPLOAD_BYTES } });
         if (!data) return reply.code(400).send({ error: 'No file uploaded' });
 
         const ext = extname(data.filename).toLowerCase() || `.${data.mimetype.split('/')[1]}`;
@@ -99,16 +110,13 @@ export function createBoardRoutes(db: Db, configDir: string): FastifyPluginAsync
         const board = getBoard(db, req.params.id);
         if (!board) return reply.code(404).send({ error: 'Board not found' });
 
-        let parsed: URL;
-        try { parsed = new URL(req.body.url); } catch {
-          return reply.code(400).send({ error: 'Invalid URL' });
-        }
-        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-          return reply.code(400).send({ error: 'Only http/https URLs allowed' });
+        const parsed = parseHttpUrl(req.body.url);
+        if (!parsed) {
+          return reply.code(400).send({ error: 'Invalid or non-HTTP URL' });
         }
 
         const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 15_000);
+        const timer = setTimeout(() => controller.abort(), URL_FETCH_TIMEOUT_MS);
         try {
           const res = await fetch(req.body.url, { signal: controller.signal });
           if (!res.ok) return reply.code(502).send({ error: 'Failed to fetch image from URL' });
@@ -121,7 +129,7 @@ export function createBoardRoutes(db: Db, configDir: string): FastifyPluginAsync
           let total = 0;
           for await (const chunk of res.body as AsyncIterable<Uint8Array>) {
             total += chunk.length;
-            if (total > MAX_BYTES) return reply.code(413).send({ error: 'Image exceeds 10 MB limit' });
+            if (total > MAX_UPLOAD_BYTES) return reply.code(413).send({ error: 'Image exceeds 10 MB limit' });
             chunks.push(Buffer.from(chunk));
           }
 

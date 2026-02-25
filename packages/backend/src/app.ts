@@ -48,10 +48,11 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
   await server.register(websocketPlugin);
 
   const db = createDb(dataDir);
-  const getSettings = () => loadSettings(configDir);
-  const getBehavior = () => loadBehavior(configDir);
+  const log = server.log;
+  const getSettings = () => loadSettings(configDir, log);
+  const getBehavior = () => loadBehavior(configDir, log);
   // YAML is the single source of truth for all services
-  const getServices = () => loadServices(configDir);
+  const getServices = () => loadServices(configDir, log);
 
   await server.register(healthRoutes, { prefix: '/api' });
   await server.register(createServicesRoutes(getServices, configDir), { prefix: '/api' });

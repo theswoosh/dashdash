@@ -93,7 +93,7 @@ function BackgroundToggle() {
       await upload(file);
       await setWallpaperEnabled(true);
     } catch {
-      // ignore — toggle stays off
+      // upload or enable failed — toggle stays off, user sees no change
     } finally {
       setUploading(false);
     }

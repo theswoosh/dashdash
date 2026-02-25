@@ -1,6 +1,10 @@
 import { execFile } from 'child_process';
 import net from 'net';
 
+const MAX_HOSTNAME_LENGTH = 253;
+const MIN_PING_TIMEOUT_SEC = 1;
+const DEFAULT_TIMEOUT_MS = 5000;
+
 /** Strict host validation — prevents any shell/command injection. */
 const SAFE_HOST_RE = /^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?$/;
 
@@ -29,7 +33,7 @@ export interface CheckResult {
 function pingHost(host: string, timeoutMs: number): Promise<CheckResult> {
   return new Promise(resolve => {
     const start = Date.now();
-    const timeoutSec = Math.max(1, Math.ceil(timeoutMs / 1000));
+    const timeoutSec = Math.max(MIN_PING_TIMEOUT_SEC, Math.ceil(timeoutMs / 1000));
     execFile('ping', ['-c', '1', '-W', String(timeoutSec), host], err => {
       const latencyMs = Date.now() - start;
       resolve(err
@@ -63,7 +67,7 @@ function tcpCheck(host: string, port: number, timeoutMs: number): Promise<CheckR
  * Port specified → TCP connect (is the service listening?).
  */
 export async function runHealthcheck(opts: CheckOptions): Promise<CheckResult> {
-  const { url: urlInput, port, timeoutMs = 5000 } = opts;
+  const { url: urlInput, port, timeoutMs = DEFAULT_TIMEOUT_MS } = opts;
 
   if (!urlInput?.trim()) {
     return { status: 'down', error: 'No URL configured', latencyMs: 0 };
@@ -72,7 +76,7 @@ export async function runHealthcheck(opts: CheckOptions): Promise<CheckResult> {
   const trimmed = urlInput.trim();
   const host = extractHost(trimmed);
 
-  if (!SAFE_HOST_RE.test(host) || host.length > 253) {
+  if (!SAFE_HOST_RE.test(host) || host.length > MAX_HOSTNAME_LENGTH) {
     return { status: 'down', error: 'Invalid host', latencyMs: 0 };
   }
 
@@ -83,7 +87,7 @@ export async function runHealthcheck(opts: CheckOptions): Promise<CheckResult> {
       const normalized = trimmed.includes('://') ? trimmed : `http://${trimmed}`;
       const urlPort = new URL(normalized).port;
       if (urlPort) effectivePort = parseInt(urlPort, 10);
-    } catch { /* ignore */ }
+    } catch { /* URL parsing failed — fall back to ping without explicit port */ }
   }
 
   return effectivePort !== undefined

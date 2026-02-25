@@ -135,7 +135,7 @@ export function WidgetConfigModal() {
       const data = await res.json() as { status: string };
       setTestResult(data.status === 'up' ? 'ok' : 'fail');
     } catch {
-      setTestResult('fail');
+      setTestResult('fail'); // network error during healthcheck test
     }
   };
 

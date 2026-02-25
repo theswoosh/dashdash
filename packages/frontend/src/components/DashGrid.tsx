@@ -111,6 +111,8 @@ export function DashGrid() {
       }).then(async r => {
         if (!r.ok) console.error('Layout save failed:', r.status, await r.text());
         else void reloadServices();
+      }).catch((err: unknown) => {
+        console.error('Layout save network error:', err);
       });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -140,7 +142,7 @@ export function DashGrid() {
       try {
         template = JSON.parse(raw) as WidgetTemplate;
       } catch {
-        return;
+        return; // malformed widget-template JSON from drag event — skip drop
       }
 
       // Use allServicesRef to avoid stale closure.
@@ -184,6 +186,9 @@ export function DashGrid() {
         // layout (x:0, y:bottom, w:1, h:1) because it's in the layout prop
         // but no longer in the children list.
         await reloadServices();
+        setDropQueue(prev => prev.filter(s => s.id !== id));
+      }).catch((err: unknown) => {
+        console.error('Failed to add service:', err);
         setDropQueue(prev => prev.filter(s => s.id !== id));
       });
     },
