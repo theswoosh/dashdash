@@ -1,0 +1,56 @@
+.profile-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 600;
+  backdrop-filter: blur(4px);
+}
+
+.profile-panel {
+  background: var(--card-bg, rgba(14, 14, 20, 0.97));
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.1));
+  border-radius: 14px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--card-border, rgba(255, 255, 255, 0.08));
+}
+
+.profile-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+}
+
+.profile-close {
+  background: none;
+  border: none;
+  color: var(--text-muted, rgba(255, 255, 255, 0.45));
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.profile-close:hover {
+  color: var(--text-primary, #fff);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.profile-body {
+  padding: 24px;
+  min-height: 80px;
+}

@@ -23,6 +23,8 @@ interface UIState {
   setConfigTarget: (id: string | null) => void;
   isAdminPanelOpen: boolean;
   setAdminPanelOpen: (open: boolean) => void;
+  isProfileOpen: boolean;
+  setProfileOpen: (open: boolean) => void;
   // TODO Phase 2: persist theme to user profile via PATCH /api/me
 }
 
@@ -44,4 +46,6 @@ export const useUIStore = create<UIState>(set => ({
   setConfigTarget: id => set({ configTarget: id }),
   isAdminPanelOpen: false,
   setAdminPanelOpen: open => set({ isAdminPanelOpen: open }),
+  isProfileOpen: false,
+  setProfileOpen: open => set({ isProfileOpen: open }),
 }));
