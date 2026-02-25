@@ -25,7 +25,9 @@ export function registerAuthMiddleware(server: FastifyInstance, db: Db, slidingW
   server.decorateRequest('userRole', 'user');
 
   server.addHook('preHandler', async (request: FastifyRequest, reply: FastifyReply) => {
-    if (PUBLIC_PATHS.has(request.url.split('?')[0]!)) return;
+    const path = request.url.split('?')[0]!;
+    if (!path.startsWith('/api/')) return;
+    if (PUBLIC_PATHS.has(path)) return;
 
     const sessionId = request.cookies?.[COOKIE_NAME];
     if (!sessionId) {
