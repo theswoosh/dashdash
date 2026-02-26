@@ -54,6 +54,15 @@ export function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preferences?.theme, preferences?.boardName]);
 
+  // Apply borderless mode to <html> so CSS selectors can respond
+  useLayoutEffect(() => {
+    if (preferences?.borderless) {
+      document.documentElement.setAttribute('data-borderless', 'true');
+    } else {
+      document.documentElement.removeAttribute('data-borderless');
+    }
+  }, [preferences?.borderless]);
+
   // Apply theme to <html> before first paint — no flash
   useLayoutEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);

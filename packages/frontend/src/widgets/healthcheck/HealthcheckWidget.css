@@ -31,13 +31,6 @@
   -webkit-box-orient: vertical;
 }
 
-/* ───────────────────────────── Tiny layout ─────────────────────────── */
-/* Header carries the dot + title; body is intentionally empty           */
-
-.healthcheck-widget--tiny {
-  padding: 0;
-}
-
 /* ───────────────────────────── Normal layout ───────────────────────── */
 
 .healthcheck-widget--normal {

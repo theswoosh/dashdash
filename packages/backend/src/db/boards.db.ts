@@ -30,6 +30,45 @@ export function setWallpaperEnabled(db: Db, boardId: string, enabled: boolean): 
 }
 
 // ============================================================
+// Per-user wallpaper preferences (stored in user_preferences)
+// ============================================================
+
+const BG_EXT_KEY = (boardId: string) => `bg_ext_${boardId}`;
+const BG_ENABLED_KEY = (boardId: string) => `bg_enabled_${boardId}`;
+
+const UPSERT_USER_PREF_SQL = `
+  INSERT INTO user_preferences (user_id, key, value, updated_at)
+  VALUES (?, ?, ?, datetime('now'))
+  ON CONFLICT (user_id, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
+`;
+
+export function getUserBgExt(db: Db, userId: string, boardId: string): string | null {
+  const row = db
+    .prepare<[string, string], { value: string }>('SELECT value FROM user_preferences WHERE user_id = ? AND key = ?')
+    .get(userId, BG_EXT_KEY(boardId));
+  return row?.value ?? null;
+}
+
+export function setUserBgExt(db: Db, userId: string, boardId: string, ext: string | null): void {
+  if (ext === null) {
+    db.prepare('DELETE FROM user_preferences WHERE user_id = ? AND key = ?').run(userId, BG_EXT_KEY(boardId));
+  } else {
+    db.prepare(UPSERT_USER_PREF_SQL).run(userId, BG_EXT_KEY(boardId), ext);
+  }
+}
+
+export function getUserWallpaperEnabled(db: Db, userId: string, boardId: string): boolean {
+  const row = db
+    .prepare<[string, string], { value: string }>('SELECT value FROM user_preferences WHERE user_id = ? AND key = ?')
+    .get(userId, BG_ENABLED_KEY(boardId));
+  return row?.value === 'true';
+}
+
+export function setUserWallpaperEnabled(db: Db, userId: string, boardId: string, enabled: boolean): void {
+  db.prepare(UPSERT_USER_PREF_SQL).run(userId, BG_ENABLED_KEY(boardId), String(enabled));
+}
+
+// ============================================================
 // Phase 2 types & functions (multi-user settings resolution)
 // ============================================================
 

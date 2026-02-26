@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { LogOut, User, Shield } from 'lucide-react';
+import { LogOut, User, Shield, Trash2 } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
 import { useAuth } from '../hooks/use-auth.hook';
 import { WIDGET_CATALOG } from '../widgets/catalog';
@@ -64,12 +64,13 @@ function WidgetsTab() {
 // ── Background toggle ─────────────────────────────────────────────────────────
 
 function BackgroundToggle() {
-  const { board, setWallpaperEnabled, upload } = useBoard();
+  const { board, setWallpaperEnabled, upload, remove } = useBoard();
   const [uploading, setUploading] = useState(false);
+  const [removing, setRemoving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const isWallpaperEnabled = board?.wallpaperEnabled ?? false;
-  const isBusy = uploading || !board;
+  const isBusy = uploading || removing || !board;
 
   const toggleWallpaper = () => {
     if (isBusy) return;
@@ -83,6 +84,18 @@ function BackgroundToggle() {
       }
     } else {
       void setWallpaperEnabled(false);
+    }
+  };
+
+  const deleteWallpaper = async () => {
+    if (isBusy) return;
+    setRemoving(true);
+    try {
+      await remove();
+    } catch {
+      // remove failed — best-effort
+    } finally {
+      setRemoving(false);
     }
   };
 
@@ -105,19 +118,33 @@ function BackgroundToggle() {
     <div className="config-option-group">
       <div className="bg-toggle-row">
         <label className="config-option-label" htmlFor="bg-toggle-btn">Custom wallpaper</label>
-        <button
-          id="bg-toggle-btn"
-          role="switch"
-          aria-checked={isWallpaperEnabled}
-          className={`bg-toggle${isWallpaperEnabled ? ' bg-toggle--on' : ''}${uploading ? ' bg-toggle--busy' : ''}`}
-          onClick={toggleWallpaper}
-          disabled={isBusy}
-          aria-label={uploading ? 'Uploading…' : 'Toggle custom wallpaper'}
-        >
-          <span className="bg-toggle__thumb" />
-        </button>
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          {board?.hasBackground && (
+            <button
+              className="bg-upload-remove"
+              onClick={() => void deleteWallpaper()}
+              disabled={isBusy}
+              aria-label="Delete wallpaper"
+              title="Delete wallpaper"
+            >
+              <Trash2 size={13} />
+            </button>
+          )}
+          <button
+            id="bg-toggle-btn"
+            role="switch"
+            aria-checked={isWallpaperEnabled}
+            className={`bg-toggle${isWallpaperEnabled ? ' bg-toggle--on' : ''}${uploading ? ' bg-toggle--busy' : ''}`}
+            onClick={toggleWallpaper}
+            disabled={isBusy}
+            aria-label={uploading ? 'Uploading…' : 'Toggle custom wallpaper'}
+          >
+            <span className="bg-toggle__thumb" />
+          </button>
+        </div>
       </div>
       {uploading && <span className="config-option-hint">Uploading…</span>}
+      {removing && <span className="config-option-hint">Removing…</span>}
       <input
         ref={inputRef}
         type="file"
@@ -131,10 +158,29 @@ function BackgroundToggle() {
 
 // ── Options tab ──────────────────────────────────────────────────────────────
 
+function ToggleRow({ id, label, checked, onChange }: { id: string; label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div className="bg-toggle-row">
+      <label className="config-option-label" htmlFor={id}>{label}</label>
+      <button
+        id={id}
+        role="switch"
+        aria-checked={checked}
+        className={`bg-toggle${checked ? ' bg-toggle--on' : ''}`}
+        onClick={() => onChange(!checked)}
+      >
+        <span className="bg-toggle__thumb" />
+      </button>
+    </div>
+  );
+}
+
 function OptionsTab() {
   const boardName = useUIStore(s => s.boardName);
   const setBoardName = useUIStore(s => s.setBoardName);
-  const { savePreferences } = usePreferences();
+  const { preferences, savePreferences } = usePreferences();
+
+  const isBorderless = preferences?.borderless ?? false;
 
   const updateBoardName = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -160,11 +206,20 @@ function OptionsTab() {
 
       <BackgroundToggle />
 
+      <div className="config-option-group">
+        <ToggleRow
+          id="borderless-toggle"
+          label="Borderless"
+          checked={isBorderless}
+          onChange={v => savePreferences({ borderless: v })}
+        />
+        <span className="config-option-hint">Removes all card borders and backgrounds</span>
+      </div>
+
       <div className="config-option-group config-option-group--coming-soon">
         <span className="config-option-section-label">Coming soon</span>
         <ul className="config-coming-soon-list">
           <li>Grid columns &amp; row height</li>
-          <li>Widget border style</li>
         </ul>
       </div>
     </div>

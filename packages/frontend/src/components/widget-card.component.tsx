@@ -70,8 +70,18 @@ export function WidgetCard({ service, editMode, onDelete }: Props) {
   const { Component, clientOnly } = getWidget(service.widget);
   const { data, error, loading } = useWidgetData(service.id, !!clientOnly);
 
-  const isHealthcheckWithPing = service.widget === 'healthcheck' && service.options?.['ping'] !== false;
-  const pingData = isHealthcheckWithPing && !loading && data ? data as PingStatus : null;
+  const isPingEnabled = service.widget === 'healthcheck' && service.options?.['ping'] !== false;
+  const hasConfiguredUrl = isPingEnabled && Boolean(service.options?.['url']);
+  const pingData = isPingEnabled && !loading && data ? data as PingStatus : null;
+  // 'unknown' = grey (no URL set or still loading); null = ping disabled
+  type PingDotState = 'up' | 'down' | 'unknown';
+  const pingDotState: PingDotState | null = !isPingEnabled
+    ? null
+    : !hasConfiguredUrl || pingData === null
+    ? 'unknown'
+    : pingData.status;
+
+  const isTinyLayout = service.options?.['layoutSize'] === 'tiny';
 
   const body = (() => {
     if (!clientOnly && loading) return <WidgetSkeleton />;
@@ -95,11 +105,11 @@ export function WidgetCard({ service, editMode, onDelete }: Props) {
             <GripVertical size={16} />
           </span>
         )}
-        {pingData && (
+        {pingDotState !== null && (
           <span
-            className={`widget-ping-dot widget-ping-dot--${pingData.status}`}
-            title={buildPingTooltip(pingData)}
-            aria-label={pingData.status === 'up' ? 'Up' : 'Down'}
+            className={`widget-ping-dot widget-ping-dot--${pingDotState}`}
+            title={pingData ? buildPingTooltip(pingData) : (hasConfiguredUrl ? 'Checking…' : 'No host configured')}
+            aria-label={pingDotState === 'up' ? 'Up' : pingDotState === 'down' ? 'Down' : 'Unknown'}
           />
         )}
         <span className="widget-title">{service.title}</span>
@@ -127,9 +137,11 @@ export function WidgetCard({ service, editMode, onDelete }: Props) {
           </div>
         )}
       </div>
-      <div className="widget-body">
-        {body}
-      </div>
+      {!isTinyLayout && (
+        <div className="widget-body">
+          {body}
+        </div>
+      )}
     </Card>
   );
 }

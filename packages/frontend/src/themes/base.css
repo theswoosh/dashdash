@@ -65,6 +65,58 @@ body {
   flex-direction: column;
 }
 
+/* ── Borderless mode ─────────────────────────────────────────────────────── */
+/* Applied via [data-borderless] on <html>. Strips all card chrome so only   */
+/* widget content and text are visible. Each card type opts in below.        */
+
+/* Classic card */
+[data-borderless] .classic-card {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+[data-borderless] .classic-card:hover {
+  box-shadow: none;
+}
+
+/* Liquid glass card */
+[data-borderless] .liquid-card {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+[data-borderless] .liquid-overlay {
+  display: none;
+}
+
+/* ASCII card */
+[data-borderless] .ascii-card {
+  background: transparent;
+}
+[data-borderless] .ascii-card__top,
+[data-borderless] .ascii-card__bottom,
+[data-borderless] .ascii-card__side {
+  display: none;
+}
+
+/* Atom card */
+[data-borderless] .atom-card {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  text-shadow: none;
+}
+[data-borderless] .atom-card::before,
+[data-borderless] .atom-card::after {
+  display: none;
+}
+
+/* Widget header separator */
+[data-borderless] .widget-header {
+  border-bottom-color: transparent;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

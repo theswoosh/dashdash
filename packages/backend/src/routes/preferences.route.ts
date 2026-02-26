@@ -10,18 +10,22 @@ interface PutBody {
   theme?: string;
   darkMode?: boolean;
   boardName?: string;
+  borderless?: boolean;
 }
 
 export function createPreferencesRoutes(db: Db): FastifyPluginAsync {
   return async fastify => {
     // GET /api/preferences
-    fastify.get('/preferences', async () => {
-      const rows = db.prepare<[], PreferencesRow>('SELECT key, value FROM user_preferences').all();
+    fastify.get('/preferences', async req => {
+      const rows = db
+        .prepare<[string], PreferencesRow>('SELECT key, value FROM user_preferences WHERE user_id = ?')
+        .all(req.userId);
       const map = Object.fromEntries(rows.map(r => [r.key, r.value]));
       return {
         theme: map['theme'] ?? 'liquid-glass',
         darkMode: map['darkMode'] !== undefined ? map['darkMode'] === 'true' : true,
         boardName: map['boardName'] ?? '',
+        borderless: map['borderless'] === 'true',
       };
     });
 
@@ -36,21 +40,23 @@ export function createPreferencesRoutes(db: Db): FastifyPluginAsync {
               theme: { type: 'string' },
               darkMode: { type: 'boolean' },
               boardName: { type: 'string' },
+              borderless: { type: 'boolean' },
             },
           },
         },
       },
       async (req, reply) => {
         const upsert = db.prepare(`
-          INSERT INTO user_preferences (key, value, updated_at)
-          VALUES (?, ?, datetime('now'))
-          ON CONFLICT (key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
+          INSERT INTO user_preferences (user_id, key, value, updated_at)
+          VALUES (?, ?, ?, datetime('now'))
+          ON CONFLICT (user_id, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
         `);
 
         const update = db.transaction((prefs: PutBody) => {
-          if (prefs.theme !== undefined) upsert.run('theme', prefs.theme);
-          if (prefs.darkMode !== undefined) upsert.run('darkMode', String(prefs.darkMode));
-          if (prefs.boardName !== undefined) upsert.run('boardName', prefs.boardName);
+          if (prefs.theme !== undefined) upsert.run(req.userId, 'theme', prefs.theme);
+          if (prefs.darkMode !== undefined) upsert.run(req.userId, 'darkMode', String(prefs.darkMode));
+          if (prefs.boardName !== undefined) upsert.run(req.userId, 'boardName', prefs.boardName);
+          if (prefs.borderless !== undefined) upsert.run(req.userId, 'borderless', String(prefs.borderless));
         });
 
         update(req.body);

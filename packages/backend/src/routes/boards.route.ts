@@ -3,7 +3,14 @@ import { join, extname } from 'path';
 import { pipeline } from 'stream/promises';
 import type { FastifyPluginAsync } from 'fastify';
 import type { Db } from '../db/index.js';
-import { getDefaultBoard, getBoard, setBackgroundExt, setWallpaperEnabled } from '../db/boards.db.js';
+import {
+  getDefaultBoard,
+  getBoard,
+  getUserBgExt,
+  setUserBgExt,
+  getUserWallpaperEnabled,
+  setUserWallpaperEnabled,
+} from '../db/boards.db.js';
 
 const ALLOWED_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.avif']);
 const MIME_TO_EXT: Record<string, string> = {
@@ -31,32 +38,35 @@ function uploadsDir(configDir: string): string {
   return dir;
 }
 
-function bgPath(configDir: string, boardId: string, ext: string): string {
-  return join(uploadsDir(configDir), `${boardId}${ext}`);
+// Wallpaper files are stored per-user: {userId}-{boardId}{ext}
+function bgPath(configDir: string, userId: string, boardId: string, ext: string): string {
+  return join(uploadsDir(configDir), `${userId}-${boardId}${ext}`);
 }
 
-function removeOldBg(configDir: string, boardId: string, ext: string | null): void {
+function removeOldBg(configDir: string, userId: string, boardId: string, ext: string | null): void {
   if (!ext) return;
-  const old = bgPath(configDir, boardId, ext);
+  const old = bgPath(configDir, userId, boardId, ext);
   if (existsSync(old)) unlinkSync(old);
 }
 
 export function createBoardRoutes(db: Db, configDir: string): FastifyPluginAsync {
   return async fastify => {
     // GET /api/boards/default
-    fastify.get('/boards/default', async (_req, reply) => {
+    fastify.get('/boards/default', async (req, reply) => {
       const board = getDefaultBoard(db);
       if (!board) return reply.code(404).send({ error: 'No board found' });
+      const bgExt = getUserBgExt(db, req.userId, board.id);
+      const isWallpaperEnabled = getUserWallpaperEnabled(db, req.userId, board.id);
       return {
         id: board.id,
         name: board.name,
         slug: board.slug,
-        hasBackground: board.background_ext !== null,
-        wallpaperEnabled: board.wallpaper_enabled === 1,
+        hasBackground: bgExt !== null,
+        wallpaperEnabled: isWallpaperEnabled,
       };
     });
 
-    // PATCH /api/boards/:id — update board settings (wallpaperEnabled, etc.)
+    // PATCH /api/boards/:id — update per-user wallpaper toggle
     fastify.patch<{ Params: { id: string }; Body: { wallpaperEnabled?: boolean } }>(
       '/boards/:id',
       {
@@ -69,13 +79,13 @@ export function createBoardRoutes(db: Db, configDir: string): FastifyPluginAsync
         const board = getBoard(db, req.params.id);
         if (!board) return reply.code(404).send({ error: 'Board not found' });
         if (req.body.wallpaperEnabled !== undefined) {
-          setWallpaperEnabled(db, board.id, req.body.wallpaperEnabled);
+          setUserWallpaperEnabled(db, req.userId, board.id, req.body.wallpaperEnabled);
         }
         return { ok: true };
       }
     );
 
-    // POST /api/boards/:id/background — multipart file upload
+    // POST /api/boards/:id/background — multipart file upload (per-user)
     fastify.post<{ Params: { id: string } }>(
       '/boards/:id/background',
       async (req, reply) => {
@@ -90,14 +100,14 @@ export function createBoardRoutes(db: Db, configDir: string): FastifyPluginAsync
           return reply.code(415).send({ error: `Unsupported file type: ${ext}` });
         }
 
-        removeOldBg(configDir, board.id, board.background_ext);
-        await pipeline(uploadedFile.file, createWriteStream(bgPath(configDir, board.id, ext)));
-        setBackgroundExt(db, board.id, ext);
+        removeOldBg(configDir, req.userId, board.id, getUserBgExt(db, req.userId, board.id));
+        await pipeline(uploadedFile.file, createWriteStream(bgPath(configDir, req.userId, board.id, ext)));
+        setUserBgExt(db, req.userId, board.id, ext);
         return { ok: true };
       }
     );
 
-    // POST /api/boards/:id/background/from-url — fetch image from URL (browser drag-drop)
+    // POST /api/boards/:id/background/from-url — fetch image from URL (per-user)
     fastify.post<{ Params: { id: string }; Body: { url: string } }>(
       '/boards/:id/background/from-url',
       {
@@ -133,9 +143,9 @@ export function createBoardRoutes(db: Db, configDir: string): FastifyPluginAsync
             chunks.push(Buffer.from(chunk));
           }
 
-          removeOldBg(configDir, board.id, board.background_ext);
-          writeFileSync(bgPath(configDir, board.id, ext), Buffer.concat(chunks));
-          setBackgroundExt(db, board.id, ext);
+          removeOldBg(configDir, req.userId, board.id, getUserBgExt(db, req.userId, board.id));
+          writeFileSync(bgPath(configDir, req.userId, board.id, ext), Buffer.concat(chunks));
+          setUserBgExt(db, req.userId, board.id, ext);
           return { ok: true };
         } finally {
           clearTimeout(timer);
@@ -143,34 +153,38 @@ export function createBoardRoutes(db: Db, configDir: string): FastifyPluginAsync
       }
     );
 
-    // DELETE /api/boards/:id/background
+    // DELETE /api/boards/:id/background — remove per-user wallpaper
     fastify.delete<{ Params: { id: string } }>(
       '/boards/:id/background',
       async (req, reply) => {
         const board = getBoard(db, req.params.id);
         if (!board) return reply.code(404).send({ error: 'Board not found' });
-        if (!board.background_ext) return { ok: true };
-        removeOldBg(configDir, board.id, board.background_ext);
-        setBackgroundExt(db, board.id, null);
+        const bgExt = getUserBgExt(db, req.userId, board.id);
+        if (!bgExt) return { ok: true };
+        removeOldBg(configDir, req.userId, board.id, bgExt);
+        setUserBgExt(db, req.userId, board.id, null);
+        setUserWallpaperEnabled(db, req.userId, board.id, false);
         return { ok: true };
       }
     );
 
-    // GET /api/boards/:id/background — serve the image file
+    // GET /api/boards/:id/background — serve the per-user wallpaper file
     fastify.get<{ Params: { id: string } }>(
       '/boards/:id/background',
       async (req, reply) => {
         const board = getBoard(db, req.params.id);
-        if (!board?.background_ext) return reply.code(404).send({ error: 'No background set' });
+        if (!board) return reply.code(404).send({ error: 'Board not found' });
+        const bgExt = getUserBgExt(db, req.userId, board.id);
+        if (!bgExt) return reply.code(404).send({ error: 'No background set' });
 
-        const file = bgPath(configDir, board.id, board.background_ext);
+        const file = bgPath(configDir, req.userId, board.id, bgExt);
         if (!existsSync(file)) return reply.code(404).send({ error: 'File not found' });
 
         const mimeMap: Record<string, string> = {
           '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
           '.png': 'image/png', '.webp': 'image/webp', '.avif': 'image/avif',
         };
-        void reply.type(mimeMap[board.background_ext] ?? 'application/octet-stream');
+        void reply.type(mimeMap[bgExt] ?? 'application/octet-stream');
         return reply.send(createReadStream(file));
       }
     );

@@ -7,9 +7,10 @@ interface Preferences {
   theme: string;
   darkMode: boolean;
   boardName?: string | undefined;
+  borderless?: boolean | undefined;
 }
 
-const DEFAULT_PREFERENCES: Preferences = { theme: 'liquid-glass', darkMode: true };
+const DEFAULT_PREFERENCES: Preferences = { theme: 'liquid-glass', darkMode: true, borderless: false };
 
 const fetcher = (url: string) => fetch(url).then(r => r.json()) as Promise<Preferences>;
 

@@ -15,7 +15,7 @@ export function HealthcheckWidget({ options, error, loading }: WidgetProps) {
   const isShowDescription = Boolean(options['showDescription']);
 
   if (layoutSize === 'tiny') {
-    return <div className="healthcheck-widget healthcheck-widget--tiny" />;
+    return null;
   }
 
   if (layoutSize === 'big') {
