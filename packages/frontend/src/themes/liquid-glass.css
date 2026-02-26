@@ -25,6 +25,7 @@
   --transition: 180ms ease;
   /* Background dot canvas */
   --bg-base: #000;
+  --bg-dropdown: #0e0e16;
   --bg-dot: rgba(255, 255, 255, 0.14);
   --bg-overlay: rgba(0, 0, 0, 0.18);
   /* LiquidCard glass tint + physics */

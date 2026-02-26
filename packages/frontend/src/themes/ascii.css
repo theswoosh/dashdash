@@ -23,6 +23,7 @@
   --transition: 0ms steps(1);
   /* Background — C64 blue */
   --bg-base: #191970;
+  --bg-dropdown: #0f0f4a;
   --bg-dot: rgba(136, 153, 255, 0.14);
   --bg-overlay: rgba(0, 0, 0, 0);
   /* Card */

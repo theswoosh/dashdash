@@ -212,6 +212,12 @@
   padding-right: 30px;
 }
 
+/* option elements require a solid background — transparent inherits system white */
+.config-select option {
+  background-color: var(--bg-dropdown, #111118);
+  color: var(--text-primary);
+}
+
 /* Buttons */
 .modal-btn {
   padding: 7px 16px;

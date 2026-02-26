@@ -23,6 +23,7 @@
   --transition: 150ms ease;
   /* Background dot canvas */
   --bg-base: #f0f0f0;
+  --bg-dropdown: #f5f5f5;
   --bg-dot: rgba(0, 0, 0, 0.06);
   --bg-overlay: rgba(240, 240, 240, 0);
   /* Card background */
