@@ -97,8 +97,13 @@ export function WidgetCard({ service, editMode, onDelete }: Props) {
     );
   })();
 
+  const cardClassName = [
+    editMode ? 'widget-card--edit' : '',
+    isTinyLayout ? 'widget-card--tiny-layout' : '',
+  ].filter(Boolean).join(' ');
+
   return (
-    <Card className={editMode ? 'widget-card--edit' : ''}>
+    <Card className={cardClassName}>
       <div className="widget-header">
         {editMode && (
           <span className="widget-drag-handle" title="Drag to move">

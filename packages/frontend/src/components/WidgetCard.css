@@ -122,6 +122,12 @@
   color: white;
 }
 
+/* Tiny layout — header-only card: remove the bottom separator, balance padding */
+.widget-card--tiny-layout .widget-header {
+  border-bottom: none;
+  padding-bottom: 10px;
+}
+
 .widget-body {
   flex: 1;
   display: flex;

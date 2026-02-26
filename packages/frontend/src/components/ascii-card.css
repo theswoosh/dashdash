@@ -126,6 +126,14 @@
   color: var(--accent);
 }
 
+/* ── Tiny layout ──────────────────────────────────────────────────────────── */
+.ascii-card.widget-card--tiny-layout {
+  height: auto;
+}
+.ascii-card.widget-card--tiny-layout .ascii-card__middle {
+  flex: 0 0 auto;
+}
+
 /* ── Edit mode highlight ──────────────────────────────────────────────────── */
 .ascii-card.widget-card--edit .ascii-card__top,
 .ascii-card.widget-card--edit .ascii-card__bottom,

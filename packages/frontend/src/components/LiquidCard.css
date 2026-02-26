@@ -13,6 +13,14 @@
   height: 100%;
 }
 
+/* Tiny layout — collapse to header height only */
+.liquid-card.widget-card--tiny-layout {
+  height: auto;
+}
+.liquid-card.widget-card--tiny-layout .liquid-content {
+  height: auto;
+}
+
 /* SVG overlay — absolute, full-size, non-interactive */
 .liquid-overlay {
   position: absolute;
