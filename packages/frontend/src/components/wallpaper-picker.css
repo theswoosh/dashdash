@@ -1,0 +1,218 @@
+/* ── Wallpaper picker modal ───────────────────────────────────────────────── */
+
+.wp-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wp-modal {
+  background: var(--bg-dropdown, #0e0e16);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+
+.wp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.wp-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.wp-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  transition: color var(--transition), background var(--transition);
+}
+
+.wp-close:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Grid ───────────────────────────────────────────────────────────────── */
+
+.wp-grid {
+  display: grid;
+  grid-template-columns: repeat(9, 86px);
+  gap: 6px;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+/* ── Slots (shared) ─────────────────────────────────────────────────────── */
+
+.wp-slot {
+  position: relative;
+  width: 86px;
+  height: 54px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 2px solid transparent;
+  transition: border-color var(--transition);
+  box-sizing: border-box;
+}
+
+.wp-slot--active {
+  border-color: var(--accent) !important;
+}
+
+/* ── "None" slot ────────────────────────────────────────────────────────── */
+
+.wp-slot--none {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+  border-style: dashed;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: var(--font);
+}
+
+.wp-slot--none:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.wp-slot--none.wp-slot--active {
+  border-style: solid;
+  background: rgba(138, 138, 154, 0.10);
+  color: var(--text-primary);
+}
+
+.wp-slot-label {
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+/* ── Image slot ─────────────────────────────────────────────────────────── */
+
+.wp-slot--image {
+  background: var(--bg-secondary);
+}
+
+.wp-thumb-btn {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.wp-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ── Upload slot ────────────────────────────────────────────────────────── */
+
+.wp-slot--upload {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+  border-style: dashed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-faint);
+  cursor: pointer;
+  font-family: var(--font);
+}
+
+.wp-slot--upload:hover {
+  border-color: var(--accent);
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ── Padding slots (visual fill) ────────────────────────────────────────── */
+
+.wp-slot--empty {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+  border-style: solid;
+  opacity: 0.25;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* ── Active checkmark badge ─────────────────────────────────────────────── */
+
+.wp-check {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-fg, #fff);
+  pointer-events: none;
+}
+
+/* ── Delete button ──────────────────────────────────────────────────────── */
+
+.wp-delete {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.65);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--transition), background var(--transition);
+}
+
+.wp-slot--image:hover .wp-delete {
+  opacity: 1;
+}
+
+.wp-delete:hover {
+  background: rgba(239, 68, 68, 0.90);
+}

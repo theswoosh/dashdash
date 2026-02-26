@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { LogOut, User, Shield, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { LogOut, User, Shield, Image } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
 import { useAuth } from '../hooks/use-auth.hook';
 import { WIDGET_CATALOG } from '../widgets/catalog';
@@ -7,6 +7,7 @@ import { THEMES } from '../themes/registry';
 import { usePreferences } from '../hooks/use-preferences.hook';
 import { useWidgetTemplates } from '../hooks/use-widget-templates.hook';
 import { useBoard } from '../hooks/use-board.hook';
+import { WallpaperPickerModal } from './wallpaper-picker.component';
 import type { WidgetTemplate } from '../widgets/catalog';
 import './ConfigPanel.css';
 
@@ -61,98 +62,41 @@ function WidgetsTab() {
   );
 }
 
-// ── Background toggle ─────────────────────────────────────────────────────────
+// ── Wallpaper button ──────────────────────────────────────────────────────────
 
-function BackgroundToggle() {
-  const { board, setWallpaperEnabled, upload, remove } = useBoard();
-  const [uploading, setUploading] = useState(false);
-  const [removing, setRemoving] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+function WallpaperButton() {
+  const { board, wallpapers, setActiveWallpaper, uploadWallpaper, deleteWallpaper } = useBoard();
+  const [showPicker, setShowPicker] = useState(false);
 
-  const isWallpaperEnabled = board?.wallpaperEnabled ?? false;
-  const isBusy = uploading || removing || !board;
-
-  const toggleWallpaper = () => {
-    if (isBusy) return;
-    if (!isWallpaperEnabled) {
-      if (board!.hasBackground) {
-        // Image already stored — just enable it.
-        void setWallpaperEnabled(true);
-      } else {
-        // No image yet — open file picker.
-        inputRef.current?.click();
-      }
-    } else {
-      void setWallpaperEnabled(false);
-    }
-  };
-
-  const deleteWallpaper = async () => {
-    if (isBusy) return;
-    setRemoving(true);
-    try {
-      await remove();
-    } catch {
-      // remove failed — best-effort
-    } finally {
-      setRemoving(false);
-    }
-  };
-
-  const uploadWallpaperFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-    setUploading(true);
-    try {
-      await upload(file);
-      await setWallpaperEnabled(true);
-    } catch {
-      // upload or enable failed — toggle stays off, user sees no change
-    } finally {
-      setUploading(false);
-    }
-  };
+  if (!board) return null;
 
   return (
-    <div className="config-option-group">
-      <div className="bg-toggle-row">
-        <label className="config-option-label" htmlFor="bg-toggle-btn">Custom wallpaper</label>
-        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-          {board?.hasBackground && (
-            <button
-              className="bg-upload-remove"
-              onClick={() => void deleteWallpaper()}
-              disabled={isBusy}
-              aria-label="Delete wallpaper"
-              title="Delete wallpaper"
-            >
-              <Trash2 size={13} />
-            </button>
-          )}
-          <button
-            id="bg-toggle-btn"
-            role="switch"
-            aria-checked={isWallpaperEnabled}
-            className={`bg-toggle${isWallpaperEnabled ? ' bg-toggle--on' : ''}${uploading ? ' bg-toggle--busy' : ''}`}
-            onClick={toggleWallpaper}
-            disabled={isBusy}
-            aria-label={uploading ? 'Uploading…' : 'Toggle custom wallpaper'}
-          >
-            <span className="bg-toggle__thumb" />
-          </button>
-        </div>
+    <>
+      <div className="config-option-group">
+        <label className="config-option-label">Wallpaper</label>
+        <button className="wp-open-btn" onClick={() => setShowPicker(true)} aria-label="Open wallpaper library">
+          {board.activeWallpaperId
+            ? <img src={`/api/boards/${board.id}/background`} alt="" className="wp-open-thumb" />
+            : <span className="wp-open-none"><Image size={16} /></span>
+          }
+          <span className="wp-open-label">
+            {board.activeWallpaperId ? 'Change…' : 'None — click to set'}
+          </span>
+        </button>
       </div>
-      {uploading && <span className="config-option-hint">Uploading…</span>}
-      {removing && <span className="config-option-hint">Removing…</span>}
-      <input
-        ref={inputRef}
-        type="file"
-        accept=".jpg,.jpeg,.png,.webp,.avif,image/jpeg,image/png,image/webp,image/avif"
-        style={{ display: 'none' }}
-        onChange={e => void uploadWallpaperFile(e)}
-      />
-    </div>
+
+      {showPicker && (
+        <WallpaperPickerModal
+          boardId={board.id}
+          wallpapers={wallpapers}
+          activeWallpaperId={board.activeWallpaperId}
+          onSetActive={id => void setActiveWallpaper(id)}
+          onUpload={file => void uploadWallpaper(file)}
+          onDelete={id => void deleteWallpaper(id)}
+          onClose={() => setShowPicker(false)}
+        />
+      )}
+    </>
   );
 }
 
@@ -204,7 +148,7 @@ function OptionsTab() {
         <span className="config-option-hint">Shown in the top-left corner</span>
       </div>
 
-      <BackgroundToggle />
+      <WallpaperButton />
 
       <div className="config-option-group">
         <ToggleRow
