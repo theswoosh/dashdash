@@ -91,13 +91,23 @@ export const MailConfigSchema = z.object({
   from: z.string().default(''),
 }).default({});
 
+export const SearchEngineSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  url: z.string(),
+});
+
+export const SearchEnginesSchema = z.array(SearchEngineSchema);
+
 export const SettingsSchema = z.object({
   title: z.string().default('dashdash'),
+  timezone: z.string().optional(),
   theme: z.enum(['dark', 'light']).default('dark'),
   background: BackgroundSchema.optional(),
   grid: GridSchema.default({}),
   auth: AuthConfigSchema,
   mail: MailConfigSchema,
+  searchEngines: SearchEnginesSchema.default([]),
 });
 
 export const BehaviorSchema = z.object({
@@ -113,6 +123,7 @@ export const IntegrationSchema = z.object({
 
 export const IntegrationsSchema = z.array(IntegrationSchema);
 
+export type SearchEngine = z.infer<typeof SearchEngineSchema>;
 export type Behavior = z.infer<typeof BehaviorSchema>;
 export type Services = z.infer<typeof ServicesSchema>;
 export type Settings = z.infer<typeof SettingsSchema>;

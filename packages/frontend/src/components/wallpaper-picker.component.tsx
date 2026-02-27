@@ -1,9 +1,10 @@
 import { useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Ban, Plus, Check } from 'lucide-react';
 import type { WallpaperEntry } from '../hooks/use-board.hook';
 import './wallpaper-picker.css';
 
-const MAX_WALLPAPERS = 80; // 9×9 grid − 1 reserved slot for "no background"
+const MAX_WALLPAPERS = 8; // 3×3 grid − 1 reserved slot for "no background"
 
 interface Props {
   boardId: string;
@@ -35,12 +36,11 @@ export function WallpaperPickerModal({
   };
 
   const isNoBgActive = activeWallpaperId === null;
-  const remainingSlots = Math.max(0, MAX_WALLPAPERS - wallpapers.length);
-  // Show exactly one upload slot (the first empty), rest are visual padding
-  const uploadSlotCount = remainingSlots > 0 ? 1 : 0;
-  const paddingSlotCount = Math.max(0, remainingSlots - 1);
+  // Slots 1–8: images fill from left; slot at wallpapers.length is the upload slot;
+  // remaining slots are inert placeholders.
+  const imageSlots = Array.from({ length: MAX_WALLPAPERS }, (_, slotIndex) => slotIndex);
 
-  return (
+  return createPortal(
     <div className="wp-overlay" onClick={onClose}>
       <div
         className="wp-modal"
@@ -72,58 +72,67 @@ export function WallpaperPickerModal({
             )}
           </button>
 
-          {/* Uploaded wallpapers */}
-          {wallpapers.map(w => {
-            const isActive = w.id === activeWallpaperId;
+          {/* Slots 1–8: image → upload → empty */}
+          {imageSlots.map(slotIndex => {
+            const wallpaper = wallpapers[slotIndex];
+
+            if (wallpaper) {
+              const isActive = wallpaper.id === activeWallpaperId;
+              return (
+                <div
+                  key={wallpaper.id}
+                  className={`wp-slot wp-slot--image${isActive ? ' wp-slot--active' : ''}`}
+                >
+                  <button
+                    className="wp-thumb-btn"
+                    onClick={() => onSetActive(wallpaper.id)}
+                    aria-pressed={isActive}
+                    title="Set as wallpaper"
+                  >
+                    <img
+                      src={`/api/boards/${boardId}/wallpapers/${wallpaper.id}`}
+                      alt=""
+                      className="wp-thumb"
+                    />
+                  </button>
+                  {isActive && (
+                    <span className="wp-check" aria-hidden="true">
+                      <Check size={10} />
+                    </span>
+                  )}
+                  <button
+                    className="wp-delete"
+                    onClick={() => onDelete(wallpaper.id)}
+                    aria-label="Delete wallpaper"
+                  >
+                    <X size={11} />
+                  </button>
+                </div>
+              );
+            }
+
+            if (slotIndex === wallpapers.length) {
+              return (
+                <button
+                  key={`upload-${slotIndex}`}
+                  className="wp-slot wp-slot--upload"
+                  onClick={triggerUpload}
+                  title="Upload new wallpaper"
+                  aria-label="Upload new wallpaper"
+                >
+                  <Plus size={22} />
+                </button>
+              );
+            }
+
             return (
               <div
-                key={w.id}
-                className={`wp-slot wp-slot--image${isActive ? ' wp-slot--active' : ''}`}
-              >
-                <button
-                  className="wp-thumb-btn"
-                  onClick={() => onSetActive(w.id)}
-                  aria-pressed={isActive}
-                  title="Set as wallpaper"
-                >
-                  <img
-                    src={`/api/boards/${boardId}/wallpapers/${w.id}`}
-                    alt=""
-                    className="wp-thumb"
-                  />
-                </button>
-                {isActive && (
-                  <span className="wp-check" aria-hidden="true">
-                    <Check size={10} />
-                  </span>
-                )}
-                <button
-                  className="wp-delete"
-                  onClick={() => onDelete(w.id)}
-                  aria-label="Delete wallpaper"
-                >
-                  <X size={11} />
-                </button>
-              </div>
+                key={`empty-${slotIndex}`}
+                className="wp-slot wp-slot--empty"
+                aria-hidden="true"
+              />
             );
           })}
-
-          {/* One interactive upload slot */}
-          {uploadSlotCount > 0 && (
-            <button
-              className="wp-slot wp-slot--upload"
-              onClick={triggerUpload}
-              title="Upload new wallpaper"
-              aria-label="Upload new wallpaper"
-            >
-              <Plus size={22} />
-            </button>
-          )}
-
-          {/* Visual padding to fill the 9×9 grid */}
-          {Array.from({ length: paddingSlotCount }, (_, i) => (
-            <div key={`pad-${i}`} className="wp-slot wp-slot--empty" aria-hidden="true" />
-          ))}
         </div>
 
         <input
@@ -134,6 +143,7 @@ export function WallpaperPickerModal({
           onChange={handleFileChange}
         />
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

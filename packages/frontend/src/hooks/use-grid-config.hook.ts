@@ -1,4 +1,4 @@
-import useSWR from 'swr';
+import { useSettings } from './use-settings.hook';
 
 export interface GridConfig {
   columns: number;
@@ -6,19 +6,13 @@ export interface GridConfig {
   gap: number;
 }
 
-const DEFAULT_GRID: GridConfig = { columns: 24, rowHeight: 40, gap: 10 };
-
-async function fetcher(url: string): Promise<GridConfig> {
-  const res = await fetch(url);
-  if (!res.ok) return DEFAULT_GRID;
-  const settingsResponse = await res.json() as { grid?: GridConfig };
-  return settingsResponse.grid ?? DEFAULT_GRID;
-}
+const DEFAULT_GRID: GridConfig = { columns: 12, rowHeight: 80, gap: 12 };
 
 export function useGridConfig(): GridConfig {
-  const { data } = useSWR<GridConfig>('/api/settings', fetcher, {
-    revalidateOnFocus: false,
-    revalidateOnReconnect: false,
-  });
-  return data ?? DEFAULT_GRID;
+  const settings = useSettings();
+  return {
+    columns: settings.grid?.columns ?? DEFAULT_GRID.columns,
+    rowHeight: settings.grid?.rowHeight ?? DEFAULT_GRID.rowHeight,
+    gap: settings.grid?.gap ?? DEFAULT_GRID.gap,
+  };
 }

@@ -11,6 +11,16 @@ interface PutBody {
   darkMode?: boolean;
   boardName?: string;
   borderless?: boolean;
+  headerIcon?: string;
+  showBoardName?: boolean;
+  headerClock?: boolean;
+  headerClockFormat?: string;
+  headerClockTimezone?: string;
+  headerClockShowSeconds?: boolean;
+  headerSearch?: boolean;
+  headerSearchEngine?: string;
+  headerSearchPlaceholder?: string;
+  hideTopbar?: boolean;
 }
 
 export function createPreferencesRoutes(db: Db): FastifyPluginAsync {
@@ -26,6 +36,16 @@ export function createPreferencesRoutes(db: Db): FastifyPluginAsync {
         darkMode: map['darkMode'] !== undefined ? map['darkMode'] === 'true' : true,
         boardName: map['boardName'] ?? '',
         borderless: map['borderless'] === 'true',
+        headerIcon: map['headerIcon'] ?? '',
+        showBoardName: map['showBoardName'] !== undefined ? map['showBoardName'] !== 'false' : true,
+        headerClock: map['headerClock'] === 'true',
+        headerClockFormat: map['headerClockFormat'] ?? '24h',
+        headerClockTimezone: map['headerClockTimezone'] ?? '',
+        headerClockShowSeconds: map['headerClockShowSeconds'] !== 'false',
+        headerSearch: map['headerSearch'] === 'true',
+        headerSearchEngine: map['headerSearchEngine'] ?? 'duckduckgo',
+        headerSearchPlaceholder: map['headerSearchPlaceholder'] ?? '',
+        hideTopbar: map['hideTopbar'] === 'true',
       };
     });
 
@@ -41,6 +61,16 @@ export function createPreferencesRoutes(db: Db): FastifyPluginAsync {
               darkMode: { type: 'boolean' },
               boardName: { type: 'string' },
               borderless: { type: 'boolean' },
+              headerIcon: { type: 'string' },
+              showBoardName: { type: 'boolean' },
+              headerClock: { type: 'boolean' },
+              headerClockFormat: { type: 'string' },
+              headerClockTimezone: { type: 'string' },
+              headerClockShowSeconds: { type: 'boolean' },
+              headerSearch: { type: 'boolean' },
+              headerSearchEngine: { type: 'string' },
+              headerSearchPlaceholder: { type: 'string' },
+              hideTopbar: { type: 'boolean' },
             },
           },
         },
@@ -57,6 +87,16 @@ export function createPreferencesRoutes(db: Db): FastifyPluginAsync {
           if (prefs.darkMode !== undefined) upsert.run(req.userId, 'darkMode', String(prefs.darkMode));
           if (prefs.boardName !== undefined) upsert.run(req.userId, 'boardName', prefs.boardName);
           if (prefs.borderless !== undefined) upsert.run(req.userId, 'borderless', String(prefs.borderless));
+          if (prefs.headerIcon !== undefined) upsert.run(req.userId, 'headerIcon', prefs.headerIcon);
+          if (prefs.showBoardName !== undefined) upsert.run(req.userId, 'showBoardName', String(prefs.showBoardName));
+          if (prefs.headerClock !== undefined) upsert.run(req.userId, 'headerClock', String(prefs.headerClock));
+          if (prefs.headerClockFormat !== undefined) upsert.run(req.userId, 'headerClockFormat', prefs.headerClockFormat);
+          if (prefs.headerClockTimezone !== undefined) upsert.run(req.userId, 'headerClockTimezone', prefs.headerClockTimezone);
+          if (prefs.headerClockShowSeconds !== undefined) upsert.run(req.userId, 'headerClockShowSeconds', String(prefs.headerClockShowSeconds));
+          if (prefs.headerSearch !== undefined) upsert.run(req.userId, 'headerSearch', String(prefs.headerSearch));
+          if (prefs.headerSearchEngine !== undefined) upsert.run(req.userId, 'headerSearchEngine', prefs.headerSearchEngine);
+          if (prefs.headerSearchPlaceholder !== undefined) upsert.run(req.userId, 'headerSearchPlaceholder', prefs.headerSearchPlaceholder);
+          if (prefs.hideTopbar !== undefined) upsert.run(req.userId, 'hideTopbar', String(prefs.hideTopbar));
         });
 
         update(req.body);

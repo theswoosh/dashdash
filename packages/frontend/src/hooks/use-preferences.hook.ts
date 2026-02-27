@@ -8,6 +8,16 @@ interface Preferences {
   darkMode: boolean;
   boardName?: string | undefined;
   borderless?: boolean | undefined;
+  headerIcon?: string | undefined;
+  showBoardName?: boolean | undefined;
+  headerClock?: boolean | undefined;
+  headerClockFormat?: string | undefined;
+  headerClockTimezone?: string | undefined;
+  headerClockShowSeconds?: boolean | undefined;
+  headerSearch?: boolean | undefined;
+  headerSearchEngine?: string | undefined;
+  headerSearchPlaceholder?: string | undefined;
+  hideTopbar?: boolean | undefined;
 }
 
 const DEFAULT_PREFERENCES: Preferences = { theme: 'liquid-glass', darkMode: true, borderless: false };

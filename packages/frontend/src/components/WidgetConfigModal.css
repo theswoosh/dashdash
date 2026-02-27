@@ -24,6 +24,10 @@
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
 }
 
+.modal--sm {
+  max-width: 320px;
+}
+
 .modal-header {
   display: flex;
   align-items: center;

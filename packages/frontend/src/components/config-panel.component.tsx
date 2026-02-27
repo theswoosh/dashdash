@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { LogOut, User, Shield, Image } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
 import { useAuth } from '../hooks/use-auth.hook';
 import { WIDGET_CATALOG } from '../widgets/catalog';
 import { THEMES } from '../themes/registry';
 import { usePreferences } from '../hooks/use-preferences.hook';
+import { useSettings } from '../hooks/use-settings.hook';
 import { useWidgetTemplates } from '../hooks/use-widget-templates.hook';
 import { useBoard } from '../hooks/use-board.hook';
 import { WallpaperPickerModal } from './wallpaper-picker.component';
@@ -102,6 +103,101 @@ function WallpaperButton() {
 
 // ── Options tab ──────────────────────────────────────────────────────────────
 
+const HEADER_ICON_PRESETS = [
+  '🏠', '🖥️', '📊', '🌐', '⚡', '🎯', '🚀', '💻',
+  '🔧', '📡', '⭐', '🎛️', '🌙', '☀️', '🔒', '📈',
+  '🗂️', '📁', '🌊', '🔥', '🧭', '🕹️', '🏗️', '💫',
+];
+
+function BoardIconPicker({
+  value,
+  onChange,
+}: {
+  readonly value: string;
+  readonly onChange: (icon: string) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const closeOnOutside = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', closeOnOutside);
+    return () => document.removeEventListener('mousedown', closeOnOutside);
+  }, [isOpen]);
+
+  const selectPreset = (emoji: string) => {
+    onChange(emoji);
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="icon-picker" ref={pickerRef}>
+      <div className="icon-picker__row">
+        <button
+          type="button"
+          className="icon-picker__trigger"
+          onClick={() => setIsOpen(o => !o)}
+          aria-expanded={isOpen}
+          title="Choose board icon"
+        >
+          {value
+            ? <span className="icon-picker__preview" aria-hidden="true">{value}</span>
+            : <span className="icon-picker__empty">＋</span>
+          }
+        </button>
+        {value && (
+          <button
+            type="button"
+            className="icon-picker__clear"
+            onClick={() => { onChange(''); setIsOpen(false); }}
+            aria-label="Remove icon"
+          >
+            ×
+          </button>
+        )}
+      </div>
+      {isOpen && (
+        <div className="icon-picker__panel" role="dialog" aria-label="Choose an icon">
+          <div className="icon-picker__grid">
+            {HEADER_ICON_PRESETS.map(emoji => (
+              <button
+                key={emoji}
+                type="button"
+                className={`icon-picker__option${value === emoji ? ' icon-picker__option--active' : ''}`}
+                onClick={() => selectPreset(emoji)}
+                title={emoji}
+                aria-pressed={value === emoji}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+          <div className="icon-picker__custom">
+            <input
+              className="config-option-input"
+              type="text"
+              placeholder="or type / paste any emoji…"
+              maxLength={8}
+              onKeyDown={e => {
+                if (e.key !== 'Enter') return;
+                const customEmoji = (e.target as HTMLInputElement).value.trim();
+                if (!customEmoji) return;
+                onChange(customEmoji);
+                setIsOpen(false);
+              }}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ToggleRow({ id, label, checked, onChange }: { id: string; label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <div className="bg-toggle-row">
@@ -123,29 +219,71 @@ function OptionsTab() {
   const boardName = useUIStore(s => s.boardName);
   const setBoardName = useUIStore(s => s.setBoardName);
   const { preferences, savePreferences } = usePreferences();
+  const settings = useSettings();
 
   const isBorderless = preferences?.borderless ?? false;
+  const headerIcon = preferences?.headerIcon ?? '';
+  const isShowBoardName = preferences?.showBoardName !== false;
+  const isHideTopbar = preferences?.hideTopbar ?? false;
+  const isHeaderClock = preferences?.headerClock ?? false;
+  const isHeaderSearch = preferences?.headerSearch ?? false;
+  const headerSearchEngine = preferences?.headerSearchEngine ?? 'duckduckgo';
+
+  // Local state for text inputs — avoids SWR re-render causing loss of focus/cursor.
+  const [localSearchPlaceholder, setLocalSearchPlaceholder] = useState('');
+  const isPlaceholderInitialized = useRef(false);
+  useEffect(() => {
+    if (preferences !== undefined && !isPlaceholderInitialized.current) {
+      setLocalSearchPlaceholder(preferences.headerSearchPlaceholder ?? '');
+      isPlaceholderInitialized.current = true;
+    }
+  }, [preferences]);
+
+  // Merge built-in engines with any custom ones from settings.yaml.
+  const builtInEngines = [
+    { id: 'duckduckgo', label: 'DuckDuckGo' },
+    { id: 'google',     label: 'Google' },
+    { id: 'brave',      label: 'Brave' },
+    { id: 'bing',       label: 'Bing' },
+  ];
+  const allEngines = [...builtInEngines, ...(settings.searchEngines ?? [])];
 
   const updateBoardName = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setBoardName(val);
-    savePreferences({ boardName: val });
+    const nameValue = e.target.value;
+    setBoardName(nameValue);
+    savePreferences({ boardName: nameValue });
   };
 
   return (
     <div className="config-options">
+      {/* ── Board ── */}
       <div className="config-option-group">
-        <label className="config-option-label" htmlFor="board-name">Board name</label>
-        <input
-          id="board-name"
-          type="text"
-          className="config-option-input"
-          value={boardName}
-          onChange={updateBoardName}
-          placeholder="dashdash"
-          maxLength={48}
+        <label className="config-option-label">Board icon</label>
+        <BoardIconPicker
+          value={headerIcon}
+          onChange={icon => savePreferences({ headerIcon: icon })}
         />
-        <span className="config-option-hint">Shown in the top-left corner</span>
+        <span className="config-option-hint">Emoji shown in the header</span>
+      </div>
+
+      <div className="config-option-group">
+        <ToggleRow
+          id="show-board-name-toggle"
+          label="Show board name"
+          checked={isShowBoardName}
+          onChange={v => savePreferences({ showBoardName: v })}
+        />
+        {isShowBoardName && (
+          <input
+            id="board-name"
+            type="text"
+            className="config-option-input"
+            value={boardName}
+            onChange={updateBoardName}
+            placeholder="dashdash"
+            maxLength={48}
+          />
+        )}
       </div>
 
       <WallpaperButton />
@@ -158,6 +296,68 @@ function OptionsTab() {
           onChange={v => savePreferences({ borderless: v })}
         />
         <span className="config-option-hint">Removes all card borders and backgrounds</span>
+      </div>
+
+      {/* ── Header bar ── */}
+      <div className="config-option-group">
+        <span className="config-option-section-label">Header bar</span>
+
+        <ToggleRow
+          id="hide-topbar-toggle"
+          label="Hide topbar"
+          checked={isHideTopbar}
+          onChange={v => savePreferences({ hideTopbar: v })}
+        />
+        {isHideTopbar && (
+          <span className="config-option-hint">Only the config button is shown</span>
+        )}
+
+        <ToggleRow
+          id="header-clock-toggle"
+          label="Clock"
+          checked={isHeaderClock}
+          onChange={v => savePreferences({ headerClock: v })}
+        />
+        {isHeaderClock && (
+          <span className="config-option-hint">Click the clock in edit mode to configure</span>
+        )}
+
+        <ToggleRow
+          id="header-search-toggle"
+          label="Search bar"
+          checked={isHeaderSearch}
+          onChange={v => savePreferences({ headerSearch: v })}
+        />
+        {isHeaderSearch && (
+          <div className="config-option-indent">
+            <div className="config-option-group">
+              <label className="config-option-label" htmlFor="header-search-engine">Engine</label>
+              <select
+                id="header-search-engine"
+                className="config-option-select"
+                value={headerSearchEngine}
+                onChange={e => savePreferences({ headerSearchEngine: e.target.value })}
+              >
+                {allEngines.map(e => (
+                  <option key={e.id} value={e.id}>{e.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="config-option-group">
+              <label className="config-option-label" htmlFor="header-search-placeholder">Placeholder text</label>
+              <input
+                id="header-search-placeholder"
+                type="text"
+                className="config-option-input"
+                value={localSearchPlaceholder}
+                onChange={e => setLocalSearchPlaceholder(e.target.value)}
+                onBlur={e => savePreferences({ headerSearchPlaceholder: e.target.value })}
+                placeholder="Search…"
+                maxLength={48}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="config-option-group config-option-group--coming-soon">

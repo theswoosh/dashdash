@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import useSWR from 'swr';
 
 interface BoardMeta {
@@ -39,18 +38,15 @@ export function useBoard() {
     { revalidateOnFocus: false },
   );
 
-  // Increment to bust the browser's image cache after active wallpaper changes.
-  const [bgRevision, setBgRevision] = useState(0);
-
+  // Each wallpaper has its own stable URL, so switching IDs naturally busts the cache.
   const backgroundUrl =
     board?.activeWallpaperId
-      ? `/api/boards/${board.id}/background?v=${bgRevision}`
+      ? `/api/boards/${board.id}/wallpapers/${board.activeWallpaperId}`
       : null;
 
   const setActiveWallpaper = async (wallpaperId: string | null): Promise<void> => {
     if (!board) return;
     void mutateBoard({ ...board, activeWallpaperId: wallpaperId }, { revalidate: false });
-    setBgRevision(r => r + 1);
     const res = await fetch(`/api/boards/${board.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -78,9 +74,6 @@ export function useBoard() {
       method: 'DELETE',
     });
     if (!res.ok) throw new Error('Delete failed');
-    if (board.activeWallpaperId === wallpaperId) {
-      setBgRevision(r => r + 1);
-    }
     await Promise.all([mutateWallpapers(), mutateBoard()]);
   };
 

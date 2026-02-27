@@ -62,8 +62,8 @@
 
 .wp-grid {
   display: grid;
-  grid-template-columns: repeat(9, 86px);
-  gap: 6px;
+  grid-template-columns: repeat(3, 140px);
+  gap: 8px;
   padding: 16px;
   overflow-y: auto;
 }
@@ -72,8 +72,8 @@
 
 .wp-slot {
   position: relative;
-  width: 86px;
-  height: 54px;
+  width: 140px;
+  height: 88px;
   border-radius: var(--radius-sm);
   overflow: hidden;
   border: 2px solid transparent;
