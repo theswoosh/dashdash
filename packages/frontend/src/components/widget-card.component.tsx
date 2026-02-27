@@ -82,6 +82,8 @@ export function WidgetCard({ service, editMode, onDelete }: Props) {
     : pingData.status;
 
   const isTinyLayout = service.options?.['layoutSize'] === 'tiny';
+  const bgColor = typeof service.options?.['bg_color'] === 'string' ? service.options['bg_color'] : undefined;
+  const cardStyle = bgColor ? { '--card-bg': bgColor } as React.CSSProperties : undefined;
 
   const body = (() => {
     if (!clientOnly && loading) return <WidgetSkeleton />;
@@ -103,7 +105,7 @@ export function WidgetCard({ service, editMode, onDelete }: Props) {
   ].filter(Boolean).join(' ');
 
   return (
-    <Card className={cardClassName}>
+    <Card className={cardClassName} style={cardStyle}>
       <div className="widget-header">
         {editMode && (
           <span className="widget-drag-handle" title="Drag to move">

@@ -1,10 +1,31 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { X, CheckCircle, XCircle, Loader } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
 import { useServices } from '../hooks/use-services.hook';
 import { getTemplate } from '../widgets/catalog';
 import type { ConfigField } from '../widgets/catalog';
 import './WidgetConfigModal.css';
+
+const DEFAULT_BG_HEX = '#4488ff';
+const DEFAULT_BG_ALPHA = 0.2;
+
+function parseRgba(rgba: string): { hex: string; alpha: number } | null {
+  const m = rgba.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+))?\s*\)/);
+  if (!m) return null;
+  const r = parseInt(m[1]!, 10);
+  const g = parseInt(m[2]!, 10);
+  const b = parseInt(m[3]!, 10);
+  const alpha = m[4] !== undefined ? parseFloat(m[4]) : 1;
+  const hex = '#' + [r, g, b].map(n => n.toString(16).padStart(2, '0')).join('');
+  return { hex, alpha };
+}
+
+function buildRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(2)})`;
+}
 
 function FieldInput({
   field,
@@ -102,21 +123,47 @@ export function WidgetConfigModal() {
   const [title, setTitle] = useState('');
   const [options, setOptions] = useState<Record<string, unknown>>({});
   const [testResult, setTestResult] = useState<'idle' | 'loading' | 'ok' | 'fail'>('idle');
+  const [bgHex, setBgHex] = useState(DEFAULT_BG_HEX);
+  const [bgAlpha, setBgAlpha] = useState(DEFAULT_BG_ALPHA);
 
   // Sync state when target changes
   useEffect(() => {
     if (service) {
       setTitle(service.title);
       setOptions({ ...(service.options ?? {}) });
+
+      const rawBg = service.options?.['bg_color'];
+      if (typeof rawBg === 'string') {
+        const parsed = parseRgba(rawBg);
+        if (parsed) {
+          setBgHex(parsed.hex);
+          setBgAlpha(parsed.alpha);
+        }
+      } else {
+        setBgHex(DEFAULT_BG_HEX);
+        setBgAlpha(DEFAULT_BG_ALPHA);
+      }
     }
     setTestResult('idle');
   }, [service]);
 
   if (!configTarget || !service) return null;
 
-  const handleOptionChange = (key: string, val: unknown) => {
+  const handleOptionChange = useCallback((key: string, val: unknown) => {
     setOptions(prev => ({ ...prev, [key]: val }));
-  };
+  }, []);
+
+  const updateBgColor = useCallback((hex: string, alpha: number) => {
+    setBgHex(hex);
+    setBgAlpha(alpha);
+    handleOptionChange('bg_color', buildRgba(hex, alpha));
+  }, [handleOptionChange]);
+
+  const resetBgColor = useCallback(() => {
+    setBgHex(DEFAULT_BG_HEX);
+    setBgAlpha(DEFAULT_BG_ALPHA);
+    handleOptionChange('bg_color', null);
+  }, [handleOptionChange]);
 
   const saveWidgetConfiguration = async () => {
     await fetch(`/api/services/${service.id}`, {
@@ -183,6 +230,43 @@ export function WidgetConfigModal() {
               <p className="modal-no-fields">This widget has no configurable options.</p>
             )
           )}
+
+          <hr className="config-separator" />
+          <div className="config-field">
+            <label className="config-label">
+              Widget background
+              {options['bg_color'] != null && (
+                <button className="config-reset-link" onClick={resetBgColor} type="button">
+                  Reset
+                </button>
+              )}
+            </label>
+            <div className="config-bg-picker">
+              <input
+                type="color"
+                className="config-color-input"
+                value={bgHex}
+                onChange={e => updateBgColor(e.target.value, bgAlpha)}
+                title="Background color"
+              />
+              <input
+                type="range"
+                className="config-alpha-slider"
+                min="0"
+                max="100"
+                value={Math.round(bgAlpha * 100)}
+                onChange={e => updateBgColor(bgHex, parseInt(e.target.value, 10) / 100)}
+                title="Opacity"
+              />
+              <span className="config-alpha-value">{Math.round(bgAlpha * 100)}%</span>
+              {options['bg_color'] != null && (
+                <div
+                  className="config-bg-preview"
+                  style={{ background: typeof options['bg_color'] === 'string' ? options['bg_color'] : undefined }}
+                />
+              )}
+            </div>
+          </div>
         </div>
         <div className="modal-footer">
           {isHealthcheck && (

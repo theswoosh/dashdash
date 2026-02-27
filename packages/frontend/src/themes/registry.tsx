@@ -11,7 +11,7 @@
  */
 
 import { createContext, useContext, useMemo } from 'react';
-import type { ComponentType, ReactNode } from 'react';
+import type { ComponentType, CSSProperties, ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { Droplets, LayoutDashboard, Terminal, Radiation } from 'lucide-react';
 import { LiquidCard } from '../components/liquid-card.component';
@@ -23,6 +23,7 @@ import { AtomCard } from '../components/atom-card.component';
 export interface CardProps {
   children: ReactNode;
   className?: string | undefined;
+  style?: CSSProperties | undefined;
 }
 
 /** One entry in the theme registry. */
