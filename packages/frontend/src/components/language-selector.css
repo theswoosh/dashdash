@@ -1,0 +1,33 @@
+.lang-selector {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.lang-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.2));
+  background: transparent;
+  color: var(--color-text-muted, rgba(255, 255, 255, 0.5));
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lang-badge:hover {
+  border-color: var(--color-accent, #6c8ebf);
+  color: var(--color-text, white);
+}
+
+.lang-badge--active {
+  background: var(--color-accent, #6c8ebf);
+  border-color: var(--color-accent, #6c8ebf);
+  color: white;
+}

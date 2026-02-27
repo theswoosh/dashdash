@@ -8,6 +8,7 @@ import { usePreferences } from '../hooks/use-preferences.hook';
 import { useSettings } from '../hooks/use-settings.hook';
 import { useWidgetTemplates } from '../hooks/use-widget-templates.hook';
 import { useBoard } from '../hooks/use-board.hook';
+import { useT } from '../i18n';
 import { WallpaperPickerModal } from './wallpaper-picker.component';
 import type { WidgetTemplate } from '../widgets/catalog';
 import './ConfigPanel.css';
@@ -17,18 +18,20 @@ type Tab = 'widgets' | 'options' | 'themes';
 // ── Add Widgets tab ──────────────────────────────────────────────────────────
 
 function SidebarItem({ template }: { template: WidgetTemplate }) {
+  const t = useT();
   const setDroppingItem = useUIStore(s => s.setDroppingItem);
   const widgetTemplates = useWidgetTemplates();
   const Icon = template.icon;
 
+  const displayLabel = template.labelKey ? (t(template.labelKey) || template.label) : template.label;
+  const displayDesc = template.descriptionKey ? (t(template.descriptionKey) || template.description) : template.description;
+
   const prepareWidgetTemplateDrag = (e: React.DragEvent<HTMLDivElement>) => {
     e.dataTransfer.effectAllowed = 'copy';
     e.dataTransfer.setData('widget-template', JSON.stringify(template));
-    // Use widgets.yml sizes if available, fall back to catalog defaults.
     const tmpl = widgetTemplates.find(t => t.type === template.type);
     const templateWidth = tmpl?.defaultSize.w ?? template.defaultSize.w;
     const templateHeight = tmpl?.defaultSize.h ?? template.defaultSize.h;
-    // Must use '__dropping-elem__' — RGL's internal default ID for ghost placement.
     setDroppingItem({ i: '__dropping-elem__', w: templateWidth, h: templateHeight });
   };
 
@@ -37,23 +40,24 @@ function SidebarItem({ template }: { template: WidgetTemplate }) {
       className="config-panel-item"
       draggable
       onDragStart={prepareWidgetTemplateDrag}
-      title={template.description}
+      title={displayDesc}
     >
       <span className="config-panel-item__icon">
         <Icon size={18} />
       </span>
       <div className="config-panel-item__info">
-        <span className="config-panel-item__label">{template.label}</span>
-        <span className="config-panel-item__desc">{template.description}</span>
+        <span className="config-panel-item__label">{displayLabel}</span>
+        <span className="config-panel-item__desc">{displayDesc}</span>
       </div>
     </div>
   );
 }
 
 function WidgetsTab() {
+  const t = useT();
   return (
     <>
-      <div className="config-tab-hint">Drag onto grid</div>
+      <div className="config-tab-hint">{t('config.dragOntoGrid')}</div>
       <div className="config-item-list">
         {WIDGET_CATALOG.map(template => (
           <SidebarItem key={template.type} template={template} />
@@ -66,6 +70,7 @@ function WidgetsTab() {
 // ── Wallpaper button ──────────────────────────────────────────────────────────
 
 function WallpaperButton() {
+  const t = useT();
   const { board, wallpapers, setActiveWallpaper, uploadWallpaper, deleteWallpaper } = useBoard();
   const [showPicker, setShowPicker] = useState(false);
 
@@ -74,14 +79,14 @@ function WallpaperButton() {
   return (
     <>
       <div className="config-option-group">
-        <label className="config-option-label">Wallpaper</label>
-        <button className="wp-open-btn" onClick={() => setShowPicker(true)} aria-label="Open wallpaper library">
+        <label className="config-option-label">{t('config.wallpaper')}</label>
+        <button className="wp-open-btn" onClick={() => setShowPicker(true)} aria-label={t('wallpaper.library')}>
           {board.activeWallpaperId
             ? <img src={`/api/boards/${board.id}/background`} alt="" className="wp-open-thumb" />
             : <span className="wp-open-none"><Image size={16} /></span>
           }
           <span className="wp-open-label">
-            {board.activeWallpaperId ? 'Change…' : 'None — click to set'}
+            {board.activeWallpaperId ? t('config.wallpaperChange') : t('config.wallpaperNone')}
           </span>
         </button>
       </div>
@@ -116,6 +121,7 @@ function BoardIconPicker({
   readonly value: string;
   readonly onChange: (icon: string) => void;
 }) {
+  const t = useT();
   const [isOpen, setIsOpen] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
 
@@ -143,7 +149,7 @@ function BoardIconPicker({
           className="icon-picker__trigger"
           onClick={() => setIsOpen(o => !o)}
           aria-expanded={isOpen}
-          title="Choose board icon"
+          title={t('config.boardIcon')}
         >
           {value
             ? <span className="icon-picker__preview" aria-hidden="true">{value}</span>
@@ -155,14 +161,14 @@ function BoardIconPicker({
             type="button"
             className="icon-picker__clear"
             onClick={() => { onChange(''); setIsOpen(false); }}
-            aria-label="Remove icon"
+            aria-label={t('common.delete')}
           >
             ×
           </button>
         )}
       </div>
       {isOpen && (
-        <div className="icon-picker__panel" role="dialog" aria-label="Choose an icon">
+        <div className="icon-picker__panel" role="dialog" aria-label={t('config.boardIcon')}>
           <div className="icon-picker__grid">
             {HEADER_ICON_PRESETS.map(emoji => (
               <button
@@ -216,6 +222,7 @@ function ToggleRow({ id, label, checked, onChange }: { id: string; label: string
 }
 
 function OptionsTab() {
+  const t = useT();
   const boardName = useUIStore(s => s.boardName);
   const setBoardName = useUIStore(s => s.setBoardName);
   const { preferences, savePreferences } = usePreferences();
@@ -229,7 +236,6 @@ function OptionsTab() {
   const isHeaderSearch = preferences?.headerSearch ?? false;
   const headerSearchEngine = preferences?.headerSearchEngine ?? 'duckduckgo';
 
-  // Local state for text inputs — avoids SWR re-render causing loss of focus/cursor.
   const [localSearchPlaceholder, setLocalSearchPlaceholder] = useState('');
   const isPlaceholderInitialized = useRef(false);
   useEffect(() => {
@@ -239,7 +245,6 @@ function OptionsTab() {
     }
   }, [preferences]);
 
-  // Merge built-in engines with any custom ones from settings.yaml.
   const builtInEngines = [
     { id: 'duckduckgo', label: 'DuckDuckGo' },
     { id: 'google',     label: 'Google' },
@@ -258,18 +263,18 @@ function OptionsTab() {
     <div className="config-options">
       {/* ── Board ── */}
       <div className="config-option-group">
-        <label className="config-option-label">Board icon</label>
+        <label className="config-option-label">{t('config.boardIcon')}</label>
         <BoardIconPicker
           value={headerIcon}
           onChange={icon => savePreferences({ headerIcon: icon })}
         />
-        <span className="config-option-hint">Emoji shown in the header</span>
+        <span className="config-option-hint">{t('config.boardIconHint')}</span>
       </div>
 
       <div className="config-option-group">
         <ToggleRow
           id="show-board-name-toggle"
-          label="Show board name"
+          label={t('config.showBoardName')}
           checked={isShowBoardName}
           onChange={v => savePreferences({ showBoardName: v })}
         />
@@ -291,47 +296,47 @@ function OptionsTab() {
       <div className="config-option-group">
         <ToggleRow
           id="borderless-toggle"
-          label="Borderless"
+          label={t('config.borderless')}
           checked={isBorderless}
           onChange={v => savePreferences({ borderless: v })}
         />
-        <span className="config-option-hint">Removes all card borders and backgrounds</span>
+        <span className="config-option-hint">{t('config.borderlessHint')}</span>
       </div>
 
       {/* ── Header bar ── */}
       <div className="config-option-group">
-        <span className="config-option-section-label">Header bar</span>
+        <span className="config-option-section-label">{t('config.headerBar')}</span>
 
         <ToggleRow
           id="hide-topbar-toggle"
-          label="Hide topbar"
+          label={t('config.hideTopbar')}
           checked={isHideTopbar}
           onChange={v => savePreferences({ hideTopbar: v })}
         />
         {isHideTopbar && (
-          <span className="config-option-hint">Only the config button is shown</span>
+          <span className="config-option-hint">{t('config.hideTopbarHint')}</span>
         )}
 
         <ToggleRow
           id="header-clock-toggle"
-          label="Clock"
+          label={t('config.clock')}
           checked={isHeaderClock}
           onChange={v => savePreferences({ headerClock: v })}
         />
         {isHeaderClock && (
-          <span className="config-option-hint">Click the clock in edit mode to configure</span>
+          <span className="config-option-hint">{t('config.clockHint')}</span>
         )}
 
         <ToggleRow
           id="header-search-toggle"
-          label="Search bar"
+          label={t('config.searchBar')}
           checked={isHeaderSearch}
           onChange={v => savePreferences({ headerSearch: v })}
         />
         {isHeaderSearch && (
           <div className="config-option-indent">
             <div className="config-option-group">
-              <label className="config-option-label" htmlFor="header-search-engine">Engine</label>
+              <label className="config-option-label" htmlFor="header-search-engine">{t('config.engine')}</label>
               <select
                 id="header-search-engine"
                 className="config-option-select"
@@ -344,7 +349,7 @@ function OptionsTab() {
               </select>
             </div>
             <div className="config-option-group">
-              <label className="config-option-label" htmlFor="header-search-placeholder">Placeholder text</label>
+              <label className="config-option-label" htmlFor="header-search-placeholder">{t('config.searchPlaceholder')}</label>
               <input
                 id="header-search-placeholder"
                 type="text"
@@ -361,7 +366,7 @@ function OptionsTab() {
       </div>
 
       <div className="config-option-group config-option-group--coming-soon">
-        <span className="config-option-section-label">Coming soon</span>
+        <span className="config-option-section-label">{t('config.comingSoon')}</span>
         <ul className="config-coming-soon-list">
           <li>Grid columns &amp; row height</li>
         </ul>
@@ -373,6 +378,7 @@ function OptionsTab() {
 // ── Themes tab ───────────────────────────────────────────────────────────────
 
 function ThemesTab() {
+  const t = useT();
   const theme = useUIStore(s => s.theme);
   const setTheme = useUIStore(s => s.setTheme);
   const { savePreferences } = usePreferences();
@@ -384,28 +390,32 @@ function ThemesTab() {
 
   return (
     <div className="config-theme-list">
-      {THEMES.map(t => (
-        <button
-          key={t.id}
-          className={`config-theme-option${theme === t.id ? ' config-theme-option--active' : ''}`}
-          onClick={() => applyTheme(t.id)}
-          aria-pressed={theme === t.id}
-        >
-          <div className="config-theme-preview" data-theme-preview={t.id}>
-            <div className="config-theme-preview-bar" />
-            <div className="config-theme-preview-cards">
-              <div className="config-theme-preview-card config-theme-preview-card--wide" />
-              <div className="config-theme-preview-card config-theme-preview-card--tall" />
-              <div className="config-theme-preview-card" />
+      {THEMES.map(themeEntry => {
+        const displayName = themeEntry.nameKey ? (t(themeEntry.nameKey) || themeEntry.name) : themeEntry.name;
+        const displayDesc = themeEntry.descriptionKey ? (t(themeEntry.descriptionKey) || themeEntry.description) : themeEntry.description;
+        return (
+          <button
+            key={themeEntry.id}
+            className={`config-theme-option${theme === themeEntry.id ? ' config-theme-option--active' : ''}`}
+            onClick={() => applyTheme(themeEntry.id)}
+            aria-pressed={theme === themeEntry.id}
+          >
+            <div className="config-theme-preview" data-theme-preview={themeEntry.id}>
+              <div className="config-theme-preview-bar" />
+              <div className="config-theme-preview-cards">
+                <div className="config-theme-preview-card config-theme-preview-card--wide" />
+                <div className="config-theme-preview-card config-theme-preview-card--tall" />
+                <div className="config-theme-preview-card" />
+              </div>
             </div>
-          </div>
-          <div className="config-theme-meta">
-            <t.Icon size={13} />
-            <span className="config-theme-name">{t.name}</span>
-          </div>
-          <span className="config-theme-desc">{t.description}</span>
-        </button>
-      ))}
+            <div className="config-theme-meta">
+              <themeEntry.Icon size={13} />
+              <span className="config-theme-name">{displayName}</span>
+            </div>
+            <span className="config-theme-desc">{displayDesc}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -413,6 +423,7 @@ function ThemesTab() {
 // ── User section ─────────────────────────────────────────────────────────────
 
 function UserSection() {
+  const t = useT();
   const { user, logout } = useAuth();
   const setAdminPanelOpen = useUIStore(s => s.setAdminPanelOpen);
   const setProfileOpen = useUIStore(s => s.setProfileOpen);
@@ -424,15 +435,15 @@ function UserSection() {
       <span className="cp-user-name">{user.name}</span>
       <div className="cp-user-actions">
         <button className="cp-user-btn" onClick={() => setProfileOpen(true)}>
-          <User size={12} /> Profile
+          <User size={12} /> {t('common.profile')}
         </button>
         {user.role === 'admin' && (
           <button className="cp-user-btn" onClick={() => setAdminPanelOpen(true)}>
-            <Shield size={12} /> Admin
+            <Shield size={12} /> {t('common.admin')}
           </button>
         )}
         <button className="cp-user-btn cp-user-btn--danger" onClick={() => { void logout(); }}>
-          <LogOut size={12} /> Logout
+          <LogOut size={12} /> {t('common.logout')}
         </button>
       </div>
     </div>
@@ -441,15 +452,16 @@ function UserSection() {
 
 // ── ConfigPanel ──────────────────────────────────────────────────────────────
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'widgets', label: 'Add Widgets' },
-  { id: 'options', label: 'Options' },
-  { id: 'themes', label: 'Themes' },
-];
-
 export function ConfigPanel() {
+  const t = useT();
   const editMode = useUIStore(s => s.editMode);
   const [activeTab, setActiveTab] = useState<Tab>('widgets');
+
+  const TABS: { id: Tab; label: string }[] = [
+    { id: 'widgets', label: t('config.tabs.addWidgets') },
+    { id: 'options', label: t('config.tabs.options') },
+    { id: 'themes', label: t('config.tabs.themes') },
+  ];
 
   return (
     <aside className={`config-panel${editMode ? ' config-panel--open' : ''}`} aria-label="Configuration">

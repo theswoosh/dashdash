@@ -103,6 +103,7 @@ export const SettingsSchema = z.object({
   title: z.string().default('dashdash'),
   timezone: z.string().optional(),
   theme: z.enum(['dark', 'light']).default('dark'),
+  language: z.string().optional(),
   background: BackgroundSchema.optional(),
   grid: GridSchema.default({}),
   auth: AuthConfigSchema,

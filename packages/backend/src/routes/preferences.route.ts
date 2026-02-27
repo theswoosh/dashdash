@@ -21,6 +21,7 @@ interface PutBody {
   headerSearchEngine?: string;
   headerSearchPlaceholder?: string;
   hideTopbar?: boolean;
+  language?: string;
 }
 
 export function createPreferencesRoutes(db: Db): FastifyPluginAsync {
@@ -46,6 +47,7 @@ export function createPreferencesRoutes(db: Db): FastifyPluginAsync {
         headerSearchEngine: map['headerSearchEngine'] ?? 'duckduckgo',
         headerSearchPlaceholder: map['headerSearchPlaceholder'] ?? '',
         hideTopbar: map['hideTopbar'] === 'true',
+        language: map['language'] ?? '',
       };
     });
 
@@ -71,6 +73,7 @@ export function createPreferencesRoutes(db: Db): FastifyPluginAsync {
               headerSearchEngine: { type: 'string' },
               headerSearchPlaceholder: { type: 'string' },
               hideTopbar: { type: 'boolean' },
+              language: { type: 'string' },
             },
           },
         },
@@ -97,6 +100,7 @@ export function createPreferencesRoutes(db: Db): FastifyPluginAsync {
           if (prefs.headerSearchEngine !== undefined) upsert.run(req.userId, 'headerSearchEngine', prefs.headerSearchEngine);
           if (prefs.headerSearchPlaceholder !== undefined) upsert.run(req.userId, 'headerSearchPlaceholder', prefs.headerSearchPlaceholder);
           if (prefs.hideTopbar !== undefined) upsert.run(req.userId, 'hideTopbar', String(prefs.hideTopbar));
+          if (prefs.language !== undefined) upsert.run(req.userId, 'language', prefs.language);
         });
 
         update(req.body);

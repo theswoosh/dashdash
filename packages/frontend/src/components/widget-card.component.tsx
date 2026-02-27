@@ -7,11 +7,13 @@ import { getWidget } from '../widgets/registry';
 import { useWidgetData } from '../hooks/use-widget-data.hook';
 import { useUIStore } from '../store/uiStore';
 import { useBehavior } from '../hooks/use-behavior.hook';
+import { useT } from '../i18n';
 import { WidgetSkeleton } from '../widgets/shared/widget-skeleton.component';
 import { WidgetError } from '../widgets/shared/widget-error.component';
 import './WidgetCard.css';
 
 function HoldDeleteButton({ id, holdToDeleteMs, onDelete }: { id: string; holdToDeleteMs: number; onDelete: (id: string) => void }) {
+  const t = useT();
   const [holding, setHolding] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -37,8 +39,8 @@ function HoldDeleteButton({ id, holdToDeleteMs, onDelete }: { id: string; holdTo
       onMouseLeave={cancel}
       onTouchStart={start}
       onTouchEnd={cancel}
-      title="Hold to delete"
-      aria-label="Hold to delete widget"
+      title={t('widgetCard.holdToDelete')}
+      aria-label={t('widgetCard.holdToDeleteAria')}
     >
       <span className="widget-delete-btn__fill" />
       <span className="widget-delete-btn__icon"><X size={13} /></span>
@@ -64,6 +66,7 @@ function buildPingTooltip(ping: PingStatus): string {
 }
 
 export function WidgetCard({ service, editMode, onDelete }: Props) {
+  const t = useT();
   const Card = useThemeCard();
   const setConfigTarget = useUIStore(s => s.setConfigTarget);
   const { holdToDeleteMs } = useBehavior();
@@ -73,7 +76,6 @@ export function WidgetCard({ service, editMode, onDelete }: Props) {
   const isPingEnabled = service.widget === 'healthcheck' && service.options?.['ping'] !== false;
   const hasConfiguredUrl = isPingEnabled && Boolean(service.options?.['url']);
   const pingData = isPingEnabled && !loading && data ? data as PingStatus : null;
-  // 'unknown' = grey (no URL set or still loading); null = ping disabled
   type PingDotState = 'up' | 'down' | 'unknown';
   const pingDotState: PingDotState | null = !isPingEnabled
     ? null
@@ -108,23 +110,23 @@ export function WidgetCard({ service, editMode, onDelete }: Props) {
     <Card className={cardClassName} style={cardStyle}>
       <div className="widget-header">
         {editMode && (
-          <span className="widget-drag-handle" title="Drag to move">
+          <span className="widget-drag-handle" title={t('widgetCard.dragToMove')}>
             <GripVertical size={16} />
           </span>
         )}
         {pingDotState !== null && (
           <span
             className={`widget-ping-dot widget-ping-dot--${pingDotState}`}
-            title={pingData ? buildPingTooltip(pingData) : (hasConfiguredUrl ? 'Checking…' : 'No host configured')}
-            aria-label={pingDotState === 'up' ? 'Up' : pingDotState === 'down' ? 'Down' : 'Unknown'}
+            title={pingData ? buildPingTooltip(pingData) : (hasConfiguredUrl ? t('widgetCard.checking') : t('widgetCard.noHostConfigured'))}
+            aria-label={pingDotState === 'up' ? t('widgetCard.up') : pingDotState === 'down' ? t('widgetCard.down') : t('widgetCard.unknown')}
           />
         )}
         <span className="widget-title">{service.title}</span>
         {service.widget === 'notepad' && (
           <button
             className="widget-edit-btn"
-            title="Refresh"
-            aria-label="Refresh notepad"
+            title={t('widgetCard.refreshNotepad')}
+            aria-label={t('widgetCard.refreshNotepad')}
             onClick={() => void swrMutate(`/api/notepad/${service.id}`)}
           >
             <RefreshCw size={13} />
@@ -134,9 +136,9 @@ export function WidgetCard({ service, editMode, onDelete }: Props) {
           <div className="widget-edit-actions">
             <button
               className="widget-edit-btn"
-              title="Configure widget"
+              title={t('widgetCard.configureWidget')}
               onClick={() => setConfigTarget(service.id)}
-              aria-label="Configure widget"
+              aria-label={t('widgetCard.configureWidget')}
             >
               <Settings size={13} />
             </button>

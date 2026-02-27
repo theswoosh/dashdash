@@ -4,6 +4,7 @@ import { useUIStore } from '../store/uiStore';
 import { useServices } from '../hooks/use-services.hook';
 import { getTemplate } from '../widgets/catalog';
 import type { ConfigField } from '../widgets/catalog';
+import { useT } from '../i18n';
 import './WidgetConfigModal.css';
 
 const DEFAULT_BG_HEX = '#4488ff';
@@ -36,10 +37,13 @@ function FieldInput({
   value: unknown;
   onChange: (key: string, val: unknown) => void;
 }) {
+  const t = useT();
+
   if (field.type === 'separator') {
     return <hr className="config-separator" />;
   }
 
+  const label = field.labelKey ? (t(field.labelKey) || field.label) : field.label;
   const strVal = value === undefined || value === null ? '' : String(value);
 
   if (field.type === 'boolean') {
@@ -50,7 +54,7 @@ function FieldInput({
           checked={Boolean(value)}
           onChange={e => onChange(field.key, e.target.checked)}
         />
-        <span>{field.label}</span>
+        <span>{label}</span>
       </label>
     );
   }
@@ -59,7 +63,7 @@ function FieldInput({
     return (
       <div className="config-field">
         <label className="config-label">
-          {field.label}{field.required && ' *'}
+          {label}{field.required && ' *'}
           {field.maxLength !== undefined && (
             <span className="config-label__counter">{strVal.length} / {field.maxLength}</span>
           )}
@@ -79,7 +83,7 @@ function FieldInput({
   if (field.type === 'select' && field.options) {
     return (
       <div className="config-field">
-        <label className="config-label">{field.label}</label>
+        <label className="config-label">{label}</label>
         <select
           className="config-input config-select"
           value={strVal}
@@ -95,7 +99,7 @@ function FieldInput({
 
   return (
     <div className="config-field">
-      <label className="config-label">{field.label}{field.required && ' *'}</label>
+      <label className="config-label">{label}{field.required && ' *'}</label>
       <input
         className="config-input"
         type={field.type === 'number' ? 'number' : field.type === 'url' ? 'url' : 'text'}
@@ -113,6 +117,7 @@ function FieldInput({
 }
 
 export function WidgetConfigModal() {
+  const t = useT();
   const configTarget = useUIStore(s => s.configTarget);
   const setConfigTarget = useUIStore(s => s.setConfigTarget);
   const { services, reload: reloadServices } = useServices();
@@ -198,16 +203,16 @@ export function WidgetConfigModal() {
 
   return (
     <div className="modal-backdrop" onClick={() => setConfigTarget(null)}>
-      <div className="modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Configure widget">
+      <div className="modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={t('widgetConfig.configure', { title: service.title })}>
         <div className="modal-header">
-          <span className="modal-title">Configure: {service.title}</span>
-          <button className="modal-close" onClick={() => setConfigTarget(null)} aria-label="Close">
+          <span className="modal-title">{t('widgetConfig.configure', { title: service.title })}</span>
+          <button className="modal-close" onClick={() => setConfigTarget(null)} aria-label={t('common.close')}>
             <X size={16} />
           </button>
         </div>
         <div className="modal-body">
           <div className="config-field">
-            <label className="config-label">Widget title</label>
+            <label className="config-label">{t('widgetConfig.widgetTitle')}</label>
             <input
               className="config-input"
               type="text"
@@ -227,17 +232,17 @@ export function WidgetConfigModal() {
             ))
           ) : (
             configFields.length === 0 && template && (
-              <p className="modal-no-fields">This widget has no configurable options.</p>
+              <p className="modal-no-fields">{t('widgetConfig.noOptions')}</p>
             )
           )}
 
           <hr className="config-separator" />
           <div className="config-field">
             <label className="config-label">
-              Widget background
+              {t('widgetConfig.widgetBackground')}
               {options['bg_color'] != null && (
                 <button className="config-reset-link" onClick={resetBgColor} type="button">
-                  Reset
+                  {t('common.reset')}
                 </button>
               )}
             </label>
@@ -247,7 +252,7 @@ export function WidgetConfigModal() {
                 className="config-color-input"
                 value={bgHex}
                 onChange={e => updateBgColor(e.target.value, bgAlpha)}
-                title="Background color"
+                title={t('widgetConfig.widgetBackground')}
               />
               <input
                 type="range"
@@ -277,15 +282,15 @@ export function WidgetConfigModal() {
                 disabled={testResult === 'loading'}
               >
                 {testResult === 'loading' ? <Loader size={13} className="modal-test-spinner" /> : null}
-                Test
+                {t('widgetConfig.test')}
               </button>
               {testResult === 'ok' && (
-                <span className="modal-test-result modal-test-result--ok" title="Reachable">
+                <span className="modal-test-result modal-test-result--ok" title={t('widgetCard.up')}>
                   <CheckCircle size={16} />
                 </span>
               )}
               {testResult === 'fail' && (
-                <span className="modal-test-result modal-test-result--fail" title="Unreachable">
+                <span className="modal-test-result modal-test-result--fail" title={t('widgetCard.down')}>
                   <XCircle size={16} />
                 </span>
               )}
@@ -293,13 +298,13 @@ export function WidgetConfigModal() {
           )}
           <div className="modal-footer-actions">
             <button className="modal-btn modal-btn--secondary" onClick={() => setConfigTarget(null)}>
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               className="modal-btn modal-btn--primary"
               onClick={() => { void saveWidgetConfiguration(); }}
             >
-              Save
+              {t('common.save')}
             </button>
           </div>
         </div>

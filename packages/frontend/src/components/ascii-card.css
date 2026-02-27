@@ -130,8 +130,30 @@
 .ascii-card.widget-card--tiny-layout {
   height: auto;
 }
+/* Side pipes carry a 200-line ::before; in a flex: 0 0 auto context their
+   intrinsic height dominates the row and stretches the card across the screen.
+   Taking them out of flex flow (position: absolute) removes their contribution
+   to cross-axis sizing while still letting them fill the content height. */
 .ascii-card.widget-card--tiny-layout .ascii-card__middle {
   flex: 0 0 auto;
+  position: relative;
+}
+.ascii-card.widget-card--tiny-layout .ascii-card__side {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1ch;
+}
+.ascii-card.widget-card--tiny-layout .ascii-card__side:first-child {
+  left: 0;
+}
+.ascii-card.widget-card--tiny-layout .ascii-card__side:last-child {
+  right: 0;
+}
+/* Content would expand to fill full width without the flex side elements;
+   restore the 1ch gutter so text doesn't slide under the pipes. */
+.ascii-card.widget-card--tiny-layout .ascii-card__content {
+  margin: 0 1ch;
 }
 
 /* ── Edit mode highlight ──────────────────────────────────────────────────── */

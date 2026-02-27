@@ -9,6 +9,7 @@ export interface SearchEngine {
 export interface DashSettings {
   title: string;
   timezone?: string | undefined;
+  language?: string | undefined;
   searchEngines?: SearchEngine[] | undefined;
   grid?: {
     columns: number;

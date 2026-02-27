@@ -1,0 +1,173 @@
+common:
+  save: "Speichern"
+  cancel: "Abbrechen"
+  close: "Schließen"
+  delete: "Löschen"
+  loading: "Lädt…"
+  done: "Fertig"
+  reset: "Zurücksetzen"
+  admin: "Admin"
+  profile: "Profil"
+  logout: "Abmelden"
+
+login:
+  signIn: "Anmelden"
+  signingIn: "Anmeldung…"
+  createAccount: "Konto erstellen"
+  creatingAccount: "Konto wird erstellt…"
+  email: "E-Mail"
+  password: "Passwort"
+  displayName: "Anzeigename"
+  confirmPassword: "Passwort bestätigen"
+  forgotPassword: "Passwort vergessen?"
+  alreadyHaveAccount: "Bereits ein Konto? Anmelden"
+  resetPassword: "Passwort zurücksetzen"
+  sendResetLink: "Zurücksetzen-Link senden"
+  sending: "Senden…"
+  backToSignIn: "Zurück zur Anmeldung"
+  minChars: "Mindestens 8 Zeichen"
+  passwordMismatch: "Passwörter stimmen nicht überein."
+  resetLinkSent: "Wenn diese E-Mail-Adresse registriert ist, wurde ein Link zum Zurücksetzen gesendet."
+  somethingWentWrong: "Etwas ist schiefgelaufen. Bitte erneut versuchen."
+  passwordUpdated: "Passwort aktualisiert"
+  passwordUpdatedInfo: "Dein Passwort wurde geändert. Du kannst dich jetzt anmelden."
+  setNewPassword: "Neues Passwort setzen"
+  newPassword: "Neues Passwort"
+  updating: "Aktualisierung…"
+  goToSignIn: "Zur Anmeldung"
+
+config:
+  tabs:
+    addWidgets: "Widgets hinzufügen"
+    options: "Optionen"
+    themes: "Themes"
+  dragOntoGrid: "Auf das Raster ziehen"
+  wallpaper: "Hintergrundbild"
+  wallpaperChange: "Ändern…"
+  wallpaperNone: "Keines — klicken zum Auswählen"
+  boardIcon: "Board-Symbol"
+  boardIconHint: "Im Header angezeigtes Emoji"
+  showBoardName: "Board-Name anzeigen"
+  borderless: "Rahmenlos"
+  borderlessHint: "Entfernt alle Rahmen und Hintergründe der Karten"
+  headerBar: "Kopfzeile"
+  hideTopbar: "Topbar ausblenden"
+  hideTopbarHint: "Nur die Konfigurationsschaltfläche wird angezeigt"
+  clock: "Uhr"
+  clockHint: "Im Bearbeitungsmodus auf die Uhr klicken, um sie zu konfigurieren"
+  searchBar: "Suchleiste"
+  engine: "Suchmaschine"
+  searchPlaceholder: "Platzhaltertext"
+  comingSoon: "Demnächst"
+
+widgetConfig:
+  configure: "Konfigurieren: {{title}}"
+  widgetTitle: "Widget-Titel"
+  widgetBackground: "Widget-Hintergrund"
+  noOptions: "Dieses Widget hat keine konfigurierbaren Optionen."
+  test: "Test"
+
+topbar:
+  openConfig: "Konfiguration öffnen"
+  openConfigAria: "Konfig öffnen"
+  saveExit: "Speichern & Bearbeitungsmodus verlassen"
+  saveExitAria: "Speichern & verlassen"
+  clockSettings: "Uhreinstellungen"
+  format: "Format"
+  showSeconds: "Sekunden anzeigen"
+  timezone: "Zeitzone"
+  configureClock: "Uhr konfigurieren"
+  clockFormat24h: "24-Stunden"
+  clockFormat12h: "12-Stunden (AM/PM)"
+
+admin:
+  adminPanel: "Admin-Panel"
+  users: "Benutzer"
+  addUser: "Benutzer hinzufügen"
+  name: "Name"
+  password: "Passwort"
+  role: "Rolle"
+  creating: "Wird erstellt…"
+  roleUser: "Benutzer"
+  roleAdmin: "Admin"
+  demoteToUser: "Zu Benutzer herabstufen"
+  promoteToAdmin: "Zu Admin befördern"
+  disableUser: "Benutzer deaktivieren"
+  enableUser: "Benutzer aktivieren"
+  sendResetEmail: "Passwort-Zurücksetzen-E-Mail senden"
+  deleteUser: "Benutzer löschen"
+  disabled: "deaktiviert"
+
+wallpaper:
+  library: "Hintergrundbibliothek"
+  noBackground: "Kein Hintergrund"
+  none: "Keines"
+  upload: "Neues Hintergrundbild hochladen"
+  deleteWallpaper: "Hintergrundbild löschen"
+  setAsWallpaper: "Als Hintergrundbild setzen"
+
+widgetCard:
+  holdToDelete: "Halten zum Löschen"
+  holdToDeleteAria: "Widget durch Halten löschen"
+  dragToMove: "Ziehen zum Verschieben"
+  configureWidget: "Widget konfigurieren"
+  refreshNotepad: "Notizblock aktualisieren"
+  up: "Oben"
+  down: "Unten"
+  unknown: "Unbekannt"
+  noHostConfigured: "Kein Host konfiguriert"
+  checking: "Prüfen…"
+
+dashGrid:
+  noServices: "Keine Dienste konfiguriert. Widgets zu config/services.yml hinzufügen oder Konfig öffnen, um Widgets auf das Raster zu ziehen."
+
+userMenu:
+  editProfile: "Profil bearbeiten"
+  currentPassword: "Aktuelles Passwort"
+  cancelPasswordChange: "Passwortänderung abbrechen"
+  changePassword: "Passwort ändern"
+  saving: "Speichert…"
+  profileUpdated: "Profil aktualisiert."
+  updateFailed: "Aktualisierung fehlgeschlagen"
+  language: "Sprache"
+
+widgets:
+  clock:
+    label: "Uhr"
+    description: "Aktuelle Uhrzeit anzeigen"
+  healthcheck:
+    label: "Healthcheck"
+    description: "Host auf Verfügbarkeit und Latenz überwachen"
+  stats:
+    label: "Systemstatistiken"
+    description: "CPU, Speicher und Betriebszeit des Servers"
+  bookmarks:
+    label: "Lesezeichen"
+    description: "Schnellzugriff-Link-Raster"
+  search:
+    label: "Suche"
+    description: "Suchleiste mit konfigurierbarer Suchmaschine"
+  notepad:
+    label: "Notizblock"
+    description: "Beständige Textnotizen mit anklickbaren Links"
+  iframe:
+    label: "iFrame"
+    description: "Beliebige URL in einem Sandbox-Frame einbetten"
+
+themes:
+  liquidGlass:
+    name: "Liquid Glass"
+    description: "Squircle-Karten mit Hintergrundunschärfe und Linsenverzerrung"
+  classic:
+    name: "Klassisch"
+    description: "Saubere, abgerundete Karten mit feinem Rahmen und Schatten"
+  ascii:
+    name: "ASCII"
+    description: "Commodore 64 PETSCII — Zeichenrahmen auf Mitternachtsblau"
+  atom:
+    name: "ATOM"
+    description: "Pip-Boy-Phosphor-CRT mit Scanlines, Vignette und Phosphorleuchten"
+
+languages:
+  en: "English"
+  de: "Deutsch"

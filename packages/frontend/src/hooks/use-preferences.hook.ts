@@ -18,6 +18,7 @@ interface Preferences {
   headerSearchEngine?: string | undefined;
   headerSearchPlaceholder?: string | undefined;
   hideTopbar?: boolean | undefined;
+  language?: string | undefined;
 }
 
 const DEFAULT_PREFERENCES: Preferences = { theme: 'liquid-glass', darkMode: true, borderless: false };

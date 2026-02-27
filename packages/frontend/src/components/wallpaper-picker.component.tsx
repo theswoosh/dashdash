@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Ban, Plus, Check } from 'lucide-react';
 import type { WallpaperEntry } from '../hooks/use-board.hook';
+import { useT } from '../i18n';
 import './wallpaper-picker.css';
 
 const MAX_WALLPAPERS = 8; // 3×3 grid − 1 reserved slot for "no background"
@@ -25,6 +26,7 @@ export function WallpaperPickerModal({
   onDelete,
   onClose,
 }: Props) {
+  const t = useT();
   const uploadInputRef = useRef<HTMLInputElement>(null);
 
   const triggerUpload = () => uploadInputRef.current?.click();
@@ -36,8 +38,6 @@ export function WallpaperPickerModal({
   };
 
   const isNoBgActive = activeWallpaperId === null;
-  // Slots 1–8: images fill from left; slot at wallpapers.length is the upload slot;
-  // remaining slots are inert placeholders.
   const imageSlots = Array.from({ length: MAX_WALLPAPERS }, (_, slotIndex) => slotIndex);
 
   return createPortal(
@@ -46,11 +46,11 @@ export function WallpaperPickerModal({
         className="wp-modal"
         onClick={e => e.stopPropagation()}
         role="dialog"
-        aria-label="Wallpaper library"
+        aria-label={t('wallpaper.library')}
       >
         <div className="wp-header">
-          <span className="wp-title">Wallpaper Library</span>
-          <button className="wp-close" onClick={onClose} aria-label="Close">
+          <span className="wp-title">{t('wallpaper.library')}</span>
+          <button className="wp-close" onClick={onClose} aria-label={t('common.close')}>
             <X size={16} />
           </button>
         </div>
@@ -60,11 +60,11 @@ export function WallpaperPickerModal({
           <button
             className={`wp-slot wp-slot--none${isNoBgActive ? ' wp-slot--active' : ''}`}
             onClick={() => onSetActive(null)}
-            title="No background"
+            title={t('wallpaper.noBackground')}
             aria-pressed={isNoBgActive}
           >
             <Ban size={22} />
-            <span className="wp-slot-label">None</span>
+            <span className="wp-slot-label">{t('wallpaper.none')}</span>
             {isNoBgActive && (
               <span className="wp-check" aria-hidden="true">
                 <Check size={10} />
@@ -87,7 +87,7 @@ export function WallpaperPickerModal({
                     className="wp-thumb-btn"
                     onClick={() => onSetActive(wallpaper.id)}
                     aria-pressed={isActive}
-                    title="Set as wallpaper"
+                    title={t('wallpaper.setAsWallpaper')}
                   >
                     <img
                       src={`/api/boards/${boardId}/wallpapers/${wallpaper.id}`}
@@ -103,7 +103,7 @@ export function WallpaperPickerModal({
                   <button
                     className="wp-delete"
                     onClick={() => onDelete(wallpaper.id)}
-                    aria-label="Delete wallpaper"
+                    aria-label={t('wallpaper.deleteWallpaper')}
                   >
                     <X size={11} />
                   </button>
@@ -117,8 +117,8 @@ export function WallpaperPickerModal({
                   key={`upload-${slotIndex}`}
                   className="wp-slot wp-slot--upload"
                   onClick={triggerUpload}
-                  title="Upload new wallpaper"
-                  aria-label="Upload new wallpaper"
+                  title={t('wallpaper.upload')}
+                  aria-label={t('wallpaper.upload')}
                 >
                   <Plus size={22} />
                 </button>
