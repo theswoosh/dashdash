@@ -147,8 +147,6 @@ export function WidgetConfigModal() {
     setTestResult('idle');
   }, [service]);
 
-  if (!configTarget || !service) return null;
-
   const handleOptionChange = useCallback((key: string, val: unknown) => {
     setOptions(prev => ({ ...prev, [key]: val }));
   }, []);
@@ -164,6 +162,8 @@ export function WidgetConfigModal() {
     setBgAlpha(DEFAULT_BG_ALPHA);
     handleOptionChange('bg_color', null);
   }, [handleOptionChange]);
+
+  if (!configTarget || !service) return null;
 
   const saveWidgetConfiguration = async () => {
     await fetch(`/api/services/${service.id}`, {
