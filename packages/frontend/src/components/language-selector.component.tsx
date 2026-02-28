@@ -11,18 +11,17 @@ export function LanguageSelector() {
   if (availableLanguages.length <= 1) return null;
 
   return (
-    <div className="lang-selector" aria-label={t('userMenu.language')}>
+    <select
+      className="lang-select"
+      value={activeLanguage}
+      onChange={e => savePreferences({ language: e.target.value })}
+      aria-label={t('userMenu.language')}
+    >
       {availableLanguages.map(lang => (
-        <button
-          key={lang}
-          className={`lang-badge${lang === activeLanguage ? ' lang-badge--active' : ''}`}
-          onClick={() => savePreferences({ language: lang })}
-          aria-pressed={lang === activeLanguage}
-          title={t(`languages.${lang}`) || lang}
-        >
-          {lang.toUpperCase()}
-        </button>
+        <option key={lang} value={lang}>
+          {t(`languages.${lang}`) || lang}
+        </option>
       ))}
-    </div>
+    </select>
   );
 }
