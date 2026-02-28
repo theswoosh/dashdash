@@ -3,11 +3,30 @@ import { render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import type { ServiceConfig } from '@dashdash/types';
 import { ThemeProvider } from '../themes/registry';
+import { I18nProvider } from '../i18n';
 import { WidgetCard } from '../components/widget-card.component';
+
+const EN_TRANSLATIONS = {
+  en: {
+    widgetCard: {
+      dragToMove: 'Drag to move',
+      holdToDelete: 'Hold to delete',
+      holdToDeleteAria: 'Hold to delete widget',
+      configureWidget: 'Configure widget',
+      refreshNotepad: 'Refresh notepad',
+      up: 'Up', down: 'Down', unknown: 'Unknown',
+      noHostConfigured: 'No host configured', checking: 'Checking…',
+    },
+  },
+};
 
 function wrap(ui: ReactNode, themeId = 'classic') {
   // Use 'classic' by default — ClassicCard has no canvas/ResizeObserver complexity
-  return render(<ThemeProvider themeId={themeId}>{ui}</ThemeProvider>);
+  return render(
+    <I18nProvider language="en" translations={EN_TRANSLATIONS} availableLanguages={['en']}>
+      <ThemeProvider themeId={themeId}>{ui}</ThemeProvider>
+    </I18nProvider>
+  );
 }
 
 const clockService: ServiceConfig = {

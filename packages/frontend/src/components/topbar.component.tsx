@@ -4,6 +4,7 @@ import { Settings2, Save, Search, X } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
 import { usePreferences } from '../hooks/use-preferences.hook';
 import { useSettings, type SearchEngine } from '../hooks/use-settings.hook';
+import { useT } from '../i18n';
 import './Topbar.css';
 import './WidgetConfigModal.css';
 
@@ -108,6 +109,7 @@ function ClockConfigModal({
   readonly onSave: (patch: ClockConfigPatch) => void;
   readonly onClose: () => void;
 }) {
+  const t = useT();
   const [localTimezone, setLocalTimezone] = useState(timezone);
 
   return createPortal(
@@ -117,24 +119,24 @@ function ClockConfigModal({
         onClick={e => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label="Clock settings"
+        aria-label={t('topbar.clockSettings')}
       >
         <div className="modal-header">
-          <span className="modal-title">Clock settings</span>
-          <button className="modal-close" onClick={onClose} aria-label="Close">
+          <span className="modal-title">{t('topbar.clockSettings')}</span>
+          <button className="modal-close" onClick={onClose} aria-label={t('common.close')}>
             <X size={16} />
           </button>
         </div>
         <div className="modal-body">
           <div className="config-field">
-            <label className="config-label">Format</label>
+            <label className="config-label">{t('topbar.format')}</label>
             <select
               className="config-input config-select"
               value={format}
               onChange={e => onSave({ headerClockFormat: e.target.value })}
             >
-              <option value="24h">24-hour</option>
-              <option value="12h">12-hour (AM/PM)</option>
+              <option value="24h">{t('topbar.clockFormat24h')}</option>
+              <option value="12h">{t('topbar.clockFormat12h')}</option>
             </select>
           </div>
 
@@ -144,12 +146,12 @@ function ClockConfigModal({
               checked={showSeconds}
               onChange={e => onSave({ headerClockShowSeconds: e.target.checked })}
             />
-            <span>Show seconds</span>
+            <span>{t('topbar.showSeconds')}</span>
           </label>
 
           <div className="config-field">
             <label className="config-label">
-              Timezone
+              {t('topbar.timezone')}
               {settingsTimezone && !localTimezone && (
                 <span className="config-label__counter">default: {settingsTimezone}</span>
               )}
@@ -167,7 +169,7 @@ function ClockConfigModal({
         <div className="modal-footer">
           <div />
           <div className="modal-footer-actions">
-            <button className="modal-btn modal-btn--primary" onClick={onClose}>Done</button>
+            <button className="modal-btn modal-btn--primary" onClick={onClose}>{t('common.done')}</button>
           </div>
         </div>
       </div>
@@ -179,6 +181,7 @@ function ClockConfigModal({
 // ── Topbar ────────────────────────────────────────────────────────────────────
 
 export function Topbar() {
+  const t = useT();
   const { editMode, toggleEditMode, boardName } = useUIStore();
   const { preferences, savePreferences } = usePreferences();
   const settings = useSettings();
@@ -195,7 +198,6 @@ export function Topbar() {
     ...(settings.searchEngines ?? []),
   ];
 
-  // User preference overrides settings.yaml timezone; both may be empty.
   const effectiveTimezone = preferences?.headerClockTimezone || settings.timezone || undefined;
 
   if (isHideTopbar && !editMode) {
@@ -204,8 +206,8 @@ export function Topbar() {
         <button
           className="topbar-btn"
           onClick={toggleEditMode}
-          title="Open configuration"
-          aria-label="Open config"
+          title={t('topbar.openConfig')}
+          aria-label={t('topbar.openConfigAria')}
         >
           <Settings2 size={16} />
         </button>
@@ -240,7 +242,7 @@ export function Topbar() {
             role={editMode ? 'button' : undefined}
             tabIndex={editMode ? 0 : undefined}
             onKeyDown={editMode ? (e => { if (e.key === 'Enter' || e.key === ' ') setIsClockConfigOpen(true); }) : undefined}
-            title={editMode ? 'Configure clock' : undefined}
+            title={editMode ? t('topbar.configureClock') : undefined}
           >
             <TopbarClock
               format={preferences?.headerClockFormat}
@@ -253,8 +255,8 @@ export function Topbar() {
         <button
           className={`topbar-btn${editMode ? ' topbar-btn--active' : ''}`}
           onClick={toggleEditMode}
-          title={editMode ? 'Save & exit edit mode' : 'Open configuration'}
-          aria-label={editMode ? 'Save & exit' : 'Open config'}
+          title={editMode ? t('topbar.saveExit') : t('topbar.openConfig')}
+          aria-label={editMode ? t('topbar.saveExitAria') : t('topbar.openConfigAria')}
         >
           {editMode ? <Save size={16} /> : <Settings2 size={16} />}
         </button>

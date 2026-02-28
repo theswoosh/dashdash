@@ -8,6 +8,9 @@ import { useUIStore } from './store/uiStore';
 import { usePreferences } from './hooks/use-preferences.hook';
 import { useBoard } from './hooks/use-board.hook';
 import { useAuth } from './hooks/use-auth.hook';
+import { useSettings } from './hooks/use-settings.hook';
+import { useLocales } from './hooks/use-locales.hook';
+import { I18nProvider } from './i18n';
 import { ThemeProvider } from './themes/registry';
 import { Topbar } from './components/topbar.component';
 import { DashGrid } from './components/dash-grid.component';
@@ -31,6 +34,11 @@ export function App() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const { preferences } = usePreferences();
   const { backgroundUrl } = useBoard();
+  const settings = useSettings();
+  const { languages, translations } = useLocales();
+
+  // Fallback chain: user preference > settings.yml language > 'en'
+  const activeLanguage = preferences?.language || settings.language || 'en';
 
   // Prevent browser navigation when an image/URL is dragged onto the page.
   // Skip for widget-template drags — those are handled by RGL on the grid.
@@ -69,9 +77,16 @@ export function App() {
   }, [theme]);
 
   if (isAuthLoading) return null;
-  if (!user) return hasResetToken() ? <ResetPasswordPage /> : <LoginPage />;
+  if (!user) {
+    return (
+      <I18nProvider language={activeLanguage} translations={translations} availableLanguages={languages}>
+        {hasResetToken() ? <ResetPasswordPage /> : <LoginPage />}
+      </I18nProvider>
+    );
+  }
 
   return (
+    <I18nProvider language={activeLanguage} translations={translations} availableLanguages={languages}>
     <ThemeProvider themeId={theme}>
       {/* Background layers — styled via CSS vars set by data-theme */}
       {backgroundUrl && (
@@ -92,5 +107,6 @@ export function App() {
       <AdminPanel />
       <ProfilePopup />
     </ThemeProvider>
+    </I18nProvider>
   );
 }

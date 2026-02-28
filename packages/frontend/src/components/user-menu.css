@@ -177,6 +177,13 @@
   color: var(--text-primary, #fff);
 }
 
+.user-modal-language {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
 .user-modal-actions {
   display: flex;
   gap: 8px;

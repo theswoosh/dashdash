@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useT } from '../i18n';
 import './login.css';
 
 export function ResetPasswordPage() {
   const token = new URLSearchParams(window.location.search).get('token') ?? '';
+  const t = useT();
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -20,11 +22,11 @@ export function ResetPasswordPage() {
       });
       if (!res.ok) {
         const body = await res.json() as { error: string };
-        throw new Error(body.error ?? 'Reset failed');
+        throw new Error(body.error ?? t('login.somethingWentWrong'));
       }
       setIsDone(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Reset failed');
+      setError(err instanceof Error ? err.message : t('login.somethingWentWrong'));
     } finally {
       setIsSubmitting(false);
     }
@@ -44,16 +46,16 @@ export function ResetPasswordPage() {
 
         {isDone ? (
           <div className="login-form">
-            <h1 className="login-title">Password updated</h1>
-            <p className="login-info" role="status">Your password has been changed. You can now sign in.</p>
-            <button className="login-btn" onClick={goToLogin}>Go to sign in</button>
+            <h1 className="login-title">{t('login.passwordUpdated')}</h1>
+            <p className="login-info" role="status">{t('login.passwordUpdatedInfo')}</p>
+            <button className="login-btn" onClick={goToLogin}>{t('login.goToSignIn')}</button>
           </div>
         ) : (
           <form className="login-form" onSubmit={e => void handleSubmit(e)}>
-            <h1 className="login-title">Set new password</h1>
+            <h1 className="login-title">{t('login.setNewPassword')}</h1>
             {error && <p className="login-error" role="alert">{error}</p>}
 
-            <label className="login-label" htmlFor="reset-password">New password</label>
+            <label className="login-label" htmlFor="reset-password">{t('login.newPassword')}</label>
             <input
               id="reset-password"
               className="login-input"
@@ -65,10 +67,10 @@ export function ResetPasswordPage() {
               minLength={8}
               autoFocus
             />
-            <span className="login-hint">Minimum 8 characters</span>
+            <span className="login-hint">{t('login.minChars')}</span>
 
             <button className="login-btn" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Updating…' : 'Set new password'}
+              {isSubmitting ? t('login.updating') : t('login.setNewPassword')}
             </button>
           </form>
         )}

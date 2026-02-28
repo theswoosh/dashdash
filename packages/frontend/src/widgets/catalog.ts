@@ -12,6 +12,7 @@ import {
 export interface ConfigField {
   key: string;
   label: string;
+  labelKey?: string | undefined;
   type: 'text' | 'url' | 'number' | 'boolean' | 'textarea' | 'select' | 'separator';
   placeholder?: string | undefined;
   required?: boolean | undefined;
@@ -23,8 +24,10 @@ export interface ConfigField {
 export interface WidgetTemplate {
   type: string;
   label: string;
+  labelKey?: string | undefined;
   icon: LucideIcon;
   description: string;
+  descriptionKey?: string | undefined;
   defaultSize: { w: number; h: number };
   defaultOptions: Record<string, unknown>;
   configFields: ConfigField[];
@@ -34,8 +37,10 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
   {
     type: 'healthcheck',
     label: 'Healthcheck',
+    labelKey: 'widgets.healthcheck.label',
     icon: Activity,
     description: 'Monitor a host for uptime and latency',
+    descriptionKey: 'widgets.healthcheck.description',
     defaultSize: { w: 6, h: 4 },
     defaultOptions: { url: '', ignoreTls: false, timeoutMs: 5000, ping: true, layoutSize: 'normal', showDescription: false },
     configFields: [
@@ -62,8 +67,10 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
   {
     type: 'clock',
     label: 'Clock',
+    labelKey: 'widgets.clock.label',
     icon: Clock,
     description: 'Display the current time',
+    descriptionKey: 'widgets.clock.description',
     defaultSize: { w: 4, h: 4 },
     defaultOptions: { format: '24h', showSeconds: true },
     configFields: [
@@ -84,8 +91,10 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
   {
     type: 'stats',
     label: 'System Stats',
+    labelKey: 'widgets.stats.label',
     icon: BarChart2,
     description: 'CPU, memory and uptime for the server',
+    descriptionKey: 'widgets.stats.description',
     defaultSize: { w: 6, h: 6 },
     defaultOptions: {},
     configFields: [],
@@ -93,8 +102,10 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
   {
     type: 'bookmarks',
     label: 'Bookmarks',
+    labelKey: 'widgets.bookmarks.label',
     icon: Bookmark,
     description: 'Quick-access links grid',
+    descriptionKey: 'widgets.bookmarks.description',
     defaultSize: { w: 6, h: 4 },
     defaultOptions: {
       links: [{ title: 'Example', url: 'https://example.com' }],
@@ -104,8 +115,10 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
   {
     type: 'search',
     label: 'Search',
+    labelKey: 'widgets.search.label',
     icon: Search,
     description: 'Search bar with configurable engine',
+    descriptionKey: 'widgets.search.description',
     defaultSize: { w: 8, h: 4 },
     defaultOptions: { engine: 'duckduckgo' },
     configFields: [
@@ -127,8 +140,10 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
   {
     type: 'notepad',
     label: 'Notepad',
+    labelKey: 'widgets.notepad.label',
     icon: FileText,
     description: 'Persistent text notes with clickable links',
+    descriptionKey: 'widgets.notepad.description',
     defaultSize: { w: 6, h: 6 },
     defaultOptions: { pollingInterval: 60 },
     configFields: [
@@ -138,8 +153,10 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
   {
     type: 'iframe',
     label: 'iFrame',
+    labelKey: 'widgets.iframe.label',
     icon: Globe,
     description: 'Embed any URL in a sandboxed frame',
+    descriptionKey: 'widgets.iframe.description',
     defaultSize: { w: 8, h: 8 },
     defaultOptions: {},
     configFields: [

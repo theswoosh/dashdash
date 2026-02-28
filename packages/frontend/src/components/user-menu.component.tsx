@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { User, LogOut, Shield, KeyRound } from 'lucide-react';
 import { useAuth } from '../hooks/use-auth.hook';
 import { useUIStore } from '../store/uiStore';
+import { useT } from '../i18n';
+import { LanguageSelector } from './language-selector.component';
 import './user-menu.css';
 
 interface ProfileModalProps {
@@ -9,6 +11,7 @@ interface ProfileModalProps {
 }
 
 function ProfileModal({ onClose }: ProfileModalProps) {
+  const t = useT();
   const { user, updateProfile } = useAuth();
   const [name, setName] = useState(user?.name ?? '');
   const [currentPassword, setCurrentPassword] = useState('');
@@ -38,12 +41,12 @@ function ProfileModal({ onClose }: ProfileModalProps) {
 
     try {
       await updateProfile(updates);
-      setInfo('Profile updated.');
+      setInfo(t('userMenu.profileUpdated'));
       setCurrentPassword('');
       setNewPassword('');
       setIsChangingPassword(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Update failed');
+      setError(err instanceof Error ? err.message : t('userMenu.updateFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -52,12 +55,12 @@ function ProfileModal({ onClose }: ProfileModalProps) {
   return (
     <div className="user-modal-overlay" onClick={onClose}>
       <div className="user-modal" onClick={e => e.stopPropagation()}>
-        <h2 className="user-modal-title">Edit profile</h2>
+        <h2 className="user-modal-title">{t('userMenu.editProfile')}</h2>
         {error && <p className="user-modal-error" role="alert">{error}</p>}
         {info && <p className="user-modal-info" role="status">{info}</p>}
 
         <form onSubmit={e => void handleSubmit(e)}>
-          <label className="user-modal-label" htmlFor="profile-name">Display name</label>
+          <label className="user-modal-label" htmlFor="profile-name">{t('login.displayName')}</label>
           <input
             id="profile-name"
             className="user-modal-input"
@@ -67,7 +70,7 @@ function ProfileModal({ onClose }: ProfileModalProps) {
             required
           />
 
-          <label className="user-modal-label">Email</label>
+          <label className="user-modal-label">{t('login.email')}</label>
           <input className="user-modal-input user-modal-input--readonly" value={user?.email ?? ''} readOnly />
 
           <button
@@ -76,12 +79,12 @@ function ProfileModal({ onClose }: ProfileModalProps) {
             onClick={() => setIsChangingPassword(p => !p)}
           >
             <KeyRound size={13} />
-            {isChangingPassword ? 'Cancel password change' : 'Change password'}
+            {isChangingPassword ? t('userMenu.cancelPasswordChange') : t('userMenu.changePassword')}
           </button>
 
           {isChangingPassword && (
             <>
-              <label className="user-modal-label" htmlFor="current-pw">Current password</label>
+              <label className="user-modal-label" htmlFor="current-pw">{t('userMenu.currentPassword')}</label>
               <input
                 id="current-pw"
                 className="user-modal-input"
@@ -91,7 +94,7 @@ function ProfileModal({ onClose }: ProfileModalProps) {
                 onChange={e => setCurrentPassword(e.target.value)}
                 required={isChangingPassword}
               />
-              <label className="user-modal-label" htmlFor="new-pw">New password</label>
+              <label className="user-modal-label" htmlFor="new-pw">{t('login.newPassword')}</label>
               <input
                 id="new-pw"
                 className="user-modal-input"
@@ -105,12 +108,17 @@ function ProfileModal({ onClose }: ProfileModalProps) {
             </>
           )}
 
+          <div className="user-modal-language">
+            <label className="user-modal-label">{t('userMenu.language')}</label>
+            <LanguageSelector />
+          </div>
+
           <div className="user-modal-actions">
             <button type="button" className="user-modal-btn user-modal-btn--ghost" onClick={onClose}>
-              Cancel
+              {t('common.cancel')}
             </button>
             <button type="submit" className="user-modal-btn" disabled={isSubmitting}>
-              {isSubmitting ? 'Saving…' : 'Save'}
+              {isSubmitting ? t('userMenu.saving') : t('common.save')}
             </button>
           </div>
         </form>
@@ -120,6 +128,7 @@ function ProfileModal({ onClose }: ProfileModalProps) {
 }
 
 export function UserMenu() {
+  const t = useT();
   const { user, logout } = useAuth();
   const setAdminPanelOpen = useUIStore(s => s.setAdminPanelOpen);
   const [isOpen, setIsOpen] = useState(false);
@@ -167,7 +176,7 @@ export function UserMenu() {
               onClick={() => { setIsProfileOpen(true); setIsOpen(false); }}
             >
               <User size={14} />
-              Edit profile
+              {t('userMenu.editProfile')}
             </button>
 
             {user.role === 'admin' && (
@@ -176,7 +185,7 @@ export function UserMenu() {
                 onClick={() => { setAdminPanelOpen(true); setIsOpen(false); }}
               >
                 <Shield size={14} />
-                Admin panel
+                {t('common.admin')}
               </button>
             )}
 
@@ -187,7 +196,7 @@ export function UserMenu() {
               onClick={() => { void logout(); setIsOpen(false); }}
             >
               <LogOut size={14} />
-              Sign out
+              {t('common.logout')}
             </button>
           </div>
         )}

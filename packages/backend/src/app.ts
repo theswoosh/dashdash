@@ -1,5 +1,6 @@
-import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
+import { readFileSync, existsSync, mkdirSync, copyFileSync, readdirSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import fastifyCookie from '@fastify/cookie';
@@ -22,6 +23,7 @@ import { healthcheckTestRoutes } from './routes/healthcheck-test.route.js';
 import { createBoardRoutes } from './routes/boards.route.js';
 import { createAuthRoutes } from './routes/auth.route.js';
 import { createUsersRoutes } from './routes/users.route.js';
+import { createLocalesRoutes } from './routes/locales.route.js';
 import { registerAuthMiddleware } from './middleware/auth.middleware.js';
 import { cleanupExpiredSessions } from './db/sessions.db.js';
 
@@ -34,6 +36,33 @@ export interface AppOptions {
 }
 
 const SESSION_CLEANUP_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+// Seed files live at src/../../seed/locales relative to this file in dev,
+// or dist/../../seed/locales in prod — but in Docker we ship them inside the
+// package, so resolve relative to this file regardless of env.
+const SEED_LOCALES_DIR = join(__dirname, '..', 'seed', 'locales');
+
+function seedLocales(configDir: string): void {
+  const localesDir = join(configDir, 'locales');
+  mkdirSync(localesDir, { recursive: true });
+
+  if (!existsSync(SEED_LOCALES_DIR)) return;
+
+  let seedFiles: string[];
+  try {
+    seedFiles = readdirSync(SEED_LOCALES_DIR).filter(f => f.endsWith('.yml'));
+  } catch {
+    return;
+  }
+
+  for (const file of seedFiles) {
+    const dest = join(localesDir, file);
+    if (!existsSync(dest)) {
+      copyFileSync(join(SEED_LOCALES_DIR, file), dest);
+    }
+  }
+}
 
 export async function buildApp({ dataDir, configDir, publicDir, logger = false }: AppOptions): Promise<{ server: ReturnType<typeof Fastify>; db: Db }> {
   const isDev = process.env['NODE_ENV'] !== 'production';
@@ -54,6 +83,8 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
   await server.register(fastifyCookie);
   await server.register(multipart);
   await server.register(websocketPlugin);
+
+  seedLocales(configDir);
 
   const db = createDb(dataDir);
   const log = server.log;
@@ -87,6 +118,7 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
   await server.register(createWidgetTemplatesRoutes(configDir), { prefix: '/api' });
   await server.register(healthcheckTestRoutes, { prefix: '/api' });
   await server.register(createBoardRoutes(db, configDir), { prefix: '/api' });
+  await server.register(createLocalesRoutes(configDir), { prefix: '/api' });
 
   server.get('/api/ws', { websocket: true }, (socket: WebSocket) => {
     addWsClient(socket);

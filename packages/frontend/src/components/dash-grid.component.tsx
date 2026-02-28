@@ -9,6 +9,7 @@ import { useConfigReload } from '../hooks/use-config-reload.hook';
 import { useWidgetTemplates } from '../hooks/use-widget-templates.hook';
 import { useGridConfig } from '../hooks/use-grid-config.hook';
 import { WidgetCard } from './widget-card.component';
+import { useT } from '../i18n';
 import type { ServiceConfig } from '@dashdash/types';
 import type { WidgetTemplate } from '../widgets/catalog';
 import type { WidgetTemplateDef } from '../hooks/use-widget-templates.hook';
@@ -32,6 +33,7 @@ function servicesAsLayout(services: ServiceConfig[], templates: WidgetTemplateDe
 }
 
 export function DashGrid() {
+  const t = useT();
   const editMode = useUIStore(s => s.editMode);
   const droppingItem = useUIStore(s => s.droppingItem);
   const setDroppingItem = useUIStore(s => s.setDroppingItem);
@@ -218,7 +220,7 @@ export function DashGrid() {
   if (allServices.length === 0 && !editMode) {
     return (
       <div className="dash-grid-container dash-grid-empty">
-        <p>No services configured. Add widgets to <code>config/services.yml</code> or open Config to drag widgets onto the grid.</p>
+        <p>{t('dashGrid.noServices')}</p>
       </div>
     );
   }

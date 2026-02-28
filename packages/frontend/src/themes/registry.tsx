@@ -31,7 +31,9 @@ export interface ThemeDefinition {
   /** Matches the data-theme attribute value on <html>. */
   id: string;
   name: string;
+  nameKey?: string | undefined;
   description: string;
+  descriptionKey?: string | undefined;
   Icon: LucideIcon;
   /** Card component rendered by WidgetCard for this theme. */
   Card: ComponentType<CardProps>;
@@ -41,28 +43,36 @@ export const THEMES: ThemeDefinition[] = [
   {
     id: 'liquid-glass',
     name: 'Liquid Glass',
+    nameKey: 'themes.liquidGlass.name',
     description: 'Squircle cards with backdrop blur and lens distortion',
+    descriptionKey: 'themes.liquidGlass.description',
     Icon: Droplets,
     Card: LiquidCard,
   },
   {
     id: 'classic',
     name: 'Classic',
+    nameKey: 'themes.classic.name',
     description: 'Clean rounded cards with subtle border and shadow',
+    descriptionKey: 'themes.classic.description',
     Icon: LayoutDashboard,
     Card: ClassicCard,
   },
   {
     id: 'ascii',
     name: 'ASCII',
+    nameKey: 'themes.ascii.name',
     description: 'Commodore 64 PETSCII — box-drawing borders on midnight blue',
+    descriptionKey: 'themes.ascii.description',
     Icon: Terminal,
     Card: AsciiCard,
   },
   {
     id: 'atom',
     name: 'ATOM',
+    nameKey: 'themes.atom.name',
     description: 'Pip-Boy phosphor CRT with scanlines, vignette, and phosphor glow',
+    descriptionKey: 'themes.atom.description',
     Icon: Radiation,
     Card: AtomCard,
   },

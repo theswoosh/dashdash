@@ -9,6 +9,7 @@ const PUBLIC_PATHS = new Set([
   '/api/auth/forgot-password',
   '/api/auth/reset-password',
   '/api/auth/config',
+  '/api/locales',
 ]);
 
 const COOKIE_NAME = 'dashdash_session';

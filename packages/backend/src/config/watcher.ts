@@ -36,7 +36,7 @@ function broadcast(data: unknown): void {
 }
 
 export function startWatcher(configDir: string, logger?: Logger | undefined) {
-  const watcher = chokidar.watch(join(configDir, '*.yml'), {
+  const watcher = chokidar.watch([join(configDir, '*.yml'), join(configDir, 'locales', '*.yml')], {
     ignoreInitial: true,
     persistent: true,
     awaitWriteFinish: { stabilityThreshold: 200, pollInterval: 50 },
