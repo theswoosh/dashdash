@@ -1,6 +1,7 @@
 import { X } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
 import { useT } from '../i18n';
+import { LanguageSelector } from './language-selector.component';
 import './profile-popup.css';
 
 export function ProfilePopup() {
@@ -20,7 +21,10 @@ export function ProfilePopup() {
           </button>
         </div>
         <div className="profile-body">
-          {/* Profile editing — coming soon */}
+          <div className="profile-language">
+            <span className="profile-language-label">{t('userMenu.language')}</span>
+            <LanguageSelector />
+          </div>
         </div>
       </div>
     </div>

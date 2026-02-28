@@ -52,5 +52,17 @@
 
 .profile-body {
   padding: 24px;
-  min-height: 80px;
+}
+
+.profile-language {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.profile-language-label {
+  font-size: 0.8125rem;
+  color: var(--text-muted, rgba(255, 255, 255, 0.55));
+  font-weight: 500;
 }
