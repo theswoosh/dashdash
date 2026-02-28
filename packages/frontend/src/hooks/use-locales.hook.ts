@@ -1,15 +1,19 @@
 import useSWR from 'swr';
+import { EN_FALLBACK } from '../i18n/en.fallback';
 
 export interface LocalesResponse {
   languages: string[];
   translations: Record<string, Record<string, unknown>>;
 }
 
-const EMPTY: LocalesResponse = { languages: ['en'], translations: {} };
+const FALLBACK: LocalesResponse = {
+  languages: ['en'],
+  translations: { en: EN_FALLBACK as Record<string, unknown> },
+};
 
 async function fetchLocales(url: string): Promise<LocalesResponse> {
   const res = await fetch(url);
-  if (!res.ok) return EMPTY;
+  if (!res.ok) return FALLBACK;
   return (await res.json()) as LocalesResponse;
 }
 
@@ -18,5 +22,5 @@ export function useLocales(): LocalesResponse {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
   });
-  return data ?? EMPTY;
+  return data ?? FALLBACK;
 }
