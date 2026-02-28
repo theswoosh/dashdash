@@ -1,14 +1,15 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import './ascii-card.css';
 
 interface Props {
   children: ReactNode;
   className?: string | undefined;
+  style?: CSSProperties | undefined;
 }
 
-export function AsciiCard({ children, className = '' }: Props) {
+export function AsciiCard({ children, className = '', style }: Props) {
   return (
-    <div className={`ascii-card ${className}`}>
+    <div className={`ascii-card ${className}`} style={style}>
       <div className="ascii-card__top">
         <div className="ascii-card__top-fill" />
       </div>

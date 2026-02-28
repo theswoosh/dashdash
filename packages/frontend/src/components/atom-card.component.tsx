@@ -1,14 +1,15 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import './atom-card.css';
 
 interface Props {
   children: ReactNode;
   className?: string | undefined;
+  style?: CSSProperties | undefined;
 }
 
-export function AtomCard({ children, className = '' }: Props) {
+export function AtomCard({ children, className = '', style }: Props) {
   return (
-    <div className={`atom-card ${className}`}>
+    <div className={`atom-card ${className}`} style={style}>
       {children}
     </div>
   );

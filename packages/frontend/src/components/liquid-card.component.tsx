@@ -2,7 +2,7 @@
  * LiquidCard — glass card with squircle corners, displacement refraction, and rim highlight.
  * Technique ported from github.com/FezVrasta/liquid-glass (originally by Shu Ding).
  */
-import { useRef, useLayoutEffect, useId, useState, type ReactNode } from 'react';
+import { useRef, useLayoutEffect, useId, useState, type CSSProperties, type ReactNode } from 'react';
 import './LiquidCard.css';
 
 // ── Feature detection (computed once at module load) ─────────────────────────
@@ -125,9 +125,10 @@ interface Props {
   children: ReactNode;
   className?: string | undefined;
   radius?: number | undefined;
+  style?: CSSProperties | undefined;
 }
 
-export function LiquidCard({ children, className = '', radius = 20 }: Props) {
+export function LiquidCard({ children, className = '', radius = 20, style }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const feImageRef = useRef<SVGFEImageElement | null>(null);
@@ -209,12 +210,15 @@ export function LiquidCard({ children, className = '', radius = 20 }: Props) {
     <div
       ref={cardRef}
       className={`liquid-card ${className}`}
-      style={ready ? {
-        WebkitMaskImage: `url(#${maskId})`,
-        maskImage: `url(#${maskId})`,
-        ...(supportsBackdropUrl && {
-          backdropFilter: `url(#${filterId}) blur(4px) saturate(140%)`,
-        }),
+      style={(ready || style) ? {
+        ...(ready ? {
+          WebkitMaskImage: `url(#${maskId})`,
+          maskImage: `url(#${maskId})`,
+          ...(supportsBackdropUrl && {
+            backdropFilter: `url(#${filterId}) blur(4px) saturate(140%)`,
+          }),
+        } : {}),
+        ...style,
       } : undefined}
     >
       {/* SVG: displacement filter + squircle mask + rim + inner edge shadow */}

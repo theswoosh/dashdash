@@ -55,6 +55,25 @@ describe('patchService', () => {
   it('throws for unknown id', () => {
     expect(() => patchService(tmpDir, 'no-such', {})).toThrow("'no-such'");
   });
+
+  it('removes an option key when patched with null', () => {
+    patchService(tmpDir, 'clock-1', { options: { format24h: null } });
+    const services = readServices(tmpDir) as { options: Record<string, unknown> }[];
+    expect(services[0]!.options).not.toHaveProperty('format24h');
+  });
+
+  it('removes an option key set to null even when other options remain', () => {
+    // First add two options in one patch
+    patchService(tmpDir, 'clock-1', { options: { bg_color: 'rgba(255, 0, 0, 0.30)', showSeconds: true } });
+    // After write, id is re-derived from widget name: 'clock'
+    const servicesAfterAdd = readServices(tmpDir) as { options: Record<string, unknown> }[];
+    expect(servicesAfterAdd[0]!.options).toHaveProperty('bg_color');
+    // Now remove bg_color via null while keeping showSeconds
+    patchService(tmpDir, 'clock', { options: { bg_color: null } });
+    const services = readServices(tmpDir) as { options: Record<string, unknown> }[];
+    expect(services[0]!.options).not.toHaveProperty('bg_color');
+    expect(services[0]!.options).toHaveProperty('showSeconds', true);
+  });
 });
 
 describe('appendService', () => {

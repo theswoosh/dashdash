@@ -257,3 +257,70 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* Background color picker */
+.config-reset-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 11px;
+  color: var(--text-faint);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color var(--transition);
+}
+
+.config-reset-link:hover {
+  color: var(--text-muted);
+}
+
+.config-bg-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.config-color-input {
+  width: 36px;
+  height: 36px;
+  padding: 2px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.config-color-input::-webkit-color-swatch-wrapper {
+  padding: 0;
+  border-radius: 4px;
+}
+
+.config-color-input::-webkit-color-swatch {
+  border: none;
+  border-radius: 4px;
+}
+
+.config-alpha-slider {
+  flex: 1;
+  height: 4px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.config-alpha-value {
+  font-size: 12px;
+  color: var(--text-muted);
+  min-width: 34px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.config-bg-preview {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
