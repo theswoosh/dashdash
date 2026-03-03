@@ -48,6 +48,9 @@ RUN pnpm --filter @dashdash/backend --prod deploy --legacy /deploy
 # ── Stage 3: Runtime image ────────────────────────────────────────────────────
 FROM node:20-alpine AS runtime
 
+# su-exec: lightweight privilege-drop utility (replaces gosu for alpine)
+RUN apk add --no-cache su-exec
+
 WORKDIR /app
 
 # Self-contained backend: compiled JS + flat prod node_modules
@@ -56,10 +59,17 @@ COPY --from=backend-builder /deploy .
 # Frontend SPA served by the backend at /
 COPY --from=frontend-builder /app/packages/frontend/dist ./public
 
-# Default config files — copied to /config on first run (never overwrite)
+# Default config files — seeded into /config on first run (never overwrite)
 COPY config/*.example /app/config-defaults/
 COPY docker/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
+
+# OCI image labels (CI overlays version/revision/created on top)
+LABEL org.opencontainers.image.title="dashdash" \
+      org.opencontainers.image.description="Self-hosted personal dashboard with drag-and-drop grid, YAML config, and live integrations" \
+      org.opencontainers.image.url="https://github.com/theswoosh/dashdash" \
+      org.opencontainers.image.source="https://github.com/theswoosh/dashdash" \
+      org.opencontainers.image.licenses="MIT"
 
 ENV NODE_ENV=production \
     PORT=3000 \
@@ -67,13 +77,9 @@ ENV NODE_ENV=production \
     DATA_DIR=/data \
     CONFIG_DIR=/config
 
-# Create non-root user and own all app directories before declaring volumes
-# (chown after VOLUME is discarded by Docker)
-RUN addgroup -S dashdash && adduser -S dashdash -G dashdash \
-    && mkdir -p /config /data \
-    && chown -R dashdash:dashdash /app /config /data
-
-USER dashdash
+# Create non-root user — entrypoint fixes /data and /config ownership at runtime
+# so upgrades from root-owned volumes work without manual intervention.
+RUN addgroup -S dashdash && adduser -S dashdash -G dashdash
 
 VOLUME ["/config", "/data"]
 
@@ -82,4 +88,5 @@ HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
 
 EXPOSE 3000
 
+# Entrypoint runs as root; fixes volume ownership then drops to dashdash via su-exec.
 ENTRYPOINT ["/app/entrypoint.sh"]

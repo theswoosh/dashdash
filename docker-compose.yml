@@ -1,8 +1,11 @@
 services:
   dashdash:
+    # Pull pre-built image from registry (default):
     image: ghcr.io/theswoosh/dashdash:latest
-    # To build locally instead of pulling:
+    # ── OR build locally ──────────────────────────────────────────────────────
+    # Comment out the image: line above and uncomment build: below.
     # build: .
+    # ─────────────────────────────────────────────────────────────────────────
     ports:
       - "3000:3000"
     volumes:
@@ -17,7 +20,7 @@ services:
       # DASHDASH_INTEGRATION_SONARR_MAIN_KEY: your-sonarr-api-key
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 5s
       retries: 3
