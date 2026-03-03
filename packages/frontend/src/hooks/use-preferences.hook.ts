@@ -1,5 +1,5 @@
 import useSWR from 'swr';
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 const SAVE_DEBOUNCE_MS = 300;
 
@@ -31,6 +31,8 @@ export function usePreferences() {
   });
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (saveTimer.current) clearTimeout(saveTimer.current); }, []);
 
   const savePreferences = useCallback(
     (patch: Partial<Preferences>) => {

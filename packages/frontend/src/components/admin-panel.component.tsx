@@ -100,14 +100,18 @@ export function AdminPanel() {
   const setAdminPanelOpen = useUIStore(s => s.setAdminPanelOpen);
   const [isAddingUser, setIsAddingUser] = useState(false);
   const [actionError, setActionError] = useState('');
+  const [isActionInFlight, setIsActionInFlight] = useState(false);
 
   const { data: users } = useSWR<UserSummary[]>(isAdminPanelOpen ? USERS_KEY : null, jsonFetcher);
 
   if (!isAdminPanelOpen) return null;
 
   async function performAction(fn: () => Promise<{ ok?: boolean; error?: string }>) {
+    if (isActionInFlight) return;
     setActionError('');
+    setIsActionInFlight(true);
     const result = await fn();
+    setIsActionInFlight(false);
     if (result.error) { setActionError(result.error); return; }
     await mutate(USERS_KEY);
   }
@@ -172,6 +176,7 @@ export function AdminPanel() {
                     className="admin-icon-btn"
                     title={user.role === 'admin' ? t('admin.demoteToUser') : t('admin.promoteToAdmin')}
                     onClick={() => toggleRole(user)}
+                    disabled={isActionInFlight}
                   >
                     {user.role === 'admin' ? <ShieldOff size={14} /> : <ShieldCheck size={14} />}
                   </button>
@@ -179,6 +184,7 @@ export function AdminPanel() {
                     className="admin-icon-btn"
                     title={user.isActive ? t('admin.disableUser') : t('admin.enableUser')}
                     onClick={() => toggleActive(user)}
+                    disabled={isActionInFlight}
                   >
                     <UserX size={14} />
                   </button>
@@ -186,6 +192,7 @@ export function AdminPanel() {
                     className="admin-icon-btn"
                     title={t('admin.sendResetEmail')}
                     onClick={() => resetPassword(user)}
+                    disabled={isActionInFlight}
                   >
                     <RefreshCw size={14} />
                   </button>
@@ -194,6 +201,7 @@ export function AdminPanel() {
                       className="admin-icon-btn admin-icon-btn--danger"
                       title={t('admin.deleteUser')}
                       onClick={() => deleteUser(user)}
+                      disabled={isActionInFlight}
                     >
                       <Trash2 size={14} />
                     </button>

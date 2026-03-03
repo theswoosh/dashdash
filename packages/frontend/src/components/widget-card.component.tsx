@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo, memo } from 'react';
 import { GripVertical, Settings, X, RefreshCw } from 'lucide-react';
 import { mutate as swrMutate } from 'swr';
 import type { ServiceConfig } from '@dashdash/types';
@@ -65,7 +65,7 @@ function buildPingTooltip(ping: PingStatus): string {
   return ping.error ?? 'Offline';
 }
 
-export function WidgetCard({ service, editMode, onDelete }: Props) {
+export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete }: Props) {
   const t = useT();
   const Card = useThemeCard();
   const setConfigTarget = useUIStore(s => s.setConfigTarget);
@@ -87,13 +87,18 @@ export function WidgetCard({ service, editMode, onDelete }: Props) {
   const bgColor = typeof service.options?.['bg_color'] === 'string' ? service.options['bg_color'] : undefined;
   const cardStyle = bgColor ? { '--card-bg': bgColor } as React.CSSProperties : undefined;
 
+  const widgetOptions = useMemo(
+    () => ({ ...service.options, _widgetId: service.widget, _title: service.title }),
+    [service.options, service.widget, service.title],
+  );
+
   const body = (() => {
     if (!clientOnly && loading) return <WidgetSkeleton />;
     if (!clientOnly && error) return <WidgetError message={error} />;
     return (
       <Component
         serviceId={service.id}
-        options={{ ...service.options, _widgetId: service.widget, _title: service.title }}
+        options={widgetOptions}
         data={data}
         error={error}
         loading={loading}
@@ -153,4 +158,4 @@ export function WidgetCard({ service, editMode, onDelete }: Props) {
       )}
     </Card>
   );
-}
+});

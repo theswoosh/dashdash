@@ -182,7 +182,9 @@ function ClockConfigModal({
 
 export function Topbar() {
   const t = useT();
-  const { editMode, toggleEditMode, boardName } = useUIStore();
+  const editMode = useUIStore(s => s.editMode);
+  const toggleEditMode = useUIStore(s => s.toggleEditMode);
+  const boardName = useUIStore(s => s.boardName);
   const { preferences, savePreferences } = usePreferences();
   const settings = useSettings();
   const [isClockConfigOpen, setIsClockConfigOpen] = useState(false);

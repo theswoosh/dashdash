@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, type ReactNode } from 'react';
+import { useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
 import useSWR from 'swr';
 import type { WidgetProps } from '@dashdash/types';
 import './NotepadWidget.css';
@@ -48,6 +48,8 @@ export function NotepadWidget({ serviceId, options }: WidgetProps) {
 
   const [focused, setFocused] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (saveTimer.current) clearTimeout(saveTimer.current); }, []);
 
   const content = data?.content ?? '';
 
