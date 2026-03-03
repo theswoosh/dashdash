@@ -27,6 +27,32 @@ auth:
   local:
     enabled: true      # fallback local accounts
 
+# Search engines for the header bar and search widget.
+# All engines must be defined here — there are no built-in defaults.
+# If this section is absent or empty, search is disabled everywhere.
+# Engine placeholder text is optional; widget options can override it.
+searchEngines:
+  - id: duckduckgo
+    label: DuckDuckGo
+    url: https://duckduckgo.com/?q={query}
+    placeholder: Search DuckDuckGo…
+  - id: google
+    label: Google
+    url: https://www.google.com/search?q={query}
+    placeholder: Search Google…
+  - id: brave
+    label: Brave
+    url: https://search.brave.com/search?q={query}
+    placeholder: Search Brave…
+  - id: bing
+    label: Bing
+    url: https://www.bing.com/search?q={query}
+    placeholder: Search Bing…
+  - id: wowhead
+    label: Wowhead
+    url: https://www.wowhead.com/search?q={query}
+    placeholder: Search Wowhead…
+
 # Optional: custom CSS injected after theme
 css:
   custom: |

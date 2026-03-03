@@ -120,21 +120,10 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     description: 'Search bar with configurable engine',
     descriptionKey: 'widgets.search.description',
     defaultSize: { w: 8, h: 4 },
-    defaultOptions: { engine: 'duckduckgo' },
+    defaultOptions: {},
     configFields: [
-      {
-        key: 'engine',
-        label: 'Search engine',
-        type: 'select',
-        options: [
-          { value: 'duckduckgo', label: 'DuckDuckGo' },
-          { value: 'google', label: 'Google' },
-          { value: 'brave', label: 'Brave' },
-          { value: 'bing', label: 'Bing' },
-        ],
-        default: 'duckduckgo',
-      },
-      { key: 'placeholder', label: 'Placeholder text', type: 'text', placeholder: 'Search…' },
+      { key: 'engine', label: 'Engine ID', type: 'text', placeholder: 'Engine id from settings.yml (leave empty for first)' },
+      { key: 'placeholder', label: 'Placeholder override', type: 'text', placeholder: 'Overrides the engine placeholder from settings.yml' },
     ],
   },
   {

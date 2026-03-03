@@ -1,12 +1,12 @@
 /*
- * ASCII card — box-drawing border using Unicode characters.
+ * ASCII card — box-drawing border using Unicode box-drawing characters.
  *
  * The border is faked with four ::before / ::after pseudo-elements on inner
  * wrapper divs, each contributing one side of:
  *
- *   /---------\
- *   |         |
- *   \---------/
+ *   ┌─────────┐
+ *   │         │
+ *   └─────────┘
  *
  * We use two wrappers so we get four pseudo-element slots.
  */
@@ -26,7 +26,7 @@
   color: var(--text-primary);
 }
 
-/* ── Top border: /---------\ ─────────────────────────────────────────────── */
+/* ── Top border: ┌─────────┐ ─────────────────────────────────────────────── */
 .ascii-card__top {
   display: flex;
   align-items: center;
@@ -38,8 +38,8 @@
   font-size: 1em;
 }
 
-.ascii-card__top::before { content: '/'; }
-.ascii-card__top::after  { content: '\\'; }
+.ascii-card__top::before { content: '┌'; }
+.ascii-card__top::after  { content: '┐'; }
 
 .ascii-card__top-fill {
   flex: 1;
@@ -50,7 +50,7 @@
 }
 
 .ascii-card__top-fill::before {
-  content: '------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------';
+  content: '────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────';
   position: absolute;
   inset: 0;
   overflow: hidden;
@@ -59,7 +59,7 @@
   color: var(--accent);
 }
 
-/* ── Middle row: | content | ─────────────────────────────────────────────── */
+/* ── Middle row: │ content │ ─────────────────────────────────────────────── */
 .ascii-card__middle {
   display: flex;
   flex: 1;
@@ -78,7 +78,7 @@
 /* Stack pipe characters vertically via newlines in CSS content (\A = newline).
    200 pipes is more than any realistic card height; overflow: hidden clips the rest. */
 .ascii-card__side::before {
-  content: "|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|\A|";
+  content: "│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│\A│";
   white-space: pre;
   display: block;
   line-height: 1em;
@@ -94,7 +94,7 @@
   flex-direction: column;
 }
 
-/* ── Bottom border: \---------/ ──────────────────────────────────────────── */
+/* ── Bottom border: └─────────┘ ──────────────────────────────────────────── */
 .ascii-card__bottom {
   display: flex;
   align-items: center;
@@ -106,8 +106,8 @@
   font-size: 1em;
 }
 
-.ascii-card__bottom::before { content: '\\'; }
-.ascii-card__bottom::after  { content: '/'; }
+.ascii-card__bottom::before { content: '└'; }
+.ascii-card__bottom::after  { content: '┘'; }
 
 .ascii-card__bottom-fill {
   flex: 1;
@@ -117,7 +117,7 @@
 }
 
 .ascii-card__bottom-fill::before {
-  content: '------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------';
+  content: '────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────';
   position: absolute;
   inset: 0;
   overflow: hidden;

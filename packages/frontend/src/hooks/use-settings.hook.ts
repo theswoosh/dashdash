@@ -4,6 +4,7 @@ export interface SearchEngine {
   id: string;
   label: string;
   url: string;
+  placeholder?: string | undefined;
 }
 
 export interface DashSettings {

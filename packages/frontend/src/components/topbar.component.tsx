@@ -8,13 +8,6 @@ import { useT } from '../i18n';
 import './Topbar.css';
 import './WidgetConfigModal.css';
 
-const BUILT_IN_ENGINES: SearchEngine[] = [
-  { id: 'duckduckgo', label: 'DuckDuckGo', url: 'https://duckduckgo.com/?q={query}' },
-  { id: 'google',     label: 'Google',     url: 'https://www.google.com/search?q={query}' },
-  { id: 'brave',      label: 'Brave',      url: 'https://search.brave.com/search?q={query}' },
-  { id: 'bing',       label: 'Bing',       url: 'https://www.bing.com/search?q={query}' },
-];
-
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function TopbarClock({
@@ -58,15 +51,15 @@ function TopbarSearch({
 }) {
   const [query, setQuery] = useState('');
 
-  const resolvedEngine = engine ?? 'duckduckgo';
-  const selectedEngine = engines.find(e => e.id === resolvedEngine) ?? engines[0];
-  const urlTemplate = selectedEngine?.url ?? BUILT_IN_ENGINES[0]!.url;
-  const resolvedPlaceholder = placeholder || 'Search…';
+  const selectedEngine = engine
+    ? engines.find(e => e.id === engine)
+    : engines[0];
+  const resolvedPlaceholder = placeholder || selectedEngine?.placeholder || 'Search…';
 
   const submitSearch = (e: FormEvent) => {
     e.preventDefault();
-    if (!query.trim()) return;
-    const url = urlTemplate.replace('{query}', encodeURIComponent(query.trim()));
+    if (!selectedEngine || !query.trim()) return;
+    const url = selectedEngine.url.replace('{query}', encodeURIComponent(query.trim()));
     window.open(url, '_blank', 'noopener,noreferrer');
     setQuery('');
   };
@@ -195,10 +188,7 @@ export function Topbar() {
   const isHeaderSearch = preferences?.headerSearch ?? false;
   const isHideTopbar = preferences?.hideTopbar ?? false;
 
-  const allEngines: SearchEngine[] = [
-    ...BUILT_IN_ENGINES,
-    ...(settings.searchEngines ?? []),
-  ];
+  const allEngines = settings.searchEngines ?? [];
 
   const effectiveTimezone = preferences?.headerClockTimezone || settings.timezone || undefined;
 

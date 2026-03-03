@@ -95,6 +95,7 @@ export const SearchEngineSchema = z.object({
   id: z.string(),
   label: z.string(),
   url: z.string(),
+  placeholder: z.string().optional(),
 });
 
 export const SearchEnginesSchema = z.array(SearchEngineSchema);

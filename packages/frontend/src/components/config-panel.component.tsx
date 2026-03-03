@@ -245,13 +245,7 @@ function OptionsTab() {
     }
   }, [preferences]);
 
-  const builtInEngines = [
-    { id: 'duckduckgo', label: 'DuckDuckGo' },
-    { id: 'google',     label: 'Google' },
-    { id: 'brave',      label: 'Brave' },
-    { id: 'bing',       label: 'Bing' },
-  ];
-  const allEngines = [...builtInEngines, ...(settings.searchEngines ?? [])];
+  const allEngines = settings.searchEngines ?? [];
 
   const updateBoardName = (e: React.ChangeEvent<HTMLInputElement>) => {
     const nameValue = e.target.value;
