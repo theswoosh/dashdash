@@ -44,7 +44,7 @@ export const createWidgetRoutes = (opts: WidgetRouteOptions): FastifyPluginAsync
         // Resolve integration if referenced
         let resolvedIntegration: import('../widgets/types.js').ResolvedIntegration | undefined;
         if (integrationId) {
-          const integrations = loadIntegrations(opts.configDir);
+          const integrations = loadIntegrations(opts.configDir, fastify.log);
           const integration = integrations.find(i => i.id === integrationId);
           if (integration) {
             resolvedIntegration = {

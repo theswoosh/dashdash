@@ -32,8 +32,8 @@ export function createNotepadRoutes(db: Db): FastifyPluginAsync {
       async (request, reply) => {
         const { serviceId } = request.params;
         const { content } = request.body;
-        if (typeof content !== 'string') {
-          return reply.code(400).send({ ok: false, error: 'content must be a string' });
+        if (typeof content !== 'string' || content.length > 100_000) {
+          return reply.code(400).send({ ok: false, error: 'content must be a string under 100 KB' });
         }
         upsert.run(serviceId, content);
         return { ok: true };

@@ -11,7 +11,7 @@ const defaultLogger: Logger = console;
 function readYaml(filePath: string, logger: Logger): unknown {
   if (!existsSync(filePath)) return null;
   try {
-    return yaml.load(readFileSync(filePath, 'utf8'));
+    return yaml.load(readFileSync(filePath, 'utf8'), { schema: yaml.CORE_SCHEMA });
   } catch (err) {
     logger.warn(`Failed to parse ${filePath}:`, err);
     return null;

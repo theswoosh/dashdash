@@ -3,6 +3,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import helmet from '@fastify/helmet';
 import fastifyCookie from '@fastify/cookie';
 import fastifyStatic from '@fastify/static';
 import multipart from '@fastify/multipart';
@@ -25,7 +26,7 @@ import { createAuthRoutes } from './routes/auth.route.js';
 import { createUsersRoutes } from './routes/users.route.js';
 import { createLocalesRoutes } from './routes/locales.route.js';
 import { registerAuthMiddleware } from './middleware/auth.middleware.js';
-import { cleanupExpiredSessions } from './db/sessions.db.js';
+import { cleanupExpiredSessions, validateSession } from './db/sessions.db.js';
 
 export interface AppOptions {
   dataDir: string;
@@ -36,6 +37,7 @@ export interface AppOptions {
 }
 
 const SESSION_CLEANUP_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
+const COOKIE_NAME = 'dashdash_session';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // Seed files live at src/../../seed/locales relative to this file in dev,
@@ -76,8 +78,23 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
   });
 
   await server.register(cors, {
-    origin: isDev ? 'http://localhost:3000' : false,
+    origin: isDev
+      ? 'http://localhost:3000'
+      : (process.env['DASHDASH_CORS_ORIGIN'] ?? false),
     credentials: true,
+  });
+
+  await server.register(helmet, {
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:', 'https:'],
+        frameSrc: ["'self'", 'https:'],
+        connectSrc: ["'self'", 'wss:'],
+      },
+    },
   });
 
   await server.register(fastifyCookie);
@@ -120,7 +137,12 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
   await server.register(createBoardRoutes(db, configDir), { prefix: '/api' });
   await server.register(createLocalesRoutes(configDir), { prefix: '/api' });
 
-  server.get('/api/ws', { websocket: true }, (socket: WebSocket) => {
+  server.get('/api/ws', { websocket: true }, (socket: WebSocket, request) => {
+    const sessionId = request.cookies?.[COOKIE_NAME];
+    if (!sessionId || !validateSession(db, sessionId)) {
+      socket.close(4001, 'Unauthorized');
+      return;
+    }
     addWsClient(socket);
     socket.on('close', () => removeWsClient(socket));
     socket.on('error', () => removeWsClient(socket));

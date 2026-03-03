@@ -1,5 +1,6 @@
 import { execFile } from 'child_process';
-import net from 'net';
+import net, { isIP } from 'net';
+import dns from 'dns/promises';
 
 const MAX_HOSTNAME_LENGTH = 253;
 const MIN_PING_TIMEOUT_SEC = 1;
@@ -7,6 +8,25 @@ const DEFAULT_TIMEOUT_MS = 5000;
 
 /** Strict host validation — prevents any shell/command injection. */
 const SAFE_HOST_RE = /^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?$/;
+
+/** Block RFC-1918 / loopback / link-local ranges to prevent SSRF. */
+const PRIVATE_IP_RE = [
+  /^127\./,
+  /^10\./,
+  /^172\.(1[6-9]|2\d|3[01])\./,
+  /^192\.168\./,
+  /^169\.254\./,
+  /^0\./,
+  /^::1$/,
+  /^fe80:/i,
+  /^fc00:/i,
+  /^fd/i,
+];
+
+async function isPrivateOrLoopback(host: string): Promise<boolean> {
+  const addresses = isIP(host) ? [host] : await dns.resolve4(host).catch(() => [] as string[]);
+  return addresses.some(ip => PRIVATE_IP_RE.some(re => re.test(ip)));
+}
 
 function extractHost(input: string): string {
   const normalized = input.includes('://') ? input : `http://${input}`;
@@ -78,6 +98,10 @@ export async function runHealthcheck(opts: CheckOptions): Promise<CheckResult> {
 
   if (!SAFE_HOST_RE.test(host) || host.length > MAX_HOSTNAME_LENGTH) {
     return { status: 'down', error: 'Invalid host', latencyMs: 0 };
+  }
+
+  if (await isPrivateOrLoopback(host)) {
+    return { status: 'down', error: 'Private or reserved addresses are not allowed', latencyMs: 0 };
   }
 
   // Extract port from URL if not provided as an explicit option.

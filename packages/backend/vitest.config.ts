@@ -6,5 +6,6 @@ export default defineConfig({
     globals: true,
     // Each test file gets its own worker — important for SQLite (file-per-test)
     pool: 'forks',
+    exclude: ['dist/**', 'node_modules/**'],
   },
 });

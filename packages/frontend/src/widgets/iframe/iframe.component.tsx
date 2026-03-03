@@ -12,6 +12,14 @@ export function IframeWidget({ options }: WidgetProps) {
     );
   }
 
+  if (!/^https?:\/\//i.test(url)) {
+    return (
+      <div className="iframe-widget iframe-widget--empty">
+        <span>Invalid URL — only http:// and https:// are allowed</span>
+      </div>
+    );
+  }
+
   return (
     <iframe
       className="iframe-widget"

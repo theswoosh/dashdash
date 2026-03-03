@@ -21,6 +21,7 @@ export function SearchWidget({ options }: WidgetProps) {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
+    if (!/^https?:\/\//i.test(urlTemplate)) return;
     const url = urlTemplate.replace('{query}', encodeURIComponent(query.trim()));
     window.open(url, '_blank', 'noopener,noreferrer');
     setQuery('');
