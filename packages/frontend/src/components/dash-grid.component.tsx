@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import ReactGridLayout from 'react-grid-layout';
 import type { Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
@@ -14,6 +14,8 @@ import type { ServiceConfig } from '@dashdash/types';
 import type { WidgetTemplate } from '../widgets/catalog';
 import type { WidgetTemplateDef } from '../hooks/use-widget-templates.hook';
 import './DashGrid.css';
+
+const CONTAINER_PADDING: [number, number] = [0, 0];
 
 /** Build RGL layout items directly from services (YAML is source of truth).
  *  Templates supply optional minW/minH constraints per widget type. */
@@ -45,10 +47,10 @@ export function DashGrid() {
   // Optimistic queue: new widgets dropped but not yet confirmed by the server
   const [dropQueue, setDropQueue] = useState<ServiceConfig[]>([]);
 
-  const allServices: ServiceConfig[] = [
-    ...services,
-    ...dropQueue.filter(s => !services.find(x => x.id === s.id)),
-  ];
+  const allServices = useMemo<ServiceConfig[]>(
+    () => [...services, ...dropQueue.filter(s => !services.find(x => x.id === s.id))],
+    [services, dropQueue],
+  );
 
   // Always-current ref so handleDrop can read allServices without a stale closure.
   const allServicesRef = useRef(allServices);
@@ -81,8 +83,7 @@ export function DashGrid() {
         return extras.length > 0 ? [...merged, ...extras] : merged;
       });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allServices.length, services, dropQueue, widgetTemplates]);
+  }, [allServices, widgetTemplates]);
 
   // Tracks the latest drag positions for save-on-close.
   // Updated by handleLayoutChange (never by React state) so it never triggers
@@ -217,6 +218,13 @@ export function DashGrid() {
     ro.observe(node);
   }, []);
 
+  const { columns: cols, rowHeight, gap } = gridConfig;
+  const margin = useMemo<[number, number]>(() => [gap, gap], [gap]);
+  const rglDropItem = useMemo(
+    () => editMode ? { i: '__dropping-elem__', w: droppingItem?.w ?? 2, h: droppingItem?.h ?? 2 } : undefined,
+    [editMode, droppingItem?.w, droppingItem?.h],
+  );
+
   if (allServices.length === 0 && !editMode) {
     return (
       <div className="dash-grid-container dash-grid-empty">
@@ -224,9 +232,6 @@ export function DashGrid() {
       </div>
     );
   }
-
-  const { columns: cols, rowHeight, gap } = gridConfig;
-  const margin: [number, number] = [gap, gap];
 
   return (
     <div className="dash-grid-container" ref={containerRef}>
@@ -244,13 +249,13 @@ export function DashGrid() {
         rowHeight={rowHeight}
         width={width}
         margin={margin}
-        containerPadding={[0, 0]}
+        containerPadding={CONTAINER_PADDING}
         isDraggable={editMode}
         isResizable={editMode}
         isDroppable={editMode}
         compactType={null}
         preventCollision={true}
-        droppingItem={editMode ? { i: '__dropping-elem__', w: droppingItem?.w ?? 2, h: droppingItem?.h ?? 2 } : undefined}
+        droppingItem={rglDropItem}
         onDrop={createWidgetFromDrop}
         onLayoutChange={recordDragPositions}
         draggableHandle=".widget-drag-handle"
