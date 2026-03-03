@@ -4,22 +4,24 @@ import yaml from 'js-yaml';
 import { IntegrationsSchema } from './schemas.js';
 import type { Integration } from './schemas.js';
 
-function readYaml(filePath: string): unknown {
+interface Logger { warn: (msg: string, ...args: unknown[]) => void }
+
+function readYaml(filePath: string, logger: Logger): unknown {
   if (!existsSync(filePath)) return null;
   try {
-    return yaml.load(readFileSync(filePath, 'utf8'));
+    return yaml.load(readFileSync(filePath, 'utf8'), { schema: yaml.CORE_SCHEMA });
   } catch (err) {
-    console.warn(`Failed to parse ${filePath}:`, err);
+    logger.warn(`Failed to parse ${filePath}:`, err);
     return null;
   }
 }
 
-export function loadIntegrations(configDir: string): Integration[] {
-  const raw = readYaml(join(configDir, 'integrations.yml'));
+export function loadIntegrations(configDir: string, logger: Logger = console): Integration[] {
+  const raw = readYaml(join(configDir, 'integrations.yml'), logger);
   if (raw === null) return [];
   const parseResult = IntegrationsSchema.safeParse(raw);
   if (!parseResult.success) {
-    console.warn('integrations.yml validation errors:', parseResult.error.format());
+    logger.warn('integrations.yml validation errors:', parseResult.error.format());
     return [];
   }
   return parseResult.data;

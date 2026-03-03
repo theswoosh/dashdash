@@ -58,16 +58,37 @@ const ResetPasswordBodySchema = z.object({
   password: z.string().min(8).max(128),
 });
 
+const RATE_LIMIT_PRUNE_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
+
+function pruneExpiredEntries(
+  store: Map<string, { count: number; windowStart: number }>,
+  windowMs: number
+): void {
+  const now = Date.now();
+  for (const [key, entry] of store) {
+    if (now - entry.windowStart > windowMs) store.delete(key);
+  }
+}
+
 export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: MailConfig): FastifyPluginAsync {
   // Rate limiter stores are per-server-instance — reset when server restarts or test teardown.
   const loginAttempts = new Map<string, { count: number; windowStart: number }>();
   const registerAttempts = new Map<string, { count: number; windowStart: number }>();
   const forgotAttempts = new Map<string, { count: number; windowStart: number }>();
 
+  // Prevent unbounded memory growth — prune expired windows every 15 minutes.
+  const pruneTimer = setInterval(() => {
+    pruneExpiredEntries(loginAttempts, RATE_WINDOWS.login.windowMs);
+    pruneExpiredEntries(registerAttempts, RATE_WINDOWS.register.windowMs);
+    pruneExpiredEntries(forgotAttempts, RATE_WINDOWS.forgot.windowMs);
+  }, RATE_LIMIT_PRUNE_INTERVAL_MS);
+  pruneTimer.unref();
+
   return async (fastify) => {
     const cookieOpts = {
       httpOnly: true,
-      secure: process.env['NODE_ENV'] === 'production',
+      secure: process.env['DASHDASH_COOKIE_SECURE'] !== 'false'
+        && process.env['NODE_ENV'] === 'production',
       sameSite: 'strict' as const,
       path: '/',
       maxAge: authConfig.session.maxAgeSeconds,

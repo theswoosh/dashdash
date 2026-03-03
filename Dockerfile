@@ -56,8 +56,6 @@ COPY --from=backend-builder /deploy .
 # Frontend SPA served by the backend at /
 COPY --from=frontend-builder /app/packages/frontend/dist ./public
 
-VOLUME ["/config", "/data"]
-
 # Default config files — copied to /config on first run (never overwrite)
 COPY config/*.example /app/config-defaults/
 COPY docker/entrypoint.sh /app/entrypoint.sh
@@ -68,6 +66,19 @@ ENV NODE_ENV=production \
     HOST=0.0.0.0 \
     DATA_DIR=/data \
     CONFIG_DIR=/config
+
+# Create non-root user and own all app directories before declaring volumes
+# (chown after VOLUME is discarded by Docker)
+RUN addgroup -S dashdash && adduser -S dashdash -G dashdash \
+    && mkdir -p /config /data \
+    && chown -R dashdash:dashdash /app /config /data
+
+USER dashdash
+
+VOLUME ["/config", "/data"]
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+  CMD wget -qO- http://localhost:3000/api/health || exit 1
 
 EXPOSE 3000
 

@@ -1,5 +1,5 @@
 import chokidar from 'chokidar';
-import { join } from 'path';
+import { join, basename } from 'path';
 
 interface Logger { info: (msg: string) => void }
 
@@ -48,11 +48,11 @@ export function startWatcher(configDir: string, logger?: Logger | undefined) {
       return;
     }
     (logger ?? console).info(`Config changed: ${path}`);
-    broadcast({ type: 'config:reload', path });
+    broadcast({ type: 'config:reload', file: basename(path) });
   });
 
   watcher.on('add', path => {
-    broadcast({ type: 'config:reload', path });
+    broadcast({ type: 'config:reload', file: basename(path) });
   });
 
   return watcher;

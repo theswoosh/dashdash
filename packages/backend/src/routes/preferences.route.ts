@@ -58,6 +58,7 @@ export function createPreferencesRoutes(db: Db): FastifyPluginAsync {
         schema: {
           body: {
             type: 'object',
+            additionalProperties: false,
             properties: {
               theme: { type: 'string' },
               darkMode: { type: 'boolean' },

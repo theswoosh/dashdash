@@ -21,7 +21,7 @@ export type WidgetTemplateDef = z.infer<typeof WidgetTemplateSchema>;
 export function loadWidgetTemplates(configDir: string): WidgetTemplateDef[] {
   const filePath = join(configDir, 'widgets.yml');
   if (!existsSync(filePath)) return [];
-  const raw = yaml.load(readFileSync(filePath, 'utf8'));
+  const raw = yaml.load(readFileSync(filePath, 'utf8'), { schema: yaml.CORE_SCHEMA });
   const result = WidgetTemplatesSchema.safeParse(raw);
   return result.success ? result.data : [];
 }

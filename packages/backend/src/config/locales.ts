@@ -34,7 +34,7 @@ export function loadLocales(configDir: string): TranslationMap {
     const lang = file.replace(/\.yml$/, '');
     try {
       const raw = readFileSync(join(localesDir, file), 'utf8');
-      const parsed = yaml.load(raw);
+      const parsed = yaml.load(raw, { schema: yaml.CORE_SCHEMA });
       if (parsed && typeof parsed === 'object') {
         result[lang] = parsed as Record<string, unknown>;
       }
