@@ -3,7 +3,7 @@ import type { Db } from './index.js';
 
 const SESSION_TOKEN_BYTES = 32;
 
-export interface SessionPayload {
+interface SessionPayload {
   userId: string;
   userRole: 'admin' | 'user';
 }

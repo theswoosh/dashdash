@@ -3,7 +3,7 @@ import { join } from 'path';
 import yaml from 'js-yaml';
 import { EN_FALLBACK } from '../i18n/en.fallback.js';
 
-export type TranslationMap = Record<string, Record<string, unknown>>;
+type TranslationMap = Record<string, Record<string, unknown>>;
 
 /**
  * Loads all *.yml files from configDir/locales/.

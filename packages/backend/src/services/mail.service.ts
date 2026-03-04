@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
 
-export interface SmtpConfig {
+interface SmtpConfig {
   host: string;
   port: number;
   secure: boolean;

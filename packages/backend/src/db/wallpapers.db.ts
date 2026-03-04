@@ -1,6 +1,6 @@
 import type { Db } from './index.js';
 
-export interface WallpaperRow {
+interface WallpaperRow {
   id: string;
   user_id: string;
   board_id: string;

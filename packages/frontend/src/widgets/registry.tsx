@@ -9,7 +9,7 @@ import { IframeWidget } from './iframe/iframe.component';
 import { FallbackWidget } from './fallback/fallback.component';
 import { NotepadWidget } from './notepad/notepad.component';
 
-export interface FrontendWidget {
+interface FrontendWidget {
   Component: ComponentType<WidgetProps>;
   clientOnly?: boolean | undefined;
 }

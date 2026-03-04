@@ -37,13 +37,13 @@ function extractHost(input: string): string {
   }
 }
 
-export interface CheckOptions {
+interface CheckOptions {
   url: string;
   port?: number | undefined;
   timeoutMs?: number | undefined;
 }
 
-export interface CheckResult {
+interface CheckResult {
   status: 'up' | 'down';
   latencyMs: number;
   error?: string | undefined;

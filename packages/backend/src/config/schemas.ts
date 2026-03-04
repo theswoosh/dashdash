@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const ServiceLayoutSchema = z.object({
+const ServiceLayoutSchema = z.object({
   w: z.number().int().positive(),
   h: z.number().int().positive(),
   x: z.number().int().nonnegative().default(0),
@@ -8,7 +8,7 @@ export const ServiceLayoutSchema = z.object({
 });
 
 /** Schema used when reading from YAML — id is optional, auto-assigned if absent. */
-export const RawServiceSchema = z.object({
+const RawServiceSchema = z.object({
   id: z.string().optional(),
   title: z.string(),
   icon: z.string().optional(),
@@ -35,7 +35,7 @@ export function assignIds(
   });
 }
 
-export const ServiceSchema = z.object({
+const ServiceSchema = z.object({
   id: z.string(),
   title: z.string(),
   icon: z.string().optional(),
@@ -45,15 +45,15 @@ export const ServiceSchema = z.object({
   options: z.record(z.unknown()).optional(),
 });
 
-export const ServicesSchema = z.array(ServiceSchema);
+const ServicesSchema = z.array(ServiceSchema);
 
-export const GridSchema = z.object({
+const GridSchema = z.object({
   columns: z.number().int().positive().default(12),
   rowHeight: z.number().int().positive().default(80),
   gap: z.number().int().nonnegative().default(12),
 });
 
-export const BackgroundSchema = z.object({
+const BackgroundSchema = z.object({
   type: z.enum(['image', 'gradient', 'color', 'unsplash', 'video']).default('color'),
   url: z.string().optional(),
   value: z.string().optional(),
@@ -71,7 +71,7 @@ const AuthRegistrationSchema = z.object({
   enabled: z.boolean().default(true),
 }).default({});
 
-export const AuthConfigSchema = z.object({
+const AuthConfigSchema = z.object({
   registration: AuthRegistrationSchema,
   session: AuthSessionSchema,
   oidc: z.object({
@@ -82,7 +82,7 @@ export const AuthConfigSchema = z.object({
   }).default({}),
 }).default({});
 
-export const MailConfigSchema = z.object({
+const MailConfigSchema = z.object({
   smtp: z.object({
     host: z.string().default(''),
     port: z.number().int().default(587),
@@ -91,14 +91,14 @@ export const MailConfigSchema = z.object({
   from: z.string().default(''),
 }).default({});
 
-export const SearchEngineSchema = z.object({
+const SearchEngineSchema = z.object({
   id: z.string(),
   label: z.string(),
   url: z.string(),
   placeholder: z.string().optional(),
 });
 
-export const SearchEnginesSchema = z.array(SearchEngineSchema);
+const SearchEnginesSchema = z.array(SearchEngineSchema);
 
 export const SettingsSchema = z.object({
   title: z.string().default('dashdash'),
@@ -125,12 +125,12 @@ export const IntegrationSchema = z.object({
 
 export const IntegrationsSchema = z.array(IntegrationSchema);
 
-export type SearchEngine = z.infer<typeof SearchEngineSchema>;
+type SearchEngine = z.infer<typeof SearchEngineSchema>;
 export type Behavior = z.infer<typeof BehaviorSchema>;
 export type Services = z.infer<typeof ServicesSchema>;
 export type Settings = z.infer<typeof SettingsSchema>;
 export type Service = z.infer<typeof ServiceSchema>;
 export type Integration = z.infer<typeof IntegrationSchema>;
-export type Integrations = z.infer<typeof IntegrationsSchema>;
+type Integrations = z.infer<typeof IntegrationsSchema>;
 export type AuthConfig = z.infer<typeof AuthConfigSchema>;
 export type MailConfig = z.infer<typeof MailConfigSchema>;

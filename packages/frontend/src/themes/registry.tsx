@@ -20,14 +20,14 @@ import { AsciiCard } from '../components/ascii-card.component';
 import { AtomCard } from '../components/atom-card.component';
 
 /** Props that every card component must accept. */
-export interface CardProps {
+interface CardProps {
   children: ReactNode;
   className?: string | undefined;
   style?: CSSProperties | undefined;
 }
 
 /** One entry in the theme registry. */
-export interface ThemeDefinition {
+interface ThemeDefinition {
   /** Matches the data-theme attribute value on <html>. */
   id: string;
   name: string;
@@ -105,7 +105,3 @@ export function useThemeCard(): ComponentType<CardProps> {
   return useContext(ThemeContext).Card;
 }
 
-/** Returns the full ThemeDefinition for the currently active theme. */
-export function useTheme(): ThemeDefinition {
-  return useContext(ThemeContext).theme;
-}

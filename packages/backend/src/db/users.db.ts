@@ -1,9 +1,9 @@
 import { randomUUID } from 'crypto';
 import type { Db } from './index.js';
 
-export type UserRole = 'admin' | 'user';
+type UserRole = 'admin' | 'user';
 
-export interface UserRow {
+interface UserRow {
   id: string;
   email: string;
   name: string;
@@ -17,7 +17,7 @@ export interface UserRow {
   updated_at: string;
 }
 
-export interface UserSummary {
+interface UserSummary {
   id: string;
   email: string;
   name: string;
@@ -90,7 +90,7 @@ export function listUsers(db: Db): UserSummary[] {
   }));
 }
 
-export function countUsers(db: Db): number {
+function countUsers(db: Db): number {
   return (db.prepare('SELECT COUNT(*) AS n FROM users').get() as { n: number }).n;
 }
 

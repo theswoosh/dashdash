@@ -8,15 +8,15 @@ const SizeSchema = z.object({
   h: z.number().int().positive(),
 });
 
-export const WidgetTemplateSchema = z.object({
+const WidgetTemplateSchema = z.object({
   type: z.string(),
   defaultSize: SizeSchema,
   minSize: SizeSchema.optional(),
 });
 
-export const WidgetTemplatesSchema = z.array(WidgetTemplateSchema);
+const WidgetTemplatesSchema = z.array(WidgetTemplateSchema);
 
-export type WidgetTemplateDef = z.infer<typeof WidgetTemplateSchema>;
+type WidgetTemplateDef = z.infer<typeof WidgetTemplateSchema>;
 
 export function loadWidgetTemplates(configDir: string): WidgetTemplateDef[] {
   const filePath = join(configDir, 'widgets.yml');

@@ -4,7 +4,7 @@ import type { Db } from './index.js';
 // Phase 1 types & functions (existing board operations)
 // ============================================================
 
-export interface BoardRow {
+interface BoardRow {
   id: string;
   name: string;
   slug: string;
@@ -19,53 +19,6 @@ export function getDefaultBoard(db: Db): BoardRow | undefined {
 
 export function getBoard(db: Db, id: string): BoardRow | undefined {
   return db.prepare('SELECT * FROM boards WHERE id = ?').get(id) as BoardRow | undefined;
-}
-
-export function setBackgroundExt(db: Db, boardId: string, ext: string | null): void {
-  db.prepare('UPDATE boards SET background_ext = ? WHERE id = ?').run(ext, boardId);
-}
-
-export function setWallpaperEnabled(db: Db, boardId: string, enabled: boolean): void {
-  db.prepare('UPDATE boards SET wallpaper_enabled = ? WHERE id = ?').run(enabled ? 1 : 0, boardId);
-}
-
-// ============================================================
-// Per-user wallpaper preferences (stored in user_preferences)
-// ============================================================
-
-const BG_EXT_KEY = (boardId: string) => `bg_ext_${boardId}`;
-const BG_ENABLED_KEY = (boardId: string) => `bg_enabled_${boardId}`;
-
-const UPSERT_USER_PREF_SQL = `
-  INSERT INTO user_preferences (user_id, key, value, updated_at)
-  VALUES (?, ?, ?, datetime('now'))
-  ON CONFLICT (user_id, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
-`;
-
-export function getUserBgExt(db: Db, userId: string, boardId: string): string | null {
-  const row = db
-    .prepare<[string, string], { value: string }>('SELECT value FROM user_preferences WHERE user_id = ? AND key = ?')
-    .get(userId, BG_EXT_KEY(boardId));
-  return row?.value ?? null;
-}
-
-export function setUserBgExt(db: Db, userId: string, boardId: string, ext: string | null): void {
-  if (ext === null) {
-    db.prepare('DELETE FROM user_preferences WHERE user_id = ? AND key = ?').run(userId, BG_EXT_KEY(boardId));
-  } else {
-    db.prepare(UPSERT_USER_PREF_SQL).run(userId, BG_EXT_KEY(boardId), ext);
-  }
-}
-
-export function getUserWallpaperEnabled(db: Db, userId: string, boardId: string): boolean {
-  const row = db
-    .prepare<[string, string], { value: string }>('SELECT value FROM user_preferences WHERE user_id = ? AND key = ?')
-    .get(userId, BG_ENABLED_KEY(boardId));
-  return row?.value === 'true';
-}
-
-export function setUserWallpaperEnabled(db: Db, userId: string, boardId: string, enabled: boolean): void {
-  db.prepare(UPSERT_USER_PREF_SQL).run(userId, BG_ENABLED_KEY(boardId), String(enabled));
 }
 
 // ============================================================
@@ -86,7 +39,7 @@ interface EffectiveBoardSettingsRow {
   role: string;
 }
 
-export interface EffectiveBoardSettings {
+interface EffectiveBoardSettings {
   boardId: string;
   slug: string;
   name: string;
@@ -164,7 +117,7 @@ const LIST_USER_BOARDS_SQL = `
   ORDER BY b.name
 `;
 
-export interface BoardSummary {
+interface BoardSummary {
   id: string;
   slug: string;
   name: string;
