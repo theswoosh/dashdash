@@ -27,6 +27,7 @@ import { createUsersRoutes } from './routes/users.route.js';
 import { createLocalesRoutes } from './routes/locales.route.js';
 import { registerAuthMiddleware } from './middleware/auth.middleware.js';
 import { cleanupExpiredSessions, validateSession } from './db/sessions.db.js';
+import { cleanupExpiredOidcStates } from './db/oidc-state.db.js';
 
 export interface AppOptions {
   dataDir: string;
@@ -115,10 +116,12 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
   // Auth middleware runs before all route handlers.
   registerAuthMiddleware(server, db, authConfig.session.slidingWindow ? authConfig.session.maxAgeSeconds : 0);
 
-  // Session cleanup scheduled every 15 minutes.
+  // Session + OIDC state cleanup scheduled every 15 minutes.
   const cleanupTimer = setInterval(() => {
     const deleted = cleanupExpiredSessions(db);
     if (deleted > 0) log.info({ deleted }, 'Cleaned up expired sessions');
+    const oidcDeleted = cleanupExpiredOidcStates(db);
+    if (oidcDeleted > 0) log.info({ deleted: oidcDeleted }, 'Cleaned up expired OIDC states');
   }, SESSION_CLEANUP_INTERVAL_MS);
   // Don't keep process alive just for cleanup.
   cleanupTimer.unref();

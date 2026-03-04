@@ -5,11 +5,14 @@ export interface AuthUser {
   email: string;
   name: string;
   role: 'admin' | 'user';
+  authMethod?: 'local' | 'oidc';
 }
 
 interface AuthConfig {
   registrationEnabled: boolean;
   smtpConfigured: boolean;
+  oidcEnabled: boolean;
+  localEnabled: boolean;
 }
 
 const ME_KEY = '/api/auth/me';
@@ -60,10 +63,10 @@ export function useAuth() {
   }
 
   async function logout(): Promise<void> {
-    await fetch('/api/auth/logout', { method: 'POST' });
+    const res = await fetch('/api/auth/logout', { method: 'POST' });
     await mutate(ME_KEY, null, { revalidate: false });
-    // Hard reload clears all SWR cache and other module-level state.
-    window.location.assign('/');
+    const body = await res.json() as { ok: boolean; redirectUrl?: string };
+    window.location.assign(body.redirectUrl ?? '/');
   }
 
   async function updateProfile(data: { name?: string; email?: string; password?: string; currentPassword?: string }): Promise<void> {
@@ -97,6 +100,8 @@ export function useAuth() {
     isLoading,
     registrationEnabled: authConfig?.registrationEnabled ?? true,
     smtpConfigured: authConfig?.smtpConfigured ?? false,
+    oidcEnabled: authConfig?.oidcEnabled ?? false,
+    localEnabled: authConfig?.localEnabled ?? true,
     login,
     register,
     logout,

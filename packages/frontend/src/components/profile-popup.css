@@ -125,3 +125,10 @@
 .profile-back-btn:hover {
   color: var(--text-primary, #fff);
 }
+
+.user-modal-auth-badge {
+  font-size: 0.75rem;
+  color: var(--text-muted, rgba(255, 255, 255, 0.4));
+  margin: 8px 0 0;
+  padding: 0;
+}

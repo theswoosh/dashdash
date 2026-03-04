@@ -235,10 +235,15 @@ export function ProfilePopup() {
                 </div>
               </form>
 
-              <button type="button" className="user-modal-toggle" onClick={openPasswordView}>
-                <KeyRound size={13} />
-                {t('userMenu.changePassword')}
-              </button>
+              {user?.authMethod !== 'oidc' && (
+                <button type="button" className="user-modal-toggle" onClick={openPasswordView}>
+                  <KeyRound size={13} />
+                  {t('userMenu.changePassword')}
+                </button>
+              )}
+              {user?.authMethod === 'oidc' && (
+                <p className="user-modal-auth-badge">{t('userMenu.ssoAccount')}</p>
+              )}
             </>
           )}
 

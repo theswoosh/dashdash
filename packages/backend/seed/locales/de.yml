@@ -35,6 +35,12 @@ login:
   newPassword: "Neues Passwort"
   updating: "Aktualisierung…"
   goToSignIn: "Zur Anmeldung"
+  ssoSignIn: "Mit SSO anmelden"
+  or: "oder"
+  oidcError: "SSO-Anmeldung fehlgeschlagen. Bitte erneut versuchen."
+  oidcEmailNotVerified: "Dein SSO-Anbieter hat deine E-Mail-Adresse nicht bestätigt."
+  oidcDisabled: "SSO ist nicht konfiguriert."
+  oidcAccountInactive: "Dein Konto wurde deaktiviert."
 
 config:
   tabs:
@@ -130,6 +136,7 @@ userMenu:
   profileUpdated: "Profil aktualisiert."
   updateFailed: "Aktualisierung fehlgeschlagen"
   language: "Sprache"
+  ssoAccount: "Per SSO angemeldet"
 
 widgets:
   clock:

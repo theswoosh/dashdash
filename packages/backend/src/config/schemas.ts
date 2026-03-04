@@ -79,6 +79,12 @@ const AuthConfigSchema = z.object({
     issuer: z.string().default(''),
     clientId: z.string().default(''),
     scopes: z.string().default('openid profile email'),
+    groupsClaim: z.string().default(''),
+    adminGroup: z.string().default(''),
+    autoLink: z.boolean().default(true),
+  }).default({}),
+  local: z.object({
+    enabled: z.boolean().default(true),
   }).default({}),
 }).default({});
 

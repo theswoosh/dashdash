@@ -5,19 +5,31 @@ import './login.css';
 
 type LoginView = 'login' | 'register' | 'forgot';
 
-interface LoginPageProps {
-  initialView?: LoginView;
+type TFunc = (key: string) => string;
+
+function resolveOidcError(code: string, t: TFunc): string {
+  switch (code) {
+    case 'oidc_email_not_verified': return t('login.oidcEmailNotVerified');
+    case 'oidc_account_inactive':   return t('login.oidcAccountInactive');
+    case 'oidc_disabled':           return t('login.oidcDisabled');
+    default:                        return t('login.oidcError');
+  }
 }
 
-export function LoginPage({ initialView = 'login' }: LoginPageProps) {
-  const { login, register, registrationEnabled, smtpConfigured } = useAuth();
+interface LoginPageProps {
+  initialView?: LoginView;
+  initialError?: string;
+}
+
+export function LoginPage({ initialView = 'login', initialError = '' }: LoginPageProps) {
+  const { login, register, registrationEnabled, smtpConfigured, oidcEnabled, localEnabled } = useAuth();
   const t = useT();
   const [view, setView] = useState<LoginView>(initialView);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState(initialError ? resolveOidcError(initialError, t) : '');
   const [info, setInfo] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -85,50 +97,66 @@ export function LoginPage({ initialView = 'login' }: LoginPageProps) {
         </div>
 
         {view === 'login' && (
-          <form className="login-form" onSubmit={e => void handleLogin(e)}>
+          <div className="login-form">
             <h1 className="login-title">{t('login.signIn')}</h1>
             {error && <p className="login-error" role="alert">{error}</p>}
 
-            <label className="login-label" htmlFor="login-email">{t('login.email')}</label>
-            <input
-              id="login-email"
-              className="login-input"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-              autoFocus
-            />
+            {oidcEnabled && (
+              <a className="login-sso-btn" href="/api/auth/oidc/login">
+                {t('login.ssoSignIn')}
+              </a>
+            )}
 
-            <label className="login-label" htmlFor="login-password">{t('login.password')}</label>
-            <input
-              id="login-password"
-              className="login-input"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-            />
+            {oidcEnabled && localEnabled && (
+              <div className="login-divider"><span>{t('login.or')}</span></div>
+            )}
 
-            <button className="login-btn" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? t('login.signingIn') : t('login.signIn')}
-            </button>
+            {localEnabled && (
+              <form onSubmit={e => void handleLogin(e)}>
+                <label className="login-label" htmlFor="login-email">{t('login.email')}</label>
+                <input
+                  id="login-email"
+                  className="login-input"
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                  autoFocus={!oidcEnabled}
+                />
 
-            <div className="login-links">
-              {smtpConfigured && (
-                <button type="button" className="login-link" onClick={() => switchView('forgot')}>
-                  {t('login.forgotPassword')}
+                <label className="login-label" htmlFor="login-password">{t('login.password')}</label>
+                <input
+                  id="login-password"
+                  className="login-input"
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                />
+
+                <button className="login-btn" type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? t('login.signingIn') : t('login.signIn')}
                 </button>
-              )}
-              {registrationEnabled && (
-                <button type="button" className="login-link" onClick={() => switchView('register')}>
-                  {t('login.createAccount')}
-                </button>
-              )}
-            </div>
-          </form>
+              </form>
+            )}
+
+            {localEnabled && (
+              <div className="login-links">
+                {smtpConfigured && (
+                  <button type="button" className="login-link" onClick={() => switchView('forgot')}>
+                    {t('login.forgotPassword')}
+                  </button>
+                )}
+                {registrationEnabled && (
+                  <button type="button" className="login-link" onClick={() => switchView('register')}>
+                    {t('login.createAccount')}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         )}
 
         {view === 'register' && (

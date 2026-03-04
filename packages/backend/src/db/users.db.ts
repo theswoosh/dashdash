@@ -103,3 +103,30 @@ export function countAdmins(db: Db): number {
 export function isFirstUser(db: Db): boolean {
   return countUsers(db) === 0;
 }
+
+export function findUserByOidc(db: Db, issuer: string, subject: string): UserRow | undefined {
+  return db.prepare('SELECT * FROM users WHERE oidc_issuer = ? AND oidc_subject = ?').get(issuer, subject) as UserRow | undefined;
+}
+
+export interface CreateOidcUserParams {
+  email: string;
+  name: string;
+  oidcSubject: string;
+  oidcIssuer: string;
+  role?: UserRole;
+}
+
+export function createOidcUser(db: Db, params: CreateOidcUserParams): string {
+  const id = randomUUID();
+  db.prepare(`
+    INSERT INTO users (id, email, name, password_hash, role, auth_method, oidc_subject, oidc_issuer)
+    VALUES (?, ?, ?, NULL, ?, 'oidc', ?, ?)
+  `).run(id, params.email.toLowerCase().trim(), params.name.trim(), params.role ?? 'user', params.oidcSubject, params.oidcIssuer);
+  return id;
+}
+
+export function linkOidcToUser(db: Db, userId: string, oidcIssuer: string, oidcSubject: string): void {
+  db.prepare(`
+    UPDATE users SET auth_method = 'oidc', oidc_issuer = ?, oidc_subject = ? WHERE id = ?
+  `).run(oidcIssuer, oidcSubject, userId);
+}
