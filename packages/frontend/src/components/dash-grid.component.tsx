@@ -3,6 +3,7 @@ import ReactGridLayout from 'react-grid-layout';
 import type { Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
+import { mutate } from 'swr';
 import { useUIStore } from '../store/uiStore';
 import { useServices } from '../hooks/use-services.hook';
 import { useConfigReload } from '../hooks/use-config-reload.hook';
@@ -123,6 +124,8 @@ export function DashGrid() {
 
   useConfigReload(useCallback(() => {
     void reloadServices();
+    void mutate('/api/locales');
+    void mutate('/api/settings');
   }, [reloadServices]));
 
   const recordDragPositions = useCallback((newLayout: Layout[]) => {

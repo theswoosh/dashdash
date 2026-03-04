@@ -91,14 +91,14 @@ const MailConfigSchema = z.object({
   from: z.string().default(''),
 }).default({});
 
-const SearchEngineSchema = z.object({
+export const SearchEngineSchema = z.object({
   id: z.string(),
   label: z.string(),
   url: z.string(),
   placeholder: z.string().optional(),
 });
 
-const SearchEnginesSchema = z.array(SearchEngineSchema);
+export const SearchEnginesSchema = z.array(SearchEngineSchema);
 
 export const SettingsSchema = z.object({
   title: z.string().default('dashdash'),
@@ -129,6 +129,7 @@ export type Behavior = z.infer<typeof BehaviorSchema>;
 export type Services = z.infer<typeof ServicesSchema>;
 export type Settings = z.infer<typeof SettingsSchema>;
 export type Service = z.infer<typeof ServiceSchema>;
+export type SearchEngine = z.infer<typeof SearchEngineSchema>;
 export type Integration = z.infer<typeof IntegrationSchema>;
 export type AuthConfig = z.infer<typeof AuthConfigSchema>;
 export type MailConfig = z.infer<typeof MailConfigSchema>;

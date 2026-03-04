@@ -97,6 +97,16 @@ admin:
   sendResetEmail: "Send password reset email"
   deleteUser: "Delete user"
   disabled: "disabled"
+  searchEngines: "Search Engines"
+  addEngine: "Add engine"
+  engineId: "ID"
+  engineLabel: "Label"
+  engineUrl: "URL"
+  enginePlaceholder: "Placeholder (optional)"
+  deleteEngine: "Delete engine"
+  editEngine: "Edit engine"
+  saveEngine: "Save engine"
+  noEngines: "No search engines configured"
 
 wallpaper:
   library: "Wallpaper Library"
@@ -130,6 +140,11 @@ userMenu:
   profileUpdated: "Profile updated."
   updateFailed: "Update failed"
   language: "Language"
+  dangerZone: "Danger zone"
+  deleteAccount: "Delete account"
+  deleteAccountConfirm: "Type your email address to confirm"
+  deleteAccountHold: "Hold to permanently delete your account"
+  lastAdminError: "Cannot delete the last admin account"
 
 widgets:
   clock:

@@ -8,8 +8,6 @@ export function LanguageSelector() {
   const { savePreferences } = usePreferences();
   const t = useT();
 
-  if (availableLanguages.length <= 1) return null;
-
   return (
     <select
       className="lang-select"

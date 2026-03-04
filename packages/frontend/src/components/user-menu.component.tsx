@@ -1,138 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
-import { User, LogOut, Shield, KeyRound } from 'lucide-react';
+import { User, LogOut, Shield } from 'lucide-react';
 import { useAuth } from '../hooks/use-auth.hook';
 import { useUIStore } from '../store/uiStore';
 import { useT } from '../i18n';
-import { LanguageSelector } from './language-selector.component';
 import './user-menu.css';
-
-interface ProfileModalProps {
-  onClose: () => void;
-}
-
-function ProfileModal({ onClose }: ProfileModalProps) {
-  const t = useT();
-  const { user, updateProfile } = useAuth();
-  const [name, setName] = useState(user?.name ?? '');
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [error, setError] = useState('');
-  const [info, setInfo] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError('');
-    setInfo('');
-    setIsSubmitting(true);
-
-    const updates: { name?: string; password?: string; currentPassword?: string } = {};
-    if (name !== user?.name) updates.name = name;
-    if (isChangingPassword && newPassword) {
-      updates.password = newPassword;
-      updates.currentPassword = currentPassword;
-    }
-
-    if (Object.keys(updates).length === 0) {
-      onClose();
-      return;
-    }
-
-    try {
-      await updateProfile(updates);
-      setInfo(t('userMenu.profileUpdated'));
-      setCurrentPassword('');
-      setNewPassword('');
-      setIsChangingPassword(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('userMenu.updateFailed'));
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  return (
-    <div className="user-modal-overlay" onClick={onClose}>
-      <div className="user-modal" onClick={e => e.stopPropagation()}>
-        <h2 className="user-modal-title">{t('userMenu.editProfile')}</h2>
-        {error && <p className="user-modal-error" role="alert">{error}</p>}
-        {info && <p className="user-modal-info" role="status">{info}</p>}
-
-        <form onSubmit={e => void handleSubmit(e)}>
-          <label className="user-modal-label" htmlFor="profile-name">{t('login.displayName')}</label>
-          <input
-            id="profile-name"
-            className="user-modal-input"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            maxLength={100}
-            required
-          />
-
-          <label className="user-modal-label">{t('login.email')}</label>
-          <input className="user-modal-input user-modal-input--readonly" value={user?.email ?? ''} readOnly />
-
-          <button
-            type="button"
-            className="user-modal-toggle"
-            onClick={() => setIsChangingPassword(p => !p)}
-          >
-            <KeyRound size={13} />
-            {isChangingPassword ? t('userMenu.cancelPasswordChange') : t('userMenu.changePassword')}
-          </button>
-
-          {isChangingPassword && (
-            <>
-              <label className="user-modal-label" htmlFor="current-pw">{t('userMenu.currentPassword')}</label>
-              <input
-                id="current-pw"
-                className="user-modal-input"
-                type="password"
-                autoComplete="current-password"
-                value={currentPassword}
-                onChange={e => setCurrentPassword(e.target.value)}
-                required={isChangingPassword}
-              />
-              <label className="user-modal-label" htmlFor="new-pw">{t('login.newPassword')}</label>
-              <input
-                id="new-pw"
-                className="user-modal-input"
-                type="password"
-                autoComplete="new-password"
-                value={newPassword}
-                onChange={e => setNewPassword(e.target.value)}
-                minLength={8}
-                required={isChangingPassword}
-              />
-            </>
-          )}
-
-          <div className="user-modal-language">
-            <label className="user-modal-label">{t('userMenu.language')}</label>
-            <LanguageSelector />
-          </div>
-
-          <div className="user-modal-actions">
-            <button type="button" className="user-modal-btn user-modal-btn--ghost" onClick={onClose}>
-              {t('common.cancel')}
-            </button>
-            <button type="submit" className="user-modal-btn" disabled={isSubmitting}>
-              {isSubmitting ? t('userMenu.saving') : t('common.save')}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
 
 export function UserMenu() {
   const t = useT();
   const { user, logout } = useAuth();
   const setAdminPanelOpen = useUIStore(s => s.setAdminPanelOpen);
+  const setProfileOpen = useUIStore(s => s.setProfileOpen);
   const [isOpen, setIsOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -151,58 +29,54 @@ export function UserMenu() {
   const initials = user.name.charAt(0).toUpperCase();
 
   return (
-    <>
-      <div className="user-menu" ref={menuRef}>
-        <button
-          className="user-avatar-btn"
-          onClick={() => setIsOpen(p => !p)}
-          aria-label={`User menu for ${user.name}`}
-          aria-expanded={isOpen}
-        >
-          <span className="user-avatar">{initials}</span>
-        </button>
+    <div className="user-menu" ref={menuRef}>
+      <button
+        className="user-avatar-btn"
+        onClick={() => setIsOpen(p => !p)}
+        aria-label={`User menu for ${user.name}`}
+        aria-expanded={isOpen}
+      >
+        <span className="user-avatar">{initials}</span>
+      </button>
 
-        {isOpen && (
-          <div className="user-dropdown">
-            <div className="user-dropdown-header">
-              <span className="user-dropdown-name">{user.name}</span>
-              <span className="user-dropdown-email">{user.email}</span>
-            </div>
+      {isOpen && (
+        <div className="user-dropdown">
+          <div className="user-dropdown-header">
+            <span className="user-dropdown-name">{user.name}</span>
+            <span className="user-dropdown-email">{user.email}</span>
+          </div>
 
-            <div className="user-dropdown-divider" />
+          <div className="user-dropdown-divider" />
 
+          <button
+            className="user-dropdown-item"
+            onClick={() => { setProfileOpen(true); setIsOpen(false); }}
+          >
+            <User size={14} />
+            {t('userMenu.editProfile')}
+          </button>
+
+          {user.role === 'admin' && (
             <button
               className="user-dropdown-item"
-              onClick={() => { setIsProfileOpen(true); setIsOpen(false); }}
+              onClick={() => { setAdminPanelOpen(true); setIsOpen(false); }}
             >
-              <User size={14} />
-              {t('userMenu.editProfile')}
+              <Shield size={14} />
+              {t('common.admin')}
             </button>
+          )}
 
-            {user.role === 'admin' && (
-              <button
-                className="user-dropdown-item"
-                onClick={() => { setAdminPanelOpen(true); setIsOpen(false); }}
-              >
-                <Shield size={14} />
-                {t('common.admin')}
-              </button>
-            )}
+          <div className="user-dropdown-divider" />
 
-            <div className="user-dropdown-divider" />
-
-            <button
-              className="user-dropdown-item user-dropdown-item--danger"
-              onClick={() => { void logout(); setIsOpen(false); }}
-            >
-              <LogOut size={14} />
-              {t('common.logout')}
-            </button>
-          </div>
-        )}
-      </div>
-
-      {isProfileOpen && <ProfileModal onClose={() => setIsProfileOpen(false)} />}
-    </>
+          <button
+            className="user-dropdown-item user-dropdown-item--danger"
+            onClick={() => { void logout(); setIsOpen(false); }}
+          >
+            <LogOut size={14} />
+            {t('common.logout')}
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

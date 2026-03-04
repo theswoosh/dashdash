@@ -127,7 +127,7 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
   await server.register(createAuthRoutes(db, authConfig, mailConfig), { prefix: '/api' });
   await server.register(createUsersRoutes(db, mailConfig), { prefix: '/api' });
   await server.register(createServicesRoutes(getServices, configDir), { prefix: '/api' });
-  await server.register(createSettingsRoutes(getSettings), { prefix: '/api' });
+  await server.register(createSettingsRoutes(getSettings, configDir), { prefix: '/api' });
   await server.register(createBehaviorRoutes(getBehavior), { prefix: '/api' });
   await server.register(createWidgetRoutes({ getServices, configDir }), { prefix: '/api' });
   await server.register(createNotepadRoutes(db), { prefix: '/api' });

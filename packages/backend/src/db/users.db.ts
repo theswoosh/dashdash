@@ -35,6 +35,7 @@ export interface CreateUserParams {
 
 export interface UpdateUserParams {
   name?: string;
+  email?: string;
   passwordHash?: string;
   role?: UserRole;
   isActive?: boolean;
@@ -62,6 +63,7 @@ export function updateUser(db: Db, id: string, params: UpdateUserParams): void {
   const values: unknown[] = [];
 
   if (params.name !== undefined) { sets.push('name = ?'); values.push(params.name.trim()); }
+  if (params.email !== undefined) { sets.push('email = ?'); values.push(params.email.toLowerCase().trim()); }
   if (params.passwordHash !== undefined) { sets.push('password_hash = ?'); values.push(params.passwordHash); }
   if (params.role !== undefined) { sets.push('role = ?'); values.push(params.role); }
   if (params.isActive !== undefined) { sets.push('is_active = ?'); values.push(params.isActive ? 1 : 0); }

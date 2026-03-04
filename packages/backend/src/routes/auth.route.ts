@@ -2,8 +2,8 @@ import { randomUUID } from 'crypto';
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import type { Db } from '../db/index.js';
-import { findUserByEmail, findUserById, createUser, updateUser, isFirstUser } from '../db/users.db.js';
-import { createSession, destroySession } from '../db/sessions.db.js';
+import { findUserByEmail, findUserById, createUser, updateUser, deleteUser, countAdmins, isFirstUser } from '../db/users.db.js';
+import { createSession, destroySession, destroyAllUserSessions } from '../db/sessions.db.js';
 import { hashPassword, verifyPassword, generateResetToken, hashResetToken } from '../services/password.service.js';
 import { sendPasswordResetEmail, isMailConfigured } from '../services/mail.service.js';
 import type { AuthConfig, MailConfig } from '../config/schemas.js';
@@ -45,6 +45,7 @@ const LoginBodySchema = z.object({
 
 const UpdateMeBodySchema = z.object({
   name: z.string().min(1).max(100).trim().optional(),
+  email: z.string().email().optional(),
   password: z.string().min(8).max(128).optional(),
   currentPassword: z.string().optional(),
 });
@@ -183,13 +184,22 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
         return reply.code(400).send({ error: 'Validation failed', details: parsed.error.issues });
       }
 
-      const { name, password, currentPassword } = parsed.data;
+      const { name, email, password, currentPassword } = parsed.data;
       const user = findUserById(db, request.userId);
       if (!user) return reply.code(401).send({ error: 'User not found' });
 
       const updates: Parameters<typeof updateUser>[2] = {};
 
       if (name !== undefined) updates.name = name;
+
+      if (email !== undefined) {
+        const normalized = email.toLowerCase().trim();
+        if (normalized !== user.email) {
+          const existing = findUserByEmail(db, normalized);
+          if (existing) return reply.code(409).send({ error: 'Email already in use' });
+          updates.email = normalized;
+        }
+      }
 
       if (password !== undefined) {
         if (!currentPassword) {
@@ -203,6 +213,30 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
       }
 
       updateUser(db, request.userId, updates);
+      return reply.send({ ok: true });
+    });
+
+    // DELETE /api/auth/me — delete own account (requires email confirmation)
+    fastify.delete('/auth/me', async (request, reply) => {
+      const parsed = z.object({ email: z.string().email() }).safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(400).send({ error: 'Email confirmation required' });
+      }
+
+      const user = findUserById(db, request.userId);
+      if (!user) return reply.code(401).send({ error: 'User not found' });
+
+      if (parsed.data.email.toLowerCase().trim() !== user.email) {
+        return reply.code(403).send({ error: 'Email does not match' });
+      }
+
+      if (user.role === 'admin' && countAdmins(db) <= 1) {
+        return reply.code(403).send({ error: 'Cannot delete the last admin account' });
+      }
+
+      destroyAllUserSessions(db, request.userId);
+      deleteUser(db, request.userId);
+      reply.clearCookie('dashdash_session', { path: '/' });
       return reply.send({ ok: true });
     });
 

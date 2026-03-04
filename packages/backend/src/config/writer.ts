@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync, renameSync, existsSync } from 'fs';
 import { join } from 'path';
 import yaml from 'js-yaml';
 import { RawServicesSchema, assignIds } from './schemas.js';
-import type { Service } from './schemas.js';
+import type { Service, SearchEngine } from './schemas.js';
 
 function readServices(configDir: string): Service[] {
   const filePath = join(configDir, 'services.yml');
@@ -76,4 +76,15 @@ export function removeService(configDir: string, id: string): void {
     throw new Error(`Service '${id}' not found in services.yml`);
   }
   writeServices(configDir, filtered);
+}
+
+export function writeSearchEngines(configDir: string, engines: SearchEngine[]): void {
+  const filePath = join(configDir, 'settings.yml');
+  const raw = existsSync(filePath)
+    ? ((yaml.load(readFileSync(filePath, 'utf8'), { schema: yaml.CORE_SCHEMA }) as Record<string, unknown>) ?? {})
+    : {};
+  raw['searchEngines'] = engines;
+  const tmpPath = `${filePath}.tmp`;
+  writeFileSync(tmpPath, yaml.dump(raw, { indent: 2, lineWidth: -1, schema: yaml.CORE_SCHEMA }));
+  renameSync(tmpPath, filePath);
 }

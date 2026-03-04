@@ -66,7 +66,7 @@ export function useAuth() {
     window.location.assign('/');
   }
 
-  async function updateProfile(data: { name?: string; password?: string; currentPassword?: string }): Promise<void> {
+  async function updateProfile(data: { name?: string; email?: string; password?: string; currentPassword?: string }): Promise<void> {
     const res = await fetch('/api/auth/me', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -79,6 +79,19 @@ export function useAuth() {
     await mutate(ME_KEY);
   }
 
+  async function deleteAccount(email: string): Promise<void> {
+    const res = await fetch('/api/auth/me', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (!res.ok) {
+      const body = await res.json() as { error: string };
+      throw new Error(body.error ?? 'Delete failed');
+    }
+    window.location.assign('/');
+  }
+
   return {
     user: user ?? null,
     isLoading,
@@ -88,5 +101,6 @@ export function useAuth() {
     register,
     logout,
     updateProfile,
+    deleteAccount,
   };
 }

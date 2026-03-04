@@ -97,6 +97,16 @@ admin:
   sendResetEmail: "Passwort-Zurücksetzen-E-Mail senden"
   deleteUser: "Benutzer löschen"
   disabled: "deaktiviert"
+  searchEngines: "Suchmaschinen"
+  addEngine: "Suchmaschine hinzufügen"
+  engineId: "ID"
+  engineLabel: "Bezeichnung"
+  engineUrl: "URL"
+  enginePlaceholder: "Platzhalter (optional)"
+  deleteEngine: "Suchmaschine löschen"
+  editEngine: "Suchmaschine bearbeiten"
+  saveEngine: "Suchmaschine speichern"
+  noEngines: "Keine Suchmaschinen konfiguriert"
 
 wallpaper:
   library: "Hintergrundbibliothek"
@@ -130,6 +140,11 @@ userMenu:
   profileUpdated: "Profil aktualisiert."
   updateFailed: "Aktualisierung fehlgeschlagen"
   language: "Sprache"
+  dangerZone: "Gefahrenzone"
+  deleteAccount: "Konto löschen"
+  deleteAccountConfirm: "E-Mail-Adresse zur Bestätigung eingeben"
+  deleteAccountHold: "Halten, um Konto dauerhaft zu löschen"
+  lastAdminError: "Das letzte Admin-Konto kann nicht gelöscht werden"
 
 widgets:
   clock:
