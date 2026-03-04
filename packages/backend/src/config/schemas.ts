@@ -125,12 +125,10 @@ export const IntegrationSchema = z.object({
 
 export const IntegrationsSchema = z.array(IntegrationSchema);
 
-type SearchEngine = z.infer<typeof SearchEngineSchema>;
 export type Behavior = z.infer<typeof BehaviorSchema>;
 export type Services = z.infer<typeof ServicesSchema>;
 export type Settings = z.infer<typeof SettingsSchema>;
 export type Service = z.infer<typeof ServiceSchema>;
 export type Integration = z.infer<typeof IntegrationSchema>;
-type Integrations = z.infer<typeof IntegrationsSchema>;
 export type AuthConfig = z.infer<typeof AuthConfigSchema>;
 export type MailConfig = z.infer<typeof MailConfigSchema>;
