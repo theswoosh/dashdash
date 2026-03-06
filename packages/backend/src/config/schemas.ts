@@ -1,19 +1,19 @@
 import { z } from 'zod';
 
 const ServiceLayoutSchema = z.object({
-  w: z.number().int().positive(),
-  h: z.number().int().positive(),
-  x: z.number().int().nonnegative().default(0),
-  y: z.number().int().nonnegative().default(0),
+  w: z.number().int().positive().max(48),
+  h: z.number().int().positive().max(48),
+  x: z.number().int().nonnegative().max(200).default(0),
+  y: z.number().int().nonnegative().max(200).default(0),
 });
 
 /** Schema used when reading from YAML — id is optional, auto-assigned if absent. */
 const RawServiceSchema = z.object({
-  id: z.string().optional(),
-  title: z.string(),
-  icon: z.string().optional(),
-  integration: z.string().optional(),
-  widget: z.string(),
+  id: z.string().max(128).optional(),
+  title: z.string().max(128),
+  icon: z.string().max(128).optional(),
+  integration: z.string().max(128).optional(),
+  widget: z.string().max(64),
   layout: ServiceLayoutSchema,
   options: z.record(z.unknown()).optional(),
 });
@@ -36,11 +36,11 @@ export function assignIds(
 }
 
 const ServiceSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  icon: z.string().optional(),
-  integration: z.string().optional(),
-  widget: z.string(),
+  id: z.string().max(128),
+  title: z.string().max(128),
+  icon: z.string().max(128).optional(),
+  integration: z.string().max(128).optional(),
+  widget: z.string().max(64),
   layout: ServiceLayoutSchema,
   options: z.record(z.unknown()).optional(),
 });
@@ -48,17 +48,17 @@ const ServiceSchema = z.object({
 const ServicesSchema = z.array(ServiceSchema);
 
 const GridSchema = z.object({
-  columns: z.number().int().positive().default(12),
-  rowHeight: z.number().int().positive().default(80),
-  gap: z.number().int().nonnegative().default(12),
+  columns: z.number().int().positive().max(48).default(12).catch(12),
+  rowHeight: z.number().int().positive().max(500).default(80).catch(80),
+  gap: z.number().int().nonnegative().max(100).default(12).catch(12),
 });
 
 const BackgroundSchema = z.object({
-  type: z.enum(['image', 'gradient', 'color', 'unsplash', 'video']).default('color'),
-  url: z.string().optional(),
-  value: z.string().optional(),
-  blur: z.number().nonnegative().default(0),
-  overlay: z.string().optional(),
+  type: z.enum(['image', 'gradient', 'color', 'unsplash', 'video']).default('color').catch('color'),
+  url: z.string().max(2048).optional(),
+  value: z.string().max(2048).optional(),
+  blur: z.number().nonnegative().max(100).default(0).catch(0),
+  overlay: z.string().max(256).optional(),
   parallax: z.boolean().default(false),
 });
 
@@ -92,39 +92,39 @@ export interface OidcConfig {
 
 const MailConfigSchema = z.object({
   smtp: z.object({
-    host: z.string().default(''),
-    port: z.number().int().default(587),
+    host: z.string().max(253).default(''),
+    port: z.number().int().min(1).max(65535).default(587).catch(587),
     secure: z.boolean().default(false),
   }).default({}),
-  from: z.string().default(''),
+  from: z.string().max(320).default(''),
 }).default({});
 
 export const SearchEngineSchema = z.object({
-  id: z.string(),
-  label: z.string(),
-  url: z.string(),
-  placeholder: z.string().optional(),
+  id: z.string().max(64).regex(/^[a-z0-9-]+$/, 'ID must be lowercase letters, digits and hyphens only'),
+  label: z.string().max(64),
+  url: z.string().max(2048),
+  placeholder: z.string().max(128).optional(),
 });
 
 export const SearchEnginesSchema = z.array(SearchEngineSchema);
 
 export const SettingsSchema = z.object({
-  title: z.string().default('dashdash'),
-  timezone: z.string().optional(),
-  theme: z.enum(['dark', 'light']).default('dark'),
-  language: z.string().optional(),
+  title: z.string().max(128).default('dashdash'),
+  timezone: z.string().max(64).optional(),
+  theme: z.string().max(64).default('dark').catch('dark'),
+  language: z.string().max(16).optional(),
   background: BackgroundSchema.optional(),
   grid: GridSchema.default({}),
   auth: AuthConfigSchema,
   mail: MailConfigSchema,
   searchEngines: SearchEnginesSchema.default([]),
-  holdToDeleteMs: z.number().int().positive().default(1000),
+  holdToDeleteMs: z.number().int().positive().max(30000).default(1000).catch(1000),
 });
 
 export const IntegrationSchema = z.object({
-  id: z.string(),
-  type: z.string(),
-  url: z.string().optional(),
+  id: z.string().max(128),
+  type: z.string().max(64),
+  url: z.string().max(2048).optional(),
   options: z.record(z.unknown()).optional(),
 });
 

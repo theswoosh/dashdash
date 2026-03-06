@@ -26,6 +26,8 @@ import { createAuthRoutes } from './routes/auth.route.js';
 import type { OidcConfig } from './config/schemas.js';
 import { createUsersRoutes } from './routes/users.route.js';
 import { createLocalesRoutes } from './routes/locales.route.js';
+import { createConfigValidateRoutes } from './routes/config-validate.route.js';
+import { validateConfig } from './config/validator.js';
 import { registerAuthMiddleware } from './middleware/auth.middleware.js';
 import { cleanupExpiredSessions, validateSession } from './db/sessions.db.js';
 import { cleanupExpiredOidcStates } from './db/oidc-state.db.js';
@@ -114,6 +116,21 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
   const settings = getSettings();
   const { auth: authConfig, mail: mailConfig } = settings;
 
+  // Validate config files at startup and log any issues.
+  const configIssues = validateConfig(configDir);
+  for (const issue of configIssues) {
+    if (issue.level === 'error') {
+      log.error({ file: issue.file, field: issue.field }, `Config: ${issue.message}`);
+    } else {
+      log.warn({ file: issue.file, field: issue.field }, `Config: ${issue.message}`);
+    }
+  }
+  if (configIssues.length > 0) {
+    const errors = configIssues.filter(i => i.level === 'error').length;
+    const warnings = configIssues.filter(i => i.level === 'warning').length;
+    log.warn(`Config validation: ${errors} error(s), ${warnings} warning(s) — check the Validation tab in the admin panel`);
+  }
+
   const oidcIssuer   = process.env['DASHDASH_OIDC_ISSUER']   ?? '';
   const oidcClientId = process.env['DASHDASH_OIDC_CLIENT_ID'] ?? '';
   const oidcSecret   = process.env['DASHDASH_OIDC_SECRET']   ?? '';
@@ -154,6 +171,7 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
   await server.register(healthcheckTestRoutes, { prefix: '/api' });
   await server.register(createBoardRoutes(db, configDir), { prefix: '/api' });
   await server.register(createLocalesRoutes(configDir), { prefix: '/api' });
+  await server.register(createConfigValidateRoutes(configDir), { prefix: '/api' });
 
   server.get('/api/ws', { websocket: true }, (socket: WebSocket, request) => {
     const sessionId = request.cookies?.[COOKIE_NAME];

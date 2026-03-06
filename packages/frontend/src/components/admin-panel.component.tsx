@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import useSWR, { mutate } from 'swr';
-import { X, Plus, Trash2, ShieldCheck, ShieldOff, UserX, RefreshCw, Pencil } from 'lucide-react';
+import { X, Plus, Trash2, ShieldCheck, ShieldOff, UserX, RefreshCw, Pencil, CheckCircle } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
 import { useT } from '../i18n';
 import { useSettings } from '../hooks/use-settings.hook';
@@ -15,7 +15,7 @@ interface UserSummary {
   createdAt: string;
 }
 
-type AdminTab = 'users' | 'search-engines';
+type AdminTab = 'users' | 'search-engines' | 'validation';
 
 const USERS_KEY = '/api/users';
 const SETTINGS_KEY = '/api/settings';
@@ -130,7 +130,7 @@ function AddEngineForm({ onDone }: AddEngineFormProps) {
 
   return (
     <form className="admin-add-form" onSubmit={e => void submitAddEngine(e)}>
-      <h3 className="admin-add-title">{t('admin.addEngine')}</h3>
+      <h3 className="admin-add-title">{t('admin.engineDetails')}</h3>
       {error && <p className="admin-error">{error}</p>}
 
       <div className="admin-add-row">
@@ -157,7 +157,7 @@ function AddEngineForm({ onDone }: AddEngineFormProps) {
       <div className="admin-add-actions">
         <button type="button" className="admin-btn admin-btn--ghost" onClick={onDone}>{t('common.cancel')}</button>
         <button type="submit" className="admin-btn" disabled={isSubmitting}>
-          {isSubmitting ? t('admin.creating') : t('admin.addEngine')}
+          {isSubmitting ? t('admin.creating') : t('admin.saveEngine')}
         </button>
       </div>
     </form>
@@ -311,6 +311,60 @@ function SearchEnginesTab() {
   );
 }
 
+interface ConfigIssue {
+  file: string;
+  field: string;
+  level: 'error' | 'warning';
+  message: string;
+}
+
+function ConfigValidationTab() {
+  const t = useT();
+  const { data, mutate: refresh } = useSWR<{ issues: ConfigIssue[] }>('/api/config/validate', jsonFetcher, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+  });
+
+  const issues = data?.issues ?? [];
+  const errorCount = issues.filter(i => i.level === 'error').length;
+  const warnCount = issues.filter(i => i.level === 'warning').length;
+
+  return (
+    <>
+      <div className="admin-section-header">
+        <span className="admin-section-label">
+          {t('admin.validation')}
+          {data && issues.length > 0 && ` — ${errorCount} error(s), ${warnCount} warning(s)`}
+        </span>
+        <button className="admin-btn admin-btn--sm" onClick={() => void refresh()}>
+          <RefreshCw size={13} /> {t('admin.refresh')}
+        </button>
+      </div>
+
+      {!data && <p className="admin-loading">{t('common.loading')}</p>}
+
+      {data && issues.length === 0 && (
+        <p className="admin-issue-ok">
+          <CheckCircle size={14} /> {t('admin.configOk')}
+        </p>
+      )}
+
+      {issues.length > 0 && (
+        <div className="admin-issue-list">
+          {issues.map((issue, idx) => (
+            <div key={idx} className="admin-issue-row">
+              <span className={`admin-issue-badge admin-issue-badge--${issue.level}`}>{issue.level}</span>
+              <span className="admin-issue-file">{issue.file}</span>
+              <span className="admin-issue-field">{issue.field}</span>
+              <span className="admin-issue-msg">{issue.message}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
 export function AdminPanel() {
   const t = useT();
   const isAdminPanelOpen = useUIStore(s => s.isAdminPanelOpen);
@@ -373,6 +427,12 @@ export function AdminPanel() {
             onClick={() => setActiveTab('search-engines')}
           >
             {t('admin.searchEngines')}
+          </button>
+          <button
+            className={`admin-tab${activeTab === 'validation' ? ' admin-tab--active' : ''}`}
+            onClick={() => setActiveTab('validation')}
+          >
+            {t('admin.validation')}
           </button>
         </div>
 
@@ -449,6 +509,7 @@ export function AdminPanel() {
           )}
 
           {activeTab === 'search-engines' && <SearchEnginesTab />}
+          {activeTab === 'validation' && <ConfigValidationTab />}
         </div>
       </div>
     </div>

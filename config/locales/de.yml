@@ -99,6 +99,7 @@ admin:
   disabled: "deaktiviert"
   searchEngines: "Suchmaschinen"
   addEngine: "Suchmaschine hinzufügen"
+  engineDetails: "Suchmaschine konfigurieren"
   engineId: "ID"
   engineLabel: "Bezeichnung"
   engineUrl: "URL"
@@ -107,6 +108,9 @@ admin:
   editEngine: "Suchmaschine bearbeiten"
   saveEngine: "Suchmaschine speichern"
   noEngines: "Keine Suchmaschinen konfiguriert"
+  validation: "Validierung"
+  configOk: "Alle Konfigurationsdateien sind gültig."
+  refresh: "Aktualisieren"
 
 wallpaper:
   library: "Hintergrundbibliothek"

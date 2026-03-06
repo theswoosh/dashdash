@@ -4,12 +4,12 @@ import yaml from 'js-yaml';
 import { z } from 'zod';
 
 const SizeSchema = z.object({
-  w: z.number().int().positive(),
-  h: z.number().int().positive(),
+  w: z.number().int().positive().max(48),
+  h: z.number().int().positive().max(48),
 });
 
 const WidgetTemplateSchema = z.object({
-  type: z.string(),
+  type: z.string().max(64),
   defaultSize: SizeSchema,
   minSize: SizeSchema.optional(),
 });

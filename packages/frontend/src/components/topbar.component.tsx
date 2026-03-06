@@ -42,11 +42,9 @@ function TopbarClock({
 
 function TopbarSearch({
   engine,
-  placeholder,
   engines,
 }: {
   readonly engine?: string | undefined;
-  readonly placeholder?: string | undefined;
   readonly engines: readonly SearchEngine[];
 }) {
   const [query, setQuery] = useState('');
@@ -54,7 +52,7 @@ function TopbarSearch({
   const selectedEngine = engine
     ? engines.find(e => e.id === engine)
     : engines[0];
-  const resolvedPlaceholder = placeholder || selectedEngine?.placeholder || 'Search…';
+  const resolvedPlaceholder = selectedEngine?.placeholder || 'Search…';
 
   const submitSearch = (e: FormEvent) => {
     e.preventDefault();
@@ -220,7 +218,6 @@ export function Topbar() {
         {isHeaderSearch && (
           <TopbarSearch
             engine={preferences?.headerSearchEngine}
-            placeholder={preferences?.headerSearchPlaceholder}
             engines={allEngines}
           />
         )}

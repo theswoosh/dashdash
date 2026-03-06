@@ -102,6 +102,7 @@ export const EN_FALLBACK: Record<string, unknown> = {
     disabled: 'disabled',
     searchEngines: 'Search Engines',
     addEngine: 'Add engine',
+    engineDetails: 'Enter Engine Details',
     engineId: 'ID',
     engineLabel: 'Label',
     engineUrl: 'URL',
@@ -110,6 +111,9 @@ export const EN_FALLBACK: Record<string, unknown> = {
     editEngine: 'Edit engine',
     saveEngine: 'Save engine',
     noEngines: 'No search engines configured',
+    validation: 'Validation',
+    configOk: 'All config files are valid.',
+    refresh: 'Refresh',
   },
   wallpaper: {
     library: 'Wallpaper Library',

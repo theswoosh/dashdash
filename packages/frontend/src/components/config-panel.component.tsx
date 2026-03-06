@@ -236,15 +236,6 @@ function OptionsTab() {
   const isHeaderSearch = preferences?.headerSearch ?? false;
   const headerSearchEngine = preferences?.headerSearchEngine ?? 'duckduckgo';
 
-  const [localSearchPlaceholder, setLocalSearchPlaceholder] = useState('');
-  const isPlaceholderInitialized = useRef(false);
-  useEffect(() => {
-    if (preferences !== undefined && !isPlaceholderInitialized.current) {
-      setLocalSearchPlaceholder(preferences.headerSearchPlaceholder ?? '');
-      isPlaceholderInitialized.current = true;
-    }
-  }, [preferences]);
-
   const allEngines = settings.searchEngines ?? [];
 
   const updateBoardName = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -341,19 +332,6 @@ function OptionsTab() {
                   <option key={e.id} value={e.id}>{e.label}</option>
                 ))}
               </select>
-            </div>
-            <div className="config-option-group">
-              <label className="config-option-label" htmlFor="header-search-placeholder">{t('config.searchPlaceholder')}</label>
-              <input
-                id="header-search-placeholder"
-                type="text"
-                className="config-option-input"
-                value={localSearchPlaceholder}
-                onChange={e => setLocalSearchPlaceholder(e.target.value)}
-                onBlur={e => savePreferences({ headerSearchPlaceholder: e.target.value })}
-                placeholder="Search…"
-                maxLength={48}
-              />
             </div>
           </div>
         )}
