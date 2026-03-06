@@ -118,6 +118,8 @@ widgetCard:
   dragToMove: "Ziehen zum Verschieben"
   configureWidget: "Widget konfigurieren"
   refreshNotepad: "Notizblock aktualisieren"
+  clearNotepad: "Halten zum Leeren"
+  clearNotepadAria: "Halten um Notizblock-Inhalt zu löschen"
   up: "Oben"
   down: "Unten"
   unknown: "Unbekannt"

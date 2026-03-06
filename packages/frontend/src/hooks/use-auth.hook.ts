@@ -47,6 +47,7 @@ export function useAuth() {
       throw new Error(body.error ?? 'Login failed');
     }
     await mutate(ME_KEY);
+    void mutate('/api/settings');
   }
 
   async function register(email: string, password: string, name: string): Promise<void> {
@@ -60,6 +61,7 @@ export function useAuth() {
       throw new Error(body.error ?? 'Registration failed');
     }
     await mutate(ME_KEY);
+    void mutate('/api/settings');
   }
 
   async function logout(): Promise<void> {
