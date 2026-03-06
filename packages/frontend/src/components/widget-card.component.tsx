@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, memo } from 'react';
-import { GripVertical, Settings, X, RefreshCw } from 'lucide-react';
+import { GripVertical, Settings, X, RefreshCw, Trash2 } from 'lucide-react';
 import { mutate as swrMutate } from 'swr';
 import type { ServiceConfig } from '@dashdash/types';
 import { useThemeCard } from '../themes/registry';
@@ -11,6 +11,46 @@ import { useT } from '../i18n';
 import { WidgetSkeleton } from '../widgets/shared/widget-skeleton.component';
 import { WidgetError } from '../widgets/shared/widget-error.component';
 import './WidgetCard.css';
+
+function HoldClearNotepadButton({ serviceId, holdToDeleteMs }: { serviceId: string; holdToDeleteMs: number }) {
+  const t = useT();
+  const [holding, setHolding] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+
+  const start = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    setHolding(true);
+    timer.current = setTimeout(() => {
+      void fetch(`/api/notepad/${serviceId}`, { method: 'DELETE' })
+        .then(() => swrMutate(`/api/notepad/${serviceId}`, { content: '' }, { revalidate: false }))
+        .catch(() => { /* best-effort */ });
+    }, holdToDeleteMs);
+  };
+
+  const cancel = () => {
+    if (timer.current) { clearTimeout(timer.current); timer.current = null; }
+    setHolding(false);
+  };
+
+  return (
+    <button
+      className={`widget-delete-btn${holding ? ' widget-delete-btn--holding' : ''}`}
+      style={{ '--hold-delete-duration': `${holdToDeleteMs}ms` } as React.CSSProperties}
+      onMouseDown={start}
+      onMouseUp={cancel}
+      onMouseLeave={cancel}
+      onTouchStart={start}
+      onTouchEnd={cancel}
+      title={t('widgetCard.clearNotepad')}
+      aria-label={t('widgetCard.clearNotepadAria')}
+    >
+      <span className="widget-delete-btn__fill" />
+      <span className="widget-delete-btn__icon"><Trash2 size={13} /></span>
+    </button>
+  );
+}
 
 function HoldDeleteButton({ id, holdToDeleteMs, onDelete }: { id: string; holdToDeleteMs: number; onDelete: (id: string) => void }) {
   const t = useT();
@@ -127,15 +167,18 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
           />
         )}
         <span className="widget-title">{service.title}</span>
-        {service.widget === 'notepad' && (
-          <button
-            className="widget-edit-btn"
-            title={t('widgetCard.refreshNotepad')}
-            aria-label={t('widgetCard.refreshNotepad')}
-            onClick={() => void swrMutate(`/api/notepad/${service.id}`)}
-          >
-            <RefreshCw size={13} />
-          </button>
+        {service.widget === 'notepad' && !editMode && (
+          <>
+            <button
+              className="widget-edit-btn"
+              title={t('widgetCard.refreshNotepad')}
+              aria-label={t('widgetCard.refreshNotepad')}
+              onClick={() => void swrMutate(`/api/notepad/${service.id}`)}
+            >
+              <RefreshCw size={13} />
+            </button>
+            <HoldClearNotepadButton serviceId={service.id} holdToDeleteMs={holdToDeleteMs} />
+          </>
         )}
         {editMode && (
           <div className="widget-edit-actions">

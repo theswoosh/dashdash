@@ -1,4 +1,0 @@
-# UI behavior settings
-
-# How long (ms) the user must hold the delete button before a widget is removed.
-holdToDeleteMs: 1000

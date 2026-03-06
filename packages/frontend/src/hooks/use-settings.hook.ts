@@ -23,6 +23,7 @@ const DEFAULTS: DashSettings = { title: 'dashdash', searchEngines: [] };
 
 async function fetchSettings(url: string): Promise<DashSettings> {
   const res = await fetch(url);
+  if (res.status === 401) throw new Error('unauthenticated');
   if (!res.ok) return DEFAULTS;
   return (await res.json()) as DashSettings;
 }

@@ -9,6 +9,8 @@ const PUBLIC_PATHS = new Set([
   '/api/auth/forgot-password',
   '/api/auth/reset-password',
   '/api/auth/config',
+  '/api/auth/oidc/login',
+  '/api/auth/oidc/callback',
   '/api/locales',
 ]);
 

@@ -1,5 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify';
 import type { Service } from '../config/schemas.js';
+import type { Db } from '../db/index.js';
 import { patchService, appendService, removeService, batchPatchLayouts } from '../config/writer.js';
 import { suppressNextBroadcast } from '../config/watcher.js';
 
@@ -11,9 +12,11 @@ interface PatchBody {
 
 export function createServicesRoutes(
   getServices: () => Service[],
-  configDir: string
+  configDir: string,
+  db: Db
 ): FastifyPluginAsync {
   return async fastify => {
+    const deleteNotepadContent = db.prepare<[string]>(`DELETE FROM notepad WHERE service_id = ?`);
     // GET /api/services
     fastify.get('/services', async () => ({ services: getServices() }));
 
@@ -106,6 +109,7 @@ export function createServicesRoutes(
         try {
           suppressNextBroadcast();
           removeService(configDir, req.params.id);
+          deleteNotepadContent.run(req.params.id);
           return { ok: true };
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);

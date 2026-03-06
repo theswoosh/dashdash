@@ -25,6 +25,10 @@ function hasResetToken(): boolean {
   return new URLSearchParams(window.location.search).has('token');
 }
 
+function getOidcError(): string {
+  return new URLSearchParams(window.location.search).get('error') ?? '';
+}
+
 export function App() {
   const theme = useUIStore(s => s.theme);
   const setTheme = useUIStore(s => s.setTheme);
@@ -80,7 +84,7 @@ export function App() {
   if (!user) {
     return (
       <I18nProvider language={activeLanguage} translations={translations} availableLanguages={languages}>
-        {hasResetToken() ? <ResetPasswordPage /> : <LoginPage />}
+        {hasResetToken() ? <ResetPasswordPage /> : <LoginPage initialError={getOidcError()} />}
       </I18nProvider>
     );
   }

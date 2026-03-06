@@ -2,11 +2,15 @@ import { randomUUID } from 'crypto';
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import type { Db } from '../db/index.js';
-import { findUserByEmail, findUserById, createUser, updateUser, deleteUser, countAdmins, isFirstUser } from '../db/users.db.js';
+import { findUserByEmail, findUserById, createUser, updateUser, deleteUser, countAdmins, isFirstUser, findUserByOidc, createOidcUser, linkOidcToUser } from '../db/users.db.js';
 import { createSession, destroySession, destroyAllUserSessions } from '../db/sessions.db.js';
+import { createOidcState, consumeOidcState } from '../db/oidc-state.db.js';
 import { hashPassword, verifyPassword, generateResetToken, hashResetToken } from '../services/password.service.js';
 import { sendPasswordResetEmail, isMailConfigured } from '../services/mail.service.js';
-import type { AuthConfig, MailConfig } from '../config/schemas.js';
+import { buildOidcConfig, buildAuthorizationUrl, exchangeCode, extractUserClaims, generateCodeVerifier, generateState, getEndSessionUrl } from '../services/oidc.service.js';
+import type { AuthConfig, MailConfig, OidcConfig } from '../config/schemas.js';
+
+const OIDC_STATE_EXPIRES_SECONDS = 600; // 10 minutes
 
 const COOKIE_NAME = 'dashdash_session';
 const RESET_TOKEN_EXPIRES_SECONDS = 3600; // 1 hour
@@ -71,7 +75,7 @@ function pruneExpiredEntries(
   }
 }
 
-export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: MailConfig): FastifyPluginAsync {
+export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: MailConfig, oidcConfig: OidcConfig): FastifyPluginAsync {
   // Rate limiter stores are per-server-instance — reset when server restarts or test teardown.
   const loginAttempts = new Map<string, { count: number; windowStart: number }>();
   const registerAttempts = new Map<string, { count: number; windowStart: number }>();
@@ -99,6 +103,8 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
     fastify.get('/auth/config', async () => ({
       registrationEnabled: authConfig.registration.enabled,
       smtpConfigured: isMailConfigured({ host: mailConfig.smtp.host, port: mailConfig.smtp.port, secure: mailConfig.smtp.secure, from: mailConfig.from }),
+      oidcEnabled: oidcConfig.enabled,
+      localEnabled: authConfig.local.enabled,
     }));
 
     // POST /api/auth/register
@@ -165,8 +171,28 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
     // POST /api/auth/logout (requires auth via middleware)
     fastify.post('/auth/logout', async (request, reply) => {
       const sessionId = request.cookies?.[COOKIE_NAME];
+      const user = findUserById(db, request.userId);
       if (sessionId) destroySession(db, sessionId);
       void reply.clearCookie(COOKIE_NAME, { path: '/' });
+
+      // For OIDC users, check if the provider supports RP-initiated logout.
+      if (user?.auth_method === 'oidc' && oidcConfig.enabled && oidcConfig.issuer) {
+        try {
+          const resolvedOidcConfig = await buildOidcConfig({
+            issuer: oidcConfig.issuer,
+            clientId: oidcConfig.clientId,
+            clientSecret: oidcConfig.clientSecret,
+            scopes: oidcConfig.scopes,
+          });
+          const endSessionUrl = getEndSessionUrl(resolvedOidcConfig);
+          if (endSessionUrl) {
+            return reply.send({ ok: true, redirectUrl: endSessionUrl });
+          }
+        } catch {
+          // If discovery fails, fall through to normal logout
+        }
+      }
+
       return reply.send({ ok: true });
     });
 
@@ -174,7 +200,7 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
     fastify.get('/auth/me', async (request, reply) => {
       const user = findUserById(db, request.userId);
       if (!user) return reply.code(401).send({ error: 'User not found' });
-      return reply.send({ id: user.id, email: user.email, name: user.name, role: user.role });
+      return reply.send({ id: user.id, email: user.email, name: user.name, role: user.role, authMethod: user.auth_method });
     });
 
     // PATCH /api/auth/me (requires auth via middleware)
@@ -285,6 +311,130 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
       }
 
       return reply.send({ ok: true });
+    });
+
+    // GET /api/auth/oidc/login — initiates OIDC Authorization Code + PKCE flow
+    fastify.get('/auth/oidc/login', async (request, reply) => {
+      if (!oidcConfig.enabled) {
+        return reply.code(404).send({ error: 'OIDC is not configured' });
+      }
+
+      try {
+        const resolvedOidcConfig = await buildOidcConfig({
+          issuer: oidcConfig.issuer,
+          clientId: oidcConfig.clientId,
+          clientSecret: oidcConfig.clientSecret,
+          scopes: oidcConfig.scopes,
+        });
+
+        const state = generateState();
+        const codeVerifier = generateCodeVerifier();
+        const baseUrl = process.env['DASHDASH_BASE_URL'] ?? 'http://localhost:3000';
+        const redirectUri = `${baseUrl}/api/auth/oidc/callback`;
+
+        createOidcState(db, state, codeVerifier, redirectUri, OIDC_STATE_EXPIRES_SECONDS);
+
+        const authUrl = await buildAuthorizationUrl(resolvedOidcConfig, state, codeVerifier, redirectUri, oidcConfig.scopes);
+        return reply.redirect(authUrl.toString());
+      } catch (err) {
+        fastify.log.error({ err }, 'OIDC login initiation failed');
+        return reply.redirect('/?error=oidc_config');
+      }
+    });
+
+    // GET /api/auth/oidc/callback — handles OIDC provider redirect
+    fastify.get('/auth/oidc/callback', async (request, reply) => {
+      if (!oidcConfig.enabled) {
+        return reply.redirect('/?error=oidc_disabled');
+      }
+
+      const query = request.query as Record<string, string | undefined>;
+      const stateParam = query['state'];
+      const errorParam = query['error'];
+
+      if (errorParam) {
+        fastify.log.warn({ error: errorParam }, 'OIDC provider returned error');
+        return reply.redirect('/?error=oidc_provider');
+      }
+
+      if (!stateParam) {
+        return reply.redirect('/?error=oidc_state');
+      }
+
+      const storedState = consumeOidcState(db, stateParam);
+      if (!storedState) {
+        return reply.redirect('/?error=oidc_state');
+      }
+
+      try {
+        const resolvedOidcConfig = await buildOidcConfig({
+          issuer: oidcConfig.issuer,
+          clientId: oidcConfig.clientId,
+          clientSecret: oidcConfig.clientSecret,
+          scopes: oidcConfig.scopes,
+        });
+
+        const currentUrl = new URL(
+          `${storedState.redirect_uri}?${new URLSearchParams(query as Record<string, string>).toString()}`
+        );
+
+        const tokenSet = await exchangeCode(
+          resolvedOidcConfig,
+          currentUrl,
+          storedState.redirect_uri,
+          storedState.code_verifier,
+          stateParam
+        );
+
+        const idTokenClaims = tokenSet.claims?.();
+        if (!idTokenClaims) {
+          return reply.redirect('/?error=oidc_token');
+        }
+
+        const claims = extractUserClaims(idTokenClaims, oidcConfig.groupsClaim);
+
+        if (!claims.email || !claims.emailVerified) {
+          return reply.redirect('/?error=oidc_email_not_verified');
+        }
+
+        // Resolve user: existing OIDC user > auto-link local > JIT provision
+        let userId: string | undefined;
+
+        const existingOidcUser = findUserByOidc(db, oidcConfig.issuer, claims.sub);
+        if (existingOidcUser) {
+          if (existingOidcUser.is_active === 0) {
+            return reply.redirect('/?error=oidc_account_inactive');
+          }
+          userId = existingOidcUser.id;
+        } else {
+          const existingLocalUser = findUserByEmail(db, claims.email);
+          if (existingLocalUser && oidcConfig.autoLink) {
+            if (existingLocalUser.is_active === 0) {
+              return reply.redirect('/?error=oidc_account_inactive');
+            }
+            linkOidcToUser(db, existingLocalUser.id, oidcConfig.issuer, claims.sub);
+            userId = existingLocalUser.id;
+          } else {
+            // JIT provision new user
+            const isAdmin = isFirstUser(db) ||
+              (oidcConfig.adminGroup !== '' && claims.groups.includes(oidcConfig.adminGroup));
+            userId = createOidcUser(db, {
+              email: claims.email,
+              name: claims.name,
+              oidcSubject: claims.sub,
+              oidcIssuer: oidcConfig.issuer,
+              role: isAdmin ? 'admin' : 'user',
+            });
+          }
+        }
+
+        const sessionId = createSession(db, userId, authConfig.session.maxAgeSeconds);
+        void reply.setCookie(COOKIE_NAME, sessionId, cookieOpts);
+        return reply.redirect('/');
+      } catch (err) {
+        fastify.log.error({ err }, 'OIDC callback failed');
+        return reply.redirect('/?error=oidc_failed');
+      }
     });
 
     // POST /api/auth/reset-password

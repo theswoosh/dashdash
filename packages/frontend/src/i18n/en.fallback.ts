@@ -125,6 +125,8 @@ export const EN_FALLBACK: Record<string, unknown> = {
     dragToMove: 'Drag to move',
     configureWidget: 'Configure widget',
     refreshNotepad: 'Refresh notepad',
+    clearNotepad: 'Hold to clear notes',
+    clearNotepadAria: 'Hold to clear notepad content',
     up: 'Up',
     down: 'Down',
     unknown: 'Unknown',

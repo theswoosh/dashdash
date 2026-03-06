@@ -1,8 +1,8 @@
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import yaml from 'js-yaml';
-import { RawServicesSchema, SettingsSchema, BehaviorSchema, assignIds } from './schemas.js';
-import type { Services, Settings, Behavior } from './schemas.js';
+import { RawServicesSchema, SettingsSchema, assignIds } from './schemas.js';
+import type { Services, Settings } from './schemas.js';
 
 interface Logger { warn: (msg: string, ...args: unknown[]) => void }
 
@@ -27,16 +27,6 @@ export function loadServices(configDir: string, logger: Logger = defaultLogger):
     return [];
   }
   return assignIds(parseResult.data);
-}
-
-export function loadBehavior(configDir: string, logger: Logger = defaultLogger): Behavior {
-  const raw = readYaml(join(configDir, 'behavior.yml'), logger);
-  const parseResult = BehaviorSchema.safeParse(raw ?? {});
-  if (!parseResult.success) {
-    logger.warn('behavior.yml validation errors:', parseResult.error.format());
-    return BehaviorSchema.parse({});
-  }
-  return parseResult.data;
 }
 
 export function loadSettings(configDir: string, logger: Logger = defaultLogger): Settings {

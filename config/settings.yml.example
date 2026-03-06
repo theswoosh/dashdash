@@ -17,15 +17,8 @@ grid:
   gap: 10              # px gap between widgets
 
 auth:
-  oidc:
-    enabled: false
-    issuer: https://auth.example.com
-    clientId: dashdash
-    # clientSecret via env: DASHDASH_OIDC_SECRET
-    scopes: "openid profile email groups"
-    groupsClaim: groups
   local:
-    enabled: true      # fallback local accounts
+    enabled: true      # set to false to disable local login when OIDC is the only method
 
 # Search engines for the header bar and search widget.
 # All engines must be defined here — there are no built-in defaults.
