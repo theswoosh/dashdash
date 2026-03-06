@@ -10,7 +10,7 @@ import multipart from '@fastify/multipart';
 import websocketPlugin from '@fastify/websocket';
 import type { WebSocket } from 'ws';
 import { createDb, type Db } from './db/index.js';
-import { loadServices, loadSettings, loadBehavior } from './config/loader.js';
+import { loadServices, loadSettings } from './config/loader.js';
 import { addWsClient, removeWsClient } from './config/watcher.js';
 import { healthRoutes } from './routes/health.route.js';
 import { createServicesRoutes } from './routes/services.route.js';
@@ -23,6 +23,7 @@ import { createWidgetTemplatesRoutes } from './routes/widget-templates.route.js'
 import { healthcheckTestRoutes } from './routes/healthcheck-test.route.js';
 import { createBoardRoutes } from './routes/boards.route.js';
 import { createAuthRoutes } from './routes/auth.route.js';
+import type { OidcConfig } from './config/schemas.js';
 import { createUsersRoutes } from './routes/users.route.js';
 import { createLocalesRoutes } from './routes/locales.route.js';
 import { registerAuthMiddleware } from './middleware/auth.middleware.js';
@@ -107,11 +108,25 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
   const db = createDb(dataDir);
   const log = server.log;
   const getSettings = () => loadSettings(configDir, log);
-  const getBehavior = () => loadBehavior(configDir, log);
+  const getBehavior = () => { const s = loadSettings(configDir, log); return { holdToDeleteMs: s.holdToDeleteMs }; };
   const getServices = () => loadServices(configDir, log);
 
   const settings = getSettings();
   const { auth: authConfig, mail: mailConfig } = settings;
+
+  const oidcIssuer   = process.env['DASHDASH_OIDC_ISSUER']   ?? '';
+  const oidcClientId = process.env['DASHDASH_OIDC_CLIENT_ID'] ?? '';
+  const oidcSecret   = process.env['DASHDASH_OIDC_SECRET']   ?? '';
+  const oidcConfig: OidcConfig = {
+    enabled:      Boolean(oidcIssuer && oidcClientId && oidcSecret),
+    issuer:       oidcIssuer,
+    clientId:     oidcClientId,
+    clientSecret: oidcSecret,
+    scopes:       process.env['DASHDASH_OIDC_SCOPES']       ?? 'openid profile email',
+    groupsClaim:  process.env['DASHDASH_OIDC_GROUPS_CLAIM'] ?? '',
+    adminGroup:   process.env['DASHDASH_OIDC_ADMIN_GROUP']  ?? '',
+    autoLink:     process.env['DASHDASH_OIDC_AUTO_LINK']    !== 'false',
+  };
 
   // Auth middleware runs before all route handlers.
   registerAuthMiddleware(server, db, authConfig.session.slidingWindow ? authConfig.session.maxAgeSeconds : 0);
@@ -127,9 +142,9 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
   cleanupTimer.unref();
 
   await server.register(healthRoutes, { prefix: '/api' });
-  await server.register(createAuthRoutes(db, authConfig, mailConfig), { prefix: '/api' });
+  await server.register(createAuthRoutes(db, authConfig, mailConfig, oidcConfig), { prefix: '/api' });
   await server.register(createUsersRoutes(db, mailConfig), { prefix: '/api' });
-  await server.register(createServicesRoutes(getServices, configDir), { prefix: '/api' });
+  await server.register(createServicesRoutes(getServices, configDir, db), { prefix: '/api' });
   await server.register(createSettingsRoutes(getSettings, configDir), { prefix: '/api' });
   await server.register(createBehaviorRoutes(getBehavior), { prefix: '/api' });
   await server.register(createWidgetRoutes({ getServices, configDir }), { prefix: '/api' });

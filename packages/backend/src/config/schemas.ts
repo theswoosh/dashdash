@@ -74,19 +74,21 @@ const AuthRegistrationSchema = z.object({
 const AuthConfigSchema = z.object({
   registration: AuthRegistrationSchema,
   session: AuthSessionSchema,
-  oidc: z.object({
-    enabled: z.boolean().default(false),
-    issuer: z.string().default(''),
-    clientId: z.string().default(''),
-    scopes: z.string().default('openid profile email'),
-    groupsClaim: z.string().default(''),
-    adminGroup: z.string().default(''),
-    autoLink: z.boolean().default(true),
-  }).default({}),
   local: z.object({
     enabled: z.boolean().default(true),
   }).default({}),
 }).default({});
+
+export interface OidcConfig {
+  enabled: boolean;
+  issuer: string;
+  clientId: string;
+  clientSecret: string;
+  scopes: string;
+  groupsClaim: string;
+  adminGroup: string;
+  autoLink: boolean;
+}
 
 const MailConfigSchema = z.object({
   smtp: z.object({
@@ -116,9 +118,6 @@ export const SettingsSchema = z.object({
   auth: AuthConfigSchema,
   mail: MailConfigSchema,
   searchEngines: SearchEnginesSchema.default([]),
-});
-
-export const BehaviorSchema = z.object({
   holdToDeleteMs: z.number().int().positive().default(1000),
 });
 
@@ -131,7 +130,6 @@ export const IntegrationSchema = z.object({
 
 export const IntegrationsSchema = z.array(IntegrationSchema);
 
-export type Behavior = z.infer<typeof BehaviorSchema>;
 export type Services = z.infer<typeof ServicesSchema>;
 export type Settings = z.infer<typeof SettingsSchema>;
 export type Service = z.infer<typeof ServiceSchema>;

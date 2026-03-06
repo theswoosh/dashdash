@@ -8,7 +8,7 @@ import { createOidcState, consumeOidcState } from '../db/oidc-state.db.js';
 import { hashPassword, verifyPassword, generateResetToken, hashResetToken } from '../services/password.service.js';
 import { sendPasswordResetEmail, isMailConfigured } from '../services/mail.service.js';
 import { buildOidcConfig, buildAuthorizationUrl, exchangeCode, extractUserClaims, generateCodeVerifier, generateState, getEndSessionUrl } from '../services/oidc.service.js';
-import type { AuthConfig, MailConfig } from '../config/schemas.js';
+import type { AuthConfig, MailConfig, OidcConfig } from '../config/schemas.js';
 
 const OIDC_STATE_EXPIRES_SECONDS = 600; // 10 minutes
 
@@ -75,7 +75,7 @@ function pruneExpiredEntries(
   }
 }
 
-export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: MailConfig): FastifyPluginAsync {
+export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: MailConfig, oidcConfig: OidcConfig): FastifyPluginAsync {
   // Rate limiter stores are per-server-instance — reset when server restarts or test teardown.
   const loginAttempts = new Map<string, { count: number; windowStart: number }>();
   const registerAttempts = new Map<string, { count: number; windowStart: number }>();
@@ -103,7 +103,7 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
     fastify.get('/auth/config', async () => ({
       registrationEnabled: authConfig.registration.enabled,
       smtpConfigured: isMailConfigured({ host: mailConfig.smtp.host, port: mailConfig.smtp.port, secure: mailConfig.smtp.secure, from: mailConfig.from }),
-      oidcEnabled: authConfig.oidc.enabled,
+      oidcEnabled: oidcConfig.enabled,
       localEnabled: authConfig.local.enabled,
     }));
 
@@ -176,15 +176,15 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
       void reply.clearCookie(COOKIE_NAME, { path: '/' });
 
       // For OIDC users, check if the provider supports RP-initiated logout.
-      if (user?.auth_method === 'oidc' && authConfig.oidc.enabled && authConfig.oidc.issuer) {
+      if (user?.auth_method === 'oidc' && oidcConfig.enabled && oidcConfig.issuer) {
         try {
-          const oidcConfig = await buildOidcConfig({
-            issuer: authConfig.oidc.issuer,
-            clientId: authConfig.oidc.clientId,
-            clientSecret: process.env['DASHDASH_OIDC_SECRET'] ?? '',
-            scopes: authConfig.oidc.scopes,
+          const resolvedOidcConfig = await buildOidcConfig({
+            issuer: oidcConfig.issuer,
+            clientId: oidcConfig.clientId,
+            clientSecret: oidcConfig.clientSecret,
+            scopes: oidcConfig.scopes,
           });
-          const endSessionUrl = getEndSessionUrl(oidcConfig);
+          const endSessionUrl = getEndSessionUrl(resolvedOidcConfig);
           if (endSessionUrl) {
             return reply.send({ ok: true, redirectUrl: endSessionUrl });
           }
@@ -315,16 +315,16 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
 
     // GET /api/auth/oidc/login — initiates OIDC Authorization Code + PKCE flow
     fastify.get('/auth/oidc/login', async (request, reply) => {
-      if (!authConfig.oidc.enabled) {
+      if (!oidcConfig.enabled) {
         return reply.code(404).send({ error: 'OIDC is not configured' });
       }
 
       try {
-        const oidcConfig = await buildOidcConfig({
-          issuer: authConfig.oidc.issuer,
-          clientId: authConfig.oidc.clientId,
-          clientSecret: process.env['DASHDASH_OIDC_SECRET'] ?? '',
-          scopes: authConfig.oidc.scopes,
+        const resolvedOidcConfig = await buildOidcConfig({
+          issuer: oidcConfig.issuer,
+          clientId: oidcConfig.clientId,
+          clientSecret: oidcConfig.clientSecret,
+          scopes: oidcConfig.scopes,
         });
 
         const state = generateState();
@@ -334,7 +334,7 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
 
         createOidcState(db, state, codeVerifier, redirectUri, OIDC_STATE_EXPIRES_SECONDS);
 
-        const authUrl = await buildAuthorizationUrl(oidcConfig, state, codeVerifier, redirectUri, authConfig.oidc.scopes);
+        const authUrl = await buildAuthorizationUrl(resolvedOidcConfig, state, codeVerifier, redirectUri, oidcConfig.scopes);
         return reply.redirect(authUrl.toString());
       } catch (err) {
         fastify.log.error({ err }, 'OIDC login initiation failed');
@@ -344,7 +344,7 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
 
     // GET /api/auth/oidc/callback — handles OIDC provider redirect
     fastify.get('/auth/oidc/callback', async (request, reply) => {
-      if (!authConfig.oidc.enabled) {
+      if (!oidcConfig.enabled) {
         return reply.redirect('/?error=oidc_disabled');
       }
 
@@ -367,11 +367,11 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
       }
 
       try {
-        const oidcConfig = await buildOidcConfig({
-          issuer: authConfig.oidc.issuer,
-          clientId: authConfig.oidc.clientId,
-          clientSecret: process.env['DASHDASH_OIDC_SECRET'] ?? '',
-          scopes: authConfig.oidc.scopes,
+        const resolvedOidcConfig = await buildOidcConfig({
+          issuer: oidcConfig.issuer,
+          clientId: oidcConfig.clientId,
+          clientSecret: oidcConfig.clientSecret,
+          scopes: oidcConfig.scopes,
         });
 
         const currentUrl = new URL(
@@ -379,7 +379,7 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
         );
 
         const tokenSet = await exchangeCode(
-          oidcConfig,
+          resolvedOidcConfig,
           currentUrl,
           storedState.redirect_uri,
           storedState.code_verifier,
@@ -391,7 +391,7 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
           return reply.redirect('/?error=oidc_token');
         }
 
-        const claims = extractUserClaims(idTokenClaims, authConfig.oidc.groupsClaim);
+        const claims = extractUserClaims(idTokenClaims, oidcConfig.groupsClaim);
 
         if (!claims.email || !claims.emailVerified) {
           return reply.redirect('/?error=oidc_email_not_verified');
@@ -400,7 +400,7 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
         // Resolve user: existing OIDC user > auto-link local > JIT provision
         let userId: string | undefined;
 
-        const existingOidcUser = findUserByOidc(db, authConfig.oidc.issuer, claims.sub);
+        const existingOidcUser = findUserByOidc(db, oidcConfig.issuer, claims.sub);
         if (existingOidcUser) {
           if (existingOidcUser.is_active === 0) {
             return reply.redirect('/?error=oidc_account_inactive');
@@ -408,21 +408,21 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
           userId = existingOidcUser.id;
         } else {
           const existingLocalUser = findUserByEmail(db, claims.email);
-          if (existingLocalUser && authConfig.oidc.autoLink) {
+          if (existingLocalUser && oidcConfig.autoLink) {
             if (existingLocalUser.is_active === 0) {
               return reply.redirect('/?error=oidc_account_inactive');
             }
-            linkOidcToUser(db, existingLocalUser.id, authConfig.oidc.issuer, claims.sub);
+            linkOidcToUser(db, existingLocalUser.id, oidcConfig.issuer, claims.sub);
             userId = existingLocalUser.id;
           } else {
             // JIT provision new user
             const isAdmin = isFirstUser(db) ||
-              (authConfig.oidc.adminGroup !== '' && claims.groups.includes(authConfig.oidc.adminGroup));
+              (oidcConfig.adminGroup !== '' && claims.groups.includes(oidcConfig.adminGroup));
             userId = createOidcUser(db, {
               email: claims.email,
               name: claims.name,
               oidcSubject: claims.sub,
-              oidcIssuer: authConfig.oidc.issuer,
+              oidcIssuer: oidcConfig.issuer,
               role: isAdmin ? 'admin' : 'user',
             });
           }
