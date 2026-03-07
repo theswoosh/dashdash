@@ -13,8 +13,16 @@ config/
 
 # Dev / CI / docs — not needed in the image
 .github/
+_dev/
 docs/
 memory/
 .env*
 docker-compose.yml
 *.md
+*.log
+
+# Test artifacts
+**/coverage/
+**/__tests__/
+**/*.test.ts
+**/*.spec.ts

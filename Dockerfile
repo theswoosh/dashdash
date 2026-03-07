@@ -1,7 +1,10 @@
-# ── Stage 1: Build frontend ───────────────────────────────────────────────────
-FROM node:20-alpine AS frontend-builder
-
+# ── Stage 0: Shared base with pnpm ────────────────────────────────────────────
+FROM node:20-alpine AS base
 RUN corepack enable && corepack prepare pnpm@10.30.1 --activate
+
+
+# ── Stage 1: Build frontend ───────────────────────────────────────────────────
+FROM base AS frontend-builder
 
 WORKDIR /app
 
@@ -19,9 +22,7 @@ RUN pnpm --filter @dashdash/frontend build
 
 
 # ── Stage 2: Build backend ────────────────────────────────────────────────────
-FROM node:20-alpine AS backend-builder
-
-RUN corepack enable && corepack prepare pnpm@10.30.1 --activate
+FROM base AS backend-builder
 
 WORKDIR /app
 
@@ -51,6 +52,10 @@ FROM node:20-alpine AS runtime
 # su-exec: lightweight privilege-drop utility (replaces gosu for alpine)
 RUN apk add --no-cache su-exec
 
+# Create non-root user — entrypoint fixes /data and /config ownership at runtime
+# so upgrades from root-owned volumes work without manual intervention.
+RUN addgroup -S dashdash && adduser -S dashdash -G dashdash
+
 WORKDIR /app
 
 # Self-contained backend: compiled JS + flat prod node_modules
@@ -61,8 +66,7 @@ COPY --from=frontend-builder /app/packages/frontend/dist ./public
 
 # Default config files — seeded into /config on first run (never overwrite)
 COPY config/*.example /app/config-defaults/
-COPY docker/entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+COPY --chmod=755 docker/entrypoint.sh /app/entrypoint.sh
 
 # OCI image labels (CI overlays version/revision/created on top)
 LABEL org.opencontainers.image.title="dashdash" \
@@ -76,10 +80,6 @@ ENV NODE_ENV=production \
     HOST=0.0.0.0 \
     DATA_DIR=/data \
     CONFIG_DIR=/config
-
-# Create non-root user — entrypoint fixes /data and /config ownership at runtime
-# so upgrades from root-owned volumes work without manual intervention.
-RUN addgroup -S dashdash && adduser -S dashdash -G dashdash
 
 VOLUME ["/config", "/data"]
 
