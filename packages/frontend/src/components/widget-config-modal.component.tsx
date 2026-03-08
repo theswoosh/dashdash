@@ -152,6 +152,45 @@ export function WidgetConfigModal() {
   const [testResult, setTestResult] = useState<'idle' | 'loading' | 'ok' | 'fail'>('idle');
   const [bgHex, setBgHex] = useState(DEFAULT_BG_HEX);
   const [bgAlpha, setBgAlpha] = useState(DEFAULT_BG_ALPHA);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+  useEffect(() => {
+    if (!configTarget) return;
+    const modal = modalRef.current;
+    if (!modal) return;
+
+    const focusables = modal.querySelectorAll<HTMLElement>(FOCUSABLE);
+    focusables[0]?.focus();
+
+    const trapFocus = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setConfigTarget(null);
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const els = modal.querySelectorAll<HTMLElement>(FOCUSABLE);
+      if (els.length === 0) return;
+      const first = els[0]!;
+      const last = els[els.length - 1]!;
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', trapFocus);
+    return () => document.removeEventListener('keydown', trapFocus);
+  }, [configTarget, setConfigTarget]);
 
   // Sync state when target changes
   useEffect(() => {
@@ -225,7 +264,7 @@ export function WidgetConfigModal() {
 
   return (
     <div className="modal-backdrop" onClick={() => setConfigTarget(null)}>
-      <div className="modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={t('widgetConfig.configure', { title: service.title })}>
+      <div ref={modalRef} className="modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={t('widgetConfig.configure', { title: service.title })}>
         <div className="modal-header">
           <span className="modal-title">{t('widgetConfig.configure', { title: service.title })}</span>
           <button className="modal-close" onClick={() => setConfigTarget(null)} aria-label={t('common.close')}>

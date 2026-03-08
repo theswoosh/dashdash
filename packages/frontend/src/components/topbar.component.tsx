@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { Settings2, Save, Search, X } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
@@ -102,10 +102,49 @@ function ClockConfigModal({
 }) {
   const t = useT();
   const [localTimezone, setLocalTimezone] = useState(timezone);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+  useEffect(() => {
+    const modal = modalRef.current;
+    if (!modal) return;
+
+    const focusables = modal.querySelectorAll<HTMLElement>(FOCUSABLE);
+    focusables[0]?.focus();
+
+    const trapFocus = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const els = modal.querySelectorAll<HTMLElement>(FOCUSABLE);
+      if (els.length === 0) return;
+      const first = els[0]!;
+      const last = els[els.length - 1]!;
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', trapFocus);
+    return () => document.removeEventListener('keydown', trapFocus);
+  }, [onClose]);
 
   return createPortal(
     <div className="modal-backdrop" onClick={onClose}>
       <div
+        ref={modalRef}
         className="modal modal--sm"
         onClick={e => e.stopPropagation()}
         role="dialog"

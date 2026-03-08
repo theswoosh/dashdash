@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Ban, Plus, Check } from 'lucide-react';
 import type { WallpaperEntry } from '../hooks/use-board.hook';
@@ -28,6 +28,44 @@ export function WallpaperPickerModal({
 }: Props) {
   const t = useT();
   const uploadInputRef = useRef<HTMLInputElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+  useEffect(() => {
+    const modal = modalRef.current;
+    if (!modal) return;
+
+    const focusables = modal.querySelectorAll<HTMLElement>(FOCUSABLE);
+    focusables[0]?.focus();
+
+    const trapFocus = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const els = modal.querySelectorAll<HTMLElement>(FOCUSABLE);
+      if (els.length === 0) return;
+      const first = els[0]!;
+      const last = els[els.length - 1]!;
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', trapFocus);
+    return () => document.removeEventListener('keydown', trapFocus);
+  }, [onClose]);
 
   const triggerUpload = () => uploadInputRef.current?.click();
 
@@ -43,9 +81,11 @@ export function WallpaperPickerModal({
   return createPortal(
     <div className="wp-overlay" onClick={onClose}>
       <div
+        ref={modalRef}
         className="wp-modal"
         onClick={e => e.stopPropagation()}
         role="dialog"
+        aria-modal="true"
         aria-label={t('wallpaper.library')}
       >
         <div className="wp-header">
