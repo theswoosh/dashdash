@@ -128,7 +128,7 @@ function BoardIconPicker({
   useEffect(() => {
     if (!isOpen) return;
     const closeOnOutside = (e: MouseEvent) => {
-      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+      if (pickerRef.current && e.target instanceof Node && !pickerRef.current.contains(e.target)) {
         setIsOpen(false);
       }
     };
@@ -191,7 +191,8 @@ function BoardIconPicker({
               maxLength={8}
               onKeyDown={e => {
                 if (e.key !== 'Enter') return;
-                const customEmoji = (e.target as HTMLInputElement).value.trim();
+                if (!(e.target instanceof HTMLInputElement)) return;
+                const customEmoji = e.target.value.trim();
                 if (!customEmoji) return;
                 onChange(customEmoji);
                 setIsOpen(false);

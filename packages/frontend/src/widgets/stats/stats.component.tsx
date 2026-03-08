@@ -63,11 +63,21 @@ function StatBar({ label, value, subtitle }: BarProps) {
   );
 }
 
+function isStatsData(x: unknown): x is StatsData {
+  if (typeof x !== 'object' || x === null) return false;
+  const r = x as Record<string, unknown>;
+  return typeof r['cpuLoadPct'] === 'number'
+    && typeof r['memUsedPct'] === 'number'
+    && typeof r['memUsedMb'] === 'number'
+    && typeof r['memTotalMb'] === 'number'
+    && typeof r['uptimeSecs'] === 'number';
+}
+
 export function StatsWidget({ data, error, loading }: WidgetProps) {
   if (loading) return <WidgetSkeleton />;
   if (error) return <WidgetError message={error} />;
 
-  const statsData = data as StatsData | null;
+  const statsData = isStatsData(data) ? data : null;
   if (!statsData) return <WidgetError message="No data" />;
 
   return (

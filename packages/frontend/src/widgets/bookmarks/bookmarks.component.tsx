@@ -7,8 +7,15 @@ interface Bookmark {
   icon?: string | undefined;
 }
 
+function isBookmark(x: unknown): x is Bookmark {
+  return typeof x === 'object' && x !== null
+    && typeof (x as Record<string, unknown>)['label'] === 'string'
+    && typeof (x as Record<string, unknown>)['url'] === 'string';
+}
+
 export function BookmarksWidget({ options }: WidgetProps) {
-  const links = (options['links'] as Bookmark[] | undefined) ?? [];
+  const raw = options['links'];
+  const links: Bookmark[] = Array.isArray(raw) ? raw.filter(isBookmark) : [];
 
   if (links.length === 0) {
     return (

@@ -100,6 +100,12 @@ interface PingStatus {
   error?: string | undefined;
 }
 
+function isPingStatus(x: unknown): x is PingStatus {
+  return typeof x === 'object' && x !== null
+    && 'status' in x
+    && ((x as Record<string, unknown>)['status'] === 'up' || (x as Record<string, unknown>)['status'] === 'down');
+}
+
 function buildPingTooltip(ping: PingStatus): string {
   if (ping.status === 'up') return ping.latencyMs !== undefined ? `${ping.latencyMs}ms` : 'Up';
   return ping.error ?? 'Offline';
@@ -115,7 +121,7 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
 
   const isPingEnabled = service.widget === 'healthcheck' && service.options?.['ping'] !== false;
   const hasConfiguredUrl = isPingEnabled && Boolean(service.options?.['url']);
-  const pingData = isPingEnabled && !loading && data ? data as PingStatus : null;
+  const pingData = isPingEnabled && !loading && isPingStatus(data) ? data : null;
   type PingDotState = 'up' | 'down' | 'unknown';
   const pingDotState: PingDotState | null = !isPingEnabled
     ? null

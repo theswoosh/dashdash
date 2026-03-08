@@ -18,9 +18,9 @@ interface AuthConfig {
 const ME_KEY = '/api/auth/me';
 const CONFIG_KEY = '/api/auth/config';
 
-async function jsonFetcher<T>(url: string): Promise<T> {
+async function jsonFetcher<T>(url: string): Promise<T | null> {
   const res = await fetch(url);
-  if (res.status === 401) return null as unknown as T;
+  if (res.status === 401) return null;
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json() as Promise<T>;
 }
@@ -31,7 +31,7 @@ export function useAuth() {
     shouldRetryOnError: false,
   });
 
-  const { data: authConfig } = useSWR<AuthConfig>(CONFIG_KEY, jsonFetcher, {
+  const { data: authConfig } = useSWR<AuthConfig | null>(CONFIG_KEY, jsonFetcher, {
     revalidateOnFocus: false,
     shouldRetryOnError: false,
   });

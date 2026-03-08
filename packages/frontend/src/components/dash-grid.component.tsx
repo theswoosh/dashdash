@@ -140,8 +140,8 @@ export function DashGrid() {
 
   const createWidgetFromDrop = useCallback(
     (_rglLayout: Layout[], item: Layout, e: Event) => {
-      const dragEvent = e as DragEvent;
-      const raw = dragEvent.dataTransfer?.getData('widget-template');
+      if (!(e instanceof DragEvent)) return;
+      const raw = e.dataTransfer?.getData('widget-template');
       if (!raw) return;
 
       let template: WidgetTemplate;

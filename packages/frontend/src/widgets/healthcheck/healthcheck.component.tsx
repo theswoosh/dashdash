@@ -9,9 +9,11 @@ export function HealthcheckWidget({ options, error, loading }: WidgetProps) {
   if (loading) return <WidgetSkeleton />;
   if (error) return <WidgetError message={error} />;
 
-  const layoutSize = (options['layoutSize'] as HealthcheckLayoutSize | undefined) ?? 'normal';
-  const appName = (options['_title'] as string | undefined) ?? '';
-  const description = (options['description'] as string | undefined) ?? '';
+  const layoutSizeRaw = options['layoutSize'];
+  const layoutSize: HealthcheckLayoutSize =
+    layoutSizeRaw === 'tiny' || layoutSizeRaw === 'big' ? layoutSizeRaw : 'normal';
+  const appName = typeof options['_title'] === 'string' ? options['_title'] : '';
+  const description = typeof options['description'] === 'string' ? options['description'] : '';
   const isShowDescription = Boolean(options['showDescription']);
 
   if (layoutSize === 'tiny') {
