@@ -51,12 +51,15 @@ function buildDisplacementMap(
   refractionMultiplier: number,
   cardRadius: number
 ): number {
-  canvas.width = w;
-  canvas.height = h;
+  const dpr = window.devicePixelRatio || 1;
+  const pw = Math.round(w * dpr);
+  const ph = Math.round(h * dpr);
+  canvas.width = pw;
+  canvas.height = ph;
   const ctx = canvas.getContext('2d');
   if (!ctx) return 0;
 
-  const total = w * h;
+  const total = pw * ph;
   const pixelBuffer = new Uint8ClampedArray(total * 4);
 
   // sigma: width of the Gaussian refraction band. Proportional to corner
@@ -77,12 +80,12 @@ function buildDisplacementMap(
   const scale = sigma * refractionMultiplier * 2;
 
   for (let i = 0; i < total; i++) {
-    const px = i % w;
-    const py = Math.floor(i / w);
+    const px = i % pw;
+    const py = Math.floor(i / pw);
 
-    // Pixel coordinates centered at card origin.
-    const cx = px - w / 2;
-    const cy = py - h / 2;
+    // Map physical pixel back to logical coordinates centered at card origin.
+    const cx = px / dpr - w / 2;
+    const cy = py / dpr - h / 2;
 
     // Squircle SDF in pixel space: negative inside, 0 at boundary, positive outside.
     const sdf = squircleSDF(cx, cy, hw, hh, cardRadius);
@@ -109,7 +112,7 @@ function buildDisplacementMap(
     pixelBuffer[i * 4 + 3] = 255;
   }
 
-  ctx.putImageData(new ImageData(pixelBuffer, w, h), 0, 0);
+  ctx.putImageData(new ImageData(pixelBuffer, pw, ph), 0, 0);
   return scale;
 }
 
