@@ -50,7 +50,7 @@ function TopbarSearch({
   const [query, setQuery] = useState('');
 
   const selectedEngine = engine
-    ? engines.find(e => e.id === engine)
+    ? (engines.find(e => e.id === engine) ?? engines[0])
     : engines[0];
   const resolvedPlaceholder = selectedEngine?.placeholder || 'Search…';
 

@@ -13,7 +13,7 @@ export interface ConfigField {
   key: string;
   label: string;
   labelKey?: string | undefined;
-  type: 'text' | 'url' | 'number' | 'boolean' | 'textarea' | 'select' | 'separator';
+  type: 'text' | 'url' | 'number' | 'boolean' | 'textarea' | 'select' | 'separator' | 'engines-select';
   placeholder?: string | undefined;
   required?: boolean | undefined;
   default?: unknown;
@@ -122,7 +122,7 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     defaultSize: { w: 8, h: 4 },
     defaultOptions: {},
     configFields: [
-      { key: 'engine', label: 'Engine ID', type: 'text', placeholder: 'Engine id from settings.yml (leave empty for first)' },
+      { key: 'engine', label: 'Engine', type: 'engines-select' },
       { key: 'placeholder', label: 'Placeholder override', type: 'text', placeholder: 'Overrides the engine placeholder from settings.yml' },
     ],
   },

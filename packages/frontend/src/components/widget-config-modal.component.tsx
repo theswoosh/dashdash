@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { X, CheckCircle, XCircle, Loader } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
 import { useServices } from '../hooks/use-services.hook';
+import { useSettings, type SearchEngine } from '../hooks/use-settings.hook';
 import { getTemplate } from '../widgets/catalog';
 import type { ConfigField } from '../widgets/catalog';
 import { useT } from '../i18n';
@@ -32,10 +33,12 @@ function FieldInput({
   field,
   value,
   onChange,
+  engines = [],
 }: {
   field: ConfigField;
   value: unknown;
   onChange: (key: string, val: unknown) => void;
+  engines?: readonly SearchEngine[] | undefined;
 }) {
   const t = useT();
 
@@ -76,6 +79,24 @@ function FieldInput({
           onChange={e => onChange(field.key, e.target.value)}
           rows={2}
         />
+      </div>
+    );
+  }
+
+  if (field.type === 'engines-select') {
+    return (
+      <div className="config-field">
+        <label className="config-label">{label}</label>
+        <select
+          className="config-input config-select"
+          value={strVal}
+          onChange={e => onChange(field.key, e.target.value || undefined)}
+        >
+          <option value="">First available engine</option>
+          {engines.map(e => (
+            <option key={e.id} value={e.id}>{e.label}</option>
+          ))}
+        </select>
       </div>
     );
   }
@@ -121,6 +142,7 @@ export function WidgetConfigModal() {
   const configTarget = useUIStore(s => s.configTarget);
   const setConfigTarget = useUIStore(s => s.setConfigTarget);
   const { services, reload: reloadServices } = useServices();
+  const allEngines = useSettings().searchEngines ?? [];
 
   const service = services.find(s => s.id === configTarget);
   const template = service ? getTemplate(service.widget) : undefined;
@@ -228,6 +250,7 @@ export function WidgetConfigModal() {
                 field={field}
                 value={options[field.key] ?? field.default}
                 onChange={handleOptionChange}
+                engines={allEngines}
               />
             ))
           ) : (

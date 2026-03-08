@@ -235,9 +235,9 @@ function OptionsTab() {
   const isHideTopbar = preferences?.hideTopbar ?? false;
   const isHeaderClock = preferences?.headerClock ?? false;
   const isHeaderSearch = preferences?.headerSearch ?? false;
-  const headerSearchEngine = preferences?.headerSearchEngine ?? 'duckduckgo';
 
   const allEngines = settings.searchEngines ?? [];
+  const headerSearchEngine = preferences?.headerSearchEngine ?? allEngines[0]?.id ?? '';
 
   const updateBoardName = (e: React.ChangeEvent<HTMLInputElement>) => {
     const nameValue = e.target.value;
