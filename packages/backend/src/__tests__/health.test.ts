@@ -28,6 +28,6 @@ describe('GET /api/health', () => {
     expect(res.statusCode).toBe(200);
     const body = res.json<{ status: string; version: string }>();
     expect(body.status).toBe('ok');
-    expect(body.version).toBeTruthy();
+    expect(body.version).toMatch(/^\d+\.\d+\.\d+/);
   });
 });

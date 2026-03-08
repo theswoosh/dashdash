@@ -25,7 +25,7 @@ beforeEach(() => {
   writeFileSync(join(tmpDir, 'services.yml'), BASE_YML);
 });
 
-afterAll(() => {
+afterEach(() => {
   rmSync(tmpDir, { recursive: true, force: true });
 });
 

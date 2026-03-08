@@ -76,7 +76,7 @@ describe('POST /api/auth/register', () => {
     const res = await register();
     expect(res.headers['set-cookie']).toBeDefined();
     const cookie = extractSessionCookie(res.headers as Record<string, string | string[]>);
-    expect(cookie).toBeTruthy();
+    expect(cookie).toMatch(/^[A-Za-z0-9_-]{20,}/);
   });
 
   it('rejects duplicate email', async () => {
@@ -109,7 +109,7 @@ describe('POST /api/auth/login', () => {
     const res = await login();
     expect(res.statusCode).toBe(200);
     expect(res.json().email).toBe('admin@test.local');
-    expect(extractSessionCookie(res.headers as Record<string, string | string[]>)).toBeTruthy();
+    expect(extractSessionCookie(res.headers as Record<string, string | string[]>)).toMatch(/^[A-Za-z0-9_-]{20,}/);
   });
 
   it('returns same error for wrong password and nonexistent email', async () => {
@@ -154,6 +154,21 @@ describe('GET /api/auth/me', () => {
 
   it('returns 401 without session', async () => {
     const res = await server.inject({ method: 'GET', url: '/api/auth/me' });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('returns 401 with an expired session', async () => {
+    await register();
+    const loginRes = await login();
+    const cookie = extractSessionCookie(loginRes.headers as Record<string, string | string[]>);
+
+    db.prepare("UPDATE sessions SET expires_at = datetime('now', '-1 second')").run();
+
+    const res = await server.inject({
+      method: 'GET',
+      url: '/api/auth/me',
+      headers: { cookie: `dashdash_session=${cookie}` },
+    });
     expect(res.statusCode).toBe(401);
   });
 });

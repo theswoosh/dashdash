@@ -270,6 +270,41 @@ describe('listBoardsForUser', () => {
 });
 
 // ============================================================
+// Board deletion cascade
+// ============================================================
+
+describe('board deletion cascade', () => {
+  it('removes user_boards and user_board_overrides when a board is deleted', () => {
+    const userId = insertUser();
+    const boardId = (db.prepare('SELECT id FROM boards LIMIT 1').get() as { id: string }).id;
+
+    db.prepare(
+      `INSERT INTO user_boards (id, user_id, board_id, role) VALUES (?, ?, ?, ?)`,
+    ).run(randomUUID(), userId, boardId, 'viewer');
+
+    db.prepare(
+      `INSERT INTO user_board_overrides (id, user_id, board_id, overrides) VALUES (?, ?, ?, ?)`,
+    ).run(randomUUID(), userId, boardId, '{}');
+
+    expect(
+      (db.prepare('SELECT COUNT(*) AS n FROM user_boards WHERE board_id = ?').get(boardId) as { n: number }).n,
+    ).toBe(1);
+    expect(
+      (db.prepare('SELECT COUNT(*) AS n FROM user_board_overrides WHERE board_id = ?').get(boardId) as { n: number }).n,
+    ).toBe(1);
+
+    db.prepare('DELETE FROM boards WHERE id = ?').run(boardId);
+
+    expect(
+      (db.prepare('SELECT COUNT(*) AS n FROM user_boards WHERE board_id = ?').get(boardId) as { n: number }).n,
+    ).toBe(0);
+    expect(
+      (db.prepare('SELECT COUNT(*) AS n FROM user_board_overrides WHERE board_id = ?').get(boardId) as { n: number }).n,
+    ).toBe(0);
+  });
+});
+
+// ============================================================
 // Migration runner
 // ============================================================
 

@@ -1,18 +1,8 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { mkdtempSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { validateConfig } from '../config/validator.js';
-
-let tmpDir: string;
-
-beforeAll(() => {
-  tmpDir = mkdtempSync(join(tmpdir(), 'dashdash-validator-'));
-});
-
-afterAll(() => {
-  rmSync(tmpDir, { recursive: true });
-});
 
 function writeYml(dir: string, name: string, content: string) {
   writeFileSync(join(dir, name), content);
@@ -94,6 +84,7 @@ describe('validateConfig', () => {
       const issues = validateConfig(dir);
       const idIssue = issues.find(i => i.file === 'settings.yml' && i.field.includes('id') && i.level === 'error');
       expect(idIssue).toBeDefined();
+      expect(idIssue?.message).toBe('ID must be lowercase letters, digits and hyphens only');
     } finally {
       rmSync(dir, { recursive: true });
     }
@@ -133,6 +124,7 @@ describe('validateConfig', () => {
       const issues = validateConfig(dir);
       const integIssue = issues.find(i => i.file === 'services.yml' && i.field.includes('integration') && i.level === 'warning');
       expect(integIssue).toBeDefined();
+      expect(integIssue?.message).toMatch(/missing-integration/);
     } finally {
       rmSync(dir, { recursive: true });
     }
@@ -152,6 +144,7 @@ describe('validateConfig', () => {
       const issues = validateConfig(dir);
       const layoutIssue = issues.find(i => i.file === 'services.yml' && i.field.includes('layout.w') && i.level === 'warning');
       expect(layoutIssue).toBeDefined();
+      expect(layoutIssue?.message).toMatch(/exceeds grid columns/);
     } finally {
       rmSync(dir, { recursive: true });
     }
@@ -199,6 +192,7 @@ describe('validateConfig', () => {
       const issues = validateConfig(dir);
       const urlIssue = issues.find(i => i.file === 'integrations.yml' && i.field.includes('url') && i.level === 'warning');
       expect(urlIssue).toBeDefined();
+      expect(urlIssue?.message).toMatch(/https?/);
     } finally {
       rmSync(dir, { recursive: true });
     }
