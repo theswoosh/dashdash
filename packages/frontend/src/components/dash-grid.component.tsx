@@ -213,12 +213,15 @@ export function DashGrid() {
     [reloadServices]
   );
 
+  const roRef = useRef<ResizeObserver | null>(null);
   const containerRef = useCallback((node: HTMLDivElement | null) => {
+    if (roRef.current) { roRef.current.disconnect(); roRef.current = null; }
     if (!node) return;
     const ro = new ResizeObserver(([entry]) => {
       if (entry) setWidth(entry.contentRect.width);
     });
     ro.observe(node);
+    roRef.current = ro;
   }, []);
 
   const { columns: cols, rowHeight, gap } = gridConfig;

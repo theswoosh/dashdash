@@ -2,7 +2,7 @@
  * LiquidCard — glass card with squircle corners, displacement refraction, and rim highlight.
  * Technique ported from github.com/FezVrasta/liquid-glass (originally by Shu Ding).
  */
-import { useRef, useLayoutEffect, useId, useState, type CSSProperties, type ReactNode } from 'react';
+import { memo, useRef, useLayoutEffect, useId, useState, type CSSProperties, type ReactNode } from 'react';
 import './LiquidCard.css';
 
 // ── Feature detection (computed once at module load) ─────────────────────────
@@ -131,7 +131,7 @@ interface Props {
   style?: CSSProperties | undefined;
 }
 
-export function LiquidCard({ children, className = '', radius = 20, style }: Props) {
+export const LiquidCard = memo(function LiquidCard({ children, className = '', radius = 20, style }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const feImageRef = useRef<SVGFEImageElement | null>(null);
@@ -341,4 +341,4 @@ export function LiquidCard({ children, className = '', radius = 20, style }: Pro
       </div>
     </div>
   );
-}
+});

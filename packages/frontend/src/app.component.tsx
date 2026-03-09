@@ -30,13 +30,11 @@ function getOidcError(): string {
 }
 
 export function App() {
-  const theme = useUIStore(s => s.theme);
-  const setTheme = useUIStore(s => s.setTheme);
-  const setBoardName = useUIStore(s => s.setBoardName);
   const configTarget = useUIStore(s => s.configTarget);
 
   const { user, isLoading: isAuthLoading } = useAuth();
   const { preferences } = usePreferences();
+  const theme = preferences?.theme ?? 'liquid-glass';
   const { backgroundUrl } = useBoard();
   const settings = useSettings();
   const { languages, translations } = useLocales();
@@ -58,13 +56,6 @@ export function App() {
       document.removeEventListener('drop',     handleDrop);
     };
   }, []);
-
-  // Apply persisted preferences once they load
-  useEffect(() => {
-    if (preferences?.theme) setTheme(preferences.theme);
-    if (preferences?.boardName) setBoardName(preferences.boardName);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [preferences?.theme, preferences?.boardName]);
 
   // Apply borderless mode to <html> so CSS selectors can respond
   useLayoutEffect(() => {

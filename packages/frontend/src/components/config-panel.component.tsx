@@ -224,8 +224,6 @@ function ToggleRow({ id, label, checked, onChange }: { id: string; label: string
 
 function OptionsTab() {
   const t = useT();
-  const boardName = useUIStore(s => s.boardName);
-  const setBoardName = useUIStore(s => s.setBoardName);
   const { preferences, savePreferences } = usePreferences();
   const settings = useSettings();
 
@@ -240,9 +238,7 @@ function OptionsTab() {
   const headerSearchEngine = preferences?.headerSearchEngine ?? allEngines[0]?.id ?? '';
 
   const updateBoardName = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const nameValue = e.target.value;
-    setBoardName(nameValue);
-    savePreferences({ boardName: nameValue });
+    savePreferences({ boardName: e.target.value });
   };
 
   return (
@@ -269,7 +265,7 @@ function OptionsTab() {
             id="board-name"
             type="text"
             className="config-option-input"
-            value={boardName}
+            value={preferences?.boardName ?? ''}
             onChange={updateBoardName}
             placeholder="dashdash"
             maxLength={48}
@@ -352,14 +348,8 @@ function OptionsTab() {
 
 function ThemesTab() {
   const t = useT();
-  const theme = useUIStore(s => s.theme);
-  const setTheme = useUIStore(s => s.setTheme);
-  const { savePreferences } = usePreferences();
-
-  const applyTheme = (id: string) => {
-    setTheme(id);
-    savePreferences({ theme: id });
-  };
+  const { preferences, savePreferences } = usePreferences();
+  const theme = preferences?.theme ?? 'liquid-glass';
 
   return (
     <div className="config-theme-list">
@@ -370,7 +360,7 @@ function ThemesTab() {
           <button
             key={themeEntry.id}
             className={`config-theme-option${theme === themeEntry.id ? ' config-theme-option--active' : ''}`}
-            onClick={() => applyTheme(themeEntry.id)}
+            onClick={() => savePreferences({ theme: themeEntry.id })}
             aria-pressed={theme === themeEntry.id}
           >
             <div className="config-theme-preview" data-theme-preview={themeEntry.id}>

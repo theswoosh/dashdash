@@ -2,6 +2,9 @@ import useSWR from 'swr';
 import { useCallback, useEffect, useRef } from 'react';
 
 const SAVE_DEBOUNCE_MS = 300;
+const STORAGE_KEY_THEME = 'dashdash-theme';
+
+export const DEFAULT_THEME = 'liquid-glass';
 
 interface Preferences {
   theme: string;
@@ -21,13 +24,16 @@ interface Preferences {
   language?: string | undefined;
 }
 
-const DEFAULT_PREFERENCES: Preferences = { theme: 'liquid-glass', darkMode: true, borderless: false };
+const DEFAULT_PREFERENCES: Preferences = { theme: DEFAULT_THEME, darkMode: true, borderless: false };
+
+const fallbackTheme = (() => { try { return localStorage.getItem(STORAGE_KEY_THEME) ?? DEFAULT_THEME; } catch { return DEFAULT_THEME; } })();
 
 const fetcher = (url: string) => fetch(url).then(r => r.json()) as Promise<Preferences>;
 
 export function usePreferences() {
   const { data, mutate } = useSWR<Preferences>('/api/preferences', fetcher, {
     revalidateOnFocus: false,
+    fallbackData: { ...DEFAULT_PREFERENCES, theme: fallbackTheme },
   });
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);

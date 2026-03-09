@@ -214,7 +214,6 @@ export function Topbar() {
   const t = useT();
   const editMode = useUIStore(s => s.editMode);
   const toggleEditMode = useUIStore(s => s.toggleEditMode);
-  const boardName = useUIStore(s => s.boardName);
   const { preferences, savePreferences } = usePreferences();
   const settings = useSettings();
   const [isClockConfigOpen, setIsClockConfigOpen] = useState(false);
@@ -249,7 +248,7 @@ export function Topbar() {
       <div className="topbar-brand">
         {headerIcon && <span className="topbar-icon" aria-hidden="true">{headerIcon}</span>}
         {isShowBoardName && (
-          <span className="topbar-title">{boardName || 'dashdash'}</span>
+          <span className="topbar-title">{preferences?.boardName || 'dashdash'}</span>
         )}
       </div>
 

@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react';
+import { memo, type CSSProperties, type ReactNode } from 'react';
 import './ClassicCard.css';
 
 interface Props {
@@ -7,10 +7,10 @@ interface Props {
   style?: CSSProperties | undefined;
 }
 
-export function ClassicCard({ children, className = '', style }: Props) {
+export const ClassicCard = memo(function ClassicCard({ children, className = '', style }: Props) {
   return (
     <div className={`classic-card ${className}`} style={style}>
       {children}
     </div>
   );
-}
+});

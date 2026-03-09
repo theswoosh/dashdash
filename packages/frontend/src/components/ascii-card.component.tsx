@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react';
+import { memo, type CSSProperties, type ReactNode } from 'react';
 import './ascii-card.css';
 
 interface Props {
@@ -7,7 +7,7 @@ interface Props {
   style?: CSSProperties | undefined;
 }
 
-export function AsciiCard({ children, className = '', style }: Props) {
+export const AsciiCard = memo(function AsciiCard({ children, className = '', style }: Props) {
   return (
     <div className={`ascii-card ${className}`} style={style}>
       <div className="ascii-card__top">
@@ -23,4 +23,4 @@ export function AsciiCard({ children, className = '', style }: Props) {
       </div>
     </div>
   );
-}
+});
