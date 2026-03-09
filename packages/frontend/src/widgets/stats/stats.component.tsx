@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import type { WidgetProps } from '@dashdash/types';
 import { WidgetSkeleton } from '../shared/widget-skeleton.component';
 import { WidgetError } from '../shared/widget-error.component';
@@ -43,25 +44,24 @@ interface BarProps {
   subtitle?: string | undefined;
 }
 
-function StatBar({ label, value, subtitle }: BarProps) {
+const StatBar = memo(function StatBar({ label, value, subtitle }: BarProps) {
   const clamped = Math.max(0, Math.min(100, value));
   const color = thresholdColor(clamped);
+  const pctStyle = useMemo(() => ({ color }), [color]);
+  const fillStyle = useMemo(() => ({ width: `${clamped}%`, background: color }), [clamped, color]);
   return (
     <div className="stats-widget__row">
       <div className="stats-widget__label-row">
         <span className="stats-widget__label">{label}</span>
-        <span className="stats-widget__pct" style={{ color }}>{clamped}%</span>
+        <span className="stats-widget__pct" style={pctStyle}>{clamped}%</span>
       </div>
       <div className="stats-widget__track">
-        <div
-          className="stats-widget__fill"
-          style={{ width: `${clamped}%`, background: color }}
-        />
+        <div className="stats-widget__fill" style={fillStyle} />
       </div>
       {subtitle && <div className="stats-widget__sub">{subtitle}</div>}
     </div>
   );
-}
+});
 
 function isStatsData(x: unknown): x is StatsData {
   if (typeof x !== 'object' || x === null) return false;

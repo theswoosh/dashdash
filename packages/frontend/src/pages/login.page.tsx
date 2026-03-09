@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useReducer } from 'react';
 import { useAuth } from '../hooks/use-auth.hook';
 import { useT } from '../i18n';
 import './login.css';
@@ -16,6 +16,42 @@ function resolveOidcError(code: string, t: TFunc): string {
   }
 }
 
+interface LoginState {
+  view: LoginView;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  name: string;
+  error: string;
+  info: string;
+  isSubmitting: boolean;
+}
+
+type LoginAction =
+  | { type: 'SET_FIELD'; field: 'email' | 'password' | 'confirmPassword' | 'name'; value: string }
+  | { type: 'SWITCH_VIEW'; view: LoginView }
+  | { type: 'SET_ERROR'; error: string }
+  | { type: 'SET_INFO'; info: string }
+  | { type: 'SUBMIT_START' }
+  | { type: 'SUBMIT_END' };
+
+function loginReducer(state: LoginState, action: LoginAction): LoginState {
+  switch (action.type) {
+    case 'SET_FIELD':
+      return { ...state, [action.field]: action.value };
+    case 'SWITCH_VIEW':
+      return { ...state, view: action.view, error: '', info: '', password: '', confirmPassword: '' };
+    case 'SET_ERROR':
+      return { ...state, error: action.error };
+    case 'SET_INFO':
+      return { ...state, info: action.info };
+    case 'SUBMIT_START':
+      return { ...state, isSubmitting: true, error: '' };
+    case 'SUBMIT_END':
+      return { ...state, isSubmitting: false };
+  }
+}
+
 interface LoginPageProps {
   initialView?: LoginView;
   initialError?: string;
@@ -24,69 +60,63 @@ interface LoginPageProps {
 export function LoginPage({ initialView = 'login', initialError = '' }: LoginPageProps) {
   const { login, register, registrationEnabled, smtpConfigured, oidcEnabled, localEnabled } = useAuth();
   const t = useT();
-  const [view, setView] = useState<LoginView>(initialView);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [name, setName] = useState('');
-  const [error, setError] = useState(initialError ? resolveOidcError(initialError, t) : '');
-  const [info, setInfo] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [state, dispatch] = useReducer(loginReducer, {
+    view: initialView,
+    email: '',
+    password: '',
+    confirmPassword: '',
+    name: '',
+    error: initialError ? resolveOidcError(initialError, t) : '',
+    info: '',
+    isSubmitting: false,
+  });
+
+  const { view, email, password, confirmPassword, name, error, info, isSubmitting } = state;
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    setError('');
-    setIsSubmitting(true);
+    dispatch({ type: 'SUBMIT_START' });
     try {
       await login(email, password);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('login.signIn'));
+      dispatch({ type: 'SET_ERROR', error: err instanceof Error ? err.message : t('login.signIn') });
     } finally {
-      setIsSubmitting(false);
+      dispatch({ type: 'SUBMIT_END' });
     }
   }
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     if (password !== confirmPassword) {
-      setError(t('login.passwordMismatch'));
+      dispatch({ type: 'SET_ERROR', error: t('login.passwordMismatch') });
       return;
     }
-    setError('');
-    setIsSubmitting(true);
+    dispatch({ type: 'SUBMIT_START' });
     try {
       await register(email, password, name);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('login.createAccount'));
+      dispatch({ type: 'SET_ERROR', error: err instanceof Error ? err.message : t('login.createAccount') });
     } finally {
-      setIsSubmitting(false);
+      dispatch({ type: 'SUBMIT_END' });
     }
   }
 
   async function handleForgot(e: React.FormEvent) {
     e.preventDefault();
-    setError('');
-    setIsSubmitting(true);
+    dispatch({ type: 'SUBMIT_START' });
     try {
       await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      setInfo(t('login.resetLinkSent'));
+      dispatch({ type: 'SET_INFO', info: t('login.resetLinkSent') });
     } catch {
-      setError(t('login.somethingWentWrong'));
+      dispatch({ type: 'SET_ERROR', error: t('login.somethingWentWrong') });
     } finally {
-      setIsSubmitting(false);
+      dispatch({ type: 'SUBMIT_END' });
     }
-  }
-
-  function switchView(newView: LoginView) {
-    setError('');
-    setInfo('');
-    setPassword('');
-    setConfirmPassword('');
-    setView(newView);
   }
 
   return (
@@ -120,7 +150,7 @@ export function LoginPage({ initialView = 'login', initialError = '' }: LoginPag
                   type="email"
                   autoComplete="email"
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  onChange={e => dispatch({ type: 'SET_FIELD', field: 'email', value: e.target.value })}
                   required
                   autoFocus={!oidcEnabled}
                 />
@@ -132,7 +162,7 @@ export function LoginPage({ initialView = 'login', initialError = '' }: LoginPag
                   type="password"
                   autoComplete="current-password"
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={e => dispatch({ type: 'SET_FIELD', field: 'password', value: e.target.value })}
                   required
                 />
 
@@ -145,12 +175,12 @@ export function LoginPage({ initialView = 'login', initialError = '' }: LoginPag
             {localEnabled && (
               <div className="login-links">
                 {smtpConfigured && (
-                  <button type="button" className="login-link" onClick={() => switchView('forgot')}>
+                  <button type="button" className="login-link" onClick={() => dispatch({ type: 'SWITCH_VIEW', view: 'forgot' })}>
                     {t('login.forgotPassword')}
                   </button>
                 )}
                 {registrationEnabled && (
-                  <button type="button" className="login-link" onClick={() => switchView('register')}>
+                  <button type="button" className="login-link" onClick={() => dispatch({ type: 'SWITCH_VIEW', view: 'register' })}>
                     {t('login.createAccount')}
                   </button>
                 )}
@@ -171,7 +201,7 @@ export function LoginPage({ initialView = 'login', initialError = '' }: LoginPag
               type="text"
               autoComplete="name"
               value={name}
-              onChange={e => setName(e.target.value)}
+              onChange={e => dispatch({ type: 'SET_FIELD', field: 'name', value: e.target.value })}
               required
               autoFocus
               maxLength={100}
@@ -184,7 +214,7 @@ export function LoginPage({ initialView = 'login', initialError = '' }: LoginPag
               type="email"
               autoComplete="email"
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={e => dispatch({ type: 'SET_FIELD', field: 'email', value: e.target.value })}
               required
             />
 
@@ -195,7 +225,7 @@ export function LoginPage({ initialView = 'login', initialError = '' }: LoginPag
               type="password"
               autoComplete="new-password"
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={e => dispatch({ type: 'SET_FIELD', field: 'password', value: e.target.value })}
               required
               minLength={8}
             />
@@ -208,7 +238,7 @@ export function LoginPage({ initialView = 'login', initialError = '' }: LoginPag
               type="password"
               autoComplete="new-password"
               value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
+              onChange={e => dispatch({ type: 'SET_FIELD', field: 'confirmPassword', value: e.target.value })}
               required
             />
 
@@ -217,7 +247,7 @@ export function LoginPage({ initialView = 'login', initialError = '' }: LoginPag
             </button>
 
             <div className="login-links">
-              <button type="button" className="login-link" onClick={() => switchView('login')}>
+              <button type="button" className="login-link" onClick={() => dispatch({ type: 'SWITCH_VIEW', view: 'login' })}>
                 {t('login.alreadyHaveAccount')}
               </button>
             </div>
@@ -237,7 +267,7 @@ export function LoginPage({ initialView = 'login', initialError = '' }: LoginPag
               type="email"
               autoComplete="email"
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={e => dispatch({ type: 'SET_FIELD', field: 'email', value: e.target.value })}
               required
               autoFocus
             />
@@ -247,7 +277,7 @@ export function LoginPage({ initialView = 'login', initialError = '' }: LoginPag
             </button>
 
             <div className="login-links">
-              <button type="button" className="login-link" onClick={() => switchView('login')}>
+              <button type="button" className="login-link" onClick={() => dispatch({ type: 'SWITCH_VIEW', view: 'login' })}>
                 {t('login.backToSignIn')}
               </button>
             </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { WidgetProps } from '@dashdash/types';
 import './ClockWidget.css';
 
@@ -14,20 +14,23 @@ export function ClockWidget({ options }: WidgetProps) {
   const timezone = options['timezone'] as string | undefined;
   const showSeconds = options['showSeconds'] !== false;
 
-  const timeStr = new Intl.DateTimeFormat('en-US', {
+  const timeFmt = useMemo(() => new Intl.DateTimeFormat('en-US', {
     hour: 'numeric',
     minute: '2-digit',
     second: showSeconds ? '2-digit' : undefined,
     hour12: format === '12h',
     timeZone: timezone,
-  }).format(now);
+  }), [format, timezone, showSeconds]);
 
-  const dateStr = new Intl.DateTimeFormat('en-US', {
+  const dateFmt = useMemo(() => new Intl.DateTimeFormat('en-US', {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
     timeZone: timezone,
-  }).format(now);
+  }), [timezone]);
+
+  const timeStr = timeFmt.format(now);
+  const dateStr = dateFmt.format(now);
 
   return (
     <div className="clock-widget">

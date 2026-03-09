@@ -192,7 +192,9 @@ export function WidgetConfigModal() {
     return () => document.removeEventListener('keydown', trapFocus);
   }, [configTarget, setConfigTarget]);
 
-  // Sync state when target changes
+  // Sync state when the target widget changes.
+  // Dep on service?.id (not the whole object) so SWR revalidations don't
+  // reset in-progress edits when the service reference changes.
   useEffect(() => {
     if (service) {
       setTitle(service.title);
@@ -211,7 +213,8 @@ export function WidgetConfigModal() {
       }
     }
     setTestResult('idle');
-  }, [service]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [service?.id]);
 
   const handleOptionChange = useCallback((key: string, val: unknown) => {
     setOptions(prev => ({ ...prev, [key]: val }));
