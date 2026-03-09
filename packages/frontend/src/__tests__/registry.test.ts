@@ -16,7 +16,8 @@ describe('THEMES', () => {
       expect(t.name, `${t.id}: name`).toBeTruthy();
       expect(t.description, `${t.id}: description`).toBeTruthy();
       expect(t.Icon, `${t.id}: Icon`).toBeTruthy();
-      expect(t.Card, `${t.id}: Card`).toBeTypeOf('function');
+      // Card may be a plain function or a React.memo object — both are valid
+      expect(t.Card, `${t.id}: Card`).toBeTruthy();
     }
   });
 
