@@ -127,14 +127,19 @@ export function DashGrid() {
 
   const recordDragPositions = useCallback((newLayout: Layout[]) => {
     if (!editModeRef.current) return;
-    const isExternalDrop = newLayout.some(l => l.i === '__dropping-elem__');
     const withoutGhost = newLayout.filter(l => l.i !== '__dropping-elem__');
-    if (withoutGhost.length === 0) return;
-    dragLayoutRef.current = withoutGhost;
-    // For internal rearrange (no sidebar ghost): keep layout prop in sync with
-    // RGL's internal pushed state so items don't snap back on drop.
-    // Skip for external drops — setLayout during sidebar drag resets the ghost.
-    if (!isExternalDrop) setLayout(withoutGhost);
+    if (withoutGhost.length > 0) dragLayoutRef.current = withoutGhost;
+  }, []);
+
+  // onDragStop fires before RGL calls setState({ activeDrag: null }).
+  // Both this setLayout and RGL's setState land in the same React batch, so
+  // getDerivedStateFromProps sees nextProps.layout = finalLayout (with pushed
+  // items at their new positions) instead of the stale original layout —
+  // preventing the snap-back that would otherwise override RGL's pushed state.
+  const syncLayoutAfterDrag = useCallback((newLayout: Layout[]) => {
+    if (!editModeRef.current) return;
+    dragLayoutRef.current = newLayout;
+    setLayout(newLayout);
   }, []);
 
   const createWidgetFromDrop = useCallback(
@@ -264,6 +269,7 @@ export function DashGrid() {
         compactType={null}
         droppingItem={rglDropItem}
         onDrop={createWidgetFromDrop}
+        onDragStop={syncLayoutAfterDrag}
         onLayoutChange={recordDragPositions}
         draggableHandle=".widget-drag-handle"
       >
