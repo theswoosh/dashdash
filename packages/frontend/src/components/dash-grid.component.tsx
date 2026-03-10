@@ -126,13 +126,15 @@ export function DashGrid() {
   }, [reloadServices]));
 
   const recordDragPositions = useCallback((newLayout: Layout[]) => {
-    // Track drag positions for save-on-close via ref only — no setLayout call.
-    // Calling setLayout here triggers re-renders that interfere with RGL's
-    // internal drop state tracking (ghost position resets mid-drag).
-    if (editModeRef.current) {
-      const withoutGhost = newLayout.filter(l => l.i !== '__dropping-elem__');
-      if (withoutGhost.length > 0) dragLayoutRef.current = withoutGhost;
-    }
+    if (!editModeRef.current) return;
+    const isExternalDrop = newLayout.some(l => l.i === '__dropping-elem__');
+    const withoutGhost = newLayout.filter(l => l.i !== '__dropping-elem__');
+    if (withoutGhost.length === 0) return;
+    dragLayoutRef.current = withoutGhost;
+    // For internal rearrange (no sidebar ghost): keep layout prop in sync with
+    // RGL's internal pushed state so items don't snap back on drop.
+    // Skip for external drops — setLayout during sidebar drag resets the ghost.
+    if (!isExternalDrop) setLayout(withoutGhost);
   }, []);
 
   const createWidgetFromDrop = useCallback(
