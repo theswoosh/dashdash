@@ -143,7 +143,7 @@ export function DashGrid() {
   }, []);
 
   const createWidgetFromDrop = useCallback(
-    (_rglLayout: Layout[], item: Layout, e: Event) => {
+    (rglLayout: Layout[], item: Layout, e: Event) => {
       // RGL passes a React SyntheticDragEvent; access dataTransfer via nativeEvent
       const dataTransfer = (e as unknown as React.DragEvent).nativeEvent?.dataTransfer
         ?? (e as unknown as DragEvent).dataTransfer;
@@ -164,10 +164,6 @@ export function DashGrid() {
       let suffix = 2;
       while (existingIds.includes(id)) { id = `${base}-${suffix++}`; }
 
-      // With preventCollision=true, item.x/y is always the actual ghost cell —
-      // the ghost can only occupy non-colliding positions, so it matches exactly
-      // what the user saw visually. onLayoutChange only fires once (on ghost
-      // entry before activeDrag is set), so lastGhostRef tracking is unreliable.
       if (!item) return;
 
       // Use widgets.yml sizes if available, fall back to catalog defaults.
@@ -183,7 +179,11 @@ export function DashGrid() {
         options: template.defaultOptions ?? {},
       };
 
-      setLayout(prev => [...prev, { i: id, x: item.x, y: item.y, w: dropWidth, h: dropHeight }]);
+      // Use rglLayout (RGL's internal state at drop time) as the base — it has the
+      // correct pushed positions for all existing widgets. Using React layout state
+      // here would snap pushed widgets back to their pre-drag YAML positions.
+      const pushedLayout = rglLayout.filter(l => l.i !== '__dropping-elem__');
+      setLayout(() => [...pushedLayout, { i: id, x: item.x, y: item.y, w: dropWidth, h: dropHeight }]);
       setDropQueue(prev => [...prev, newService]);
       setDroppingItem(null);
 
@@ -266,7 +266,7 @@ export function DashGrid() {
         isDraggable={editMode}
         isResizable={editMode}
         isDroppable={editMode}
-        compactType={null}
+        compactType="vertical"
         droppingItem={rglDropItem}
         onDrop={createWidgetFromDrop}
         onDragStop={syncLayoutAfterDrag}
