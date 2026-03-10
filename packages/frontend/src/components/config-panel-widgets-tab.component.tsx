@@ -22,11 +22,14 @@ function SidebarItem({ template }: { template: WidgetTemplate }) {
     setDroppingItem({ i: '__dropping-elem__', w: templateWidth, h: templateHeight });
   };
 
+  const clearDroppingItem = () => setDroppingItem(null);
+
   return (
     <div
       className="config-panel-item"
       draggable
       onDragStart={prepareWidgetTemplateDrag}
+      onDragEnd={clearDroppingItem}
       title={displayDesc}
     >
       <span className="config-panel-item__icon">

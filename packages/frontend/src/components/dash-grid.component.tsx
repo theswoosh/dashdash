@@ -78,10 +78,7 @@ export function DashGrid() {
         // in the layout; only new items (e.g., just dropped) fall back to
         // their YAML (i.e., drop) position.
         const prevMap = new Map(prev.map(l => [l.i, l]));
-        const merged = fromYaml.map(item => prevMap.get(item.i) ?? item);
-        const mergedIds = new Set(merged.map(l => l.i));
-        const extras = prev.filter(l => !mergedIds.has(l.i) && l.i !== '__dropping-elem__');
-        return extras.length > 0 ? [...merged, ...extras] : merged;
+        return fromYaml.map(item => prevMap.get(item.i) ?? item);
       });
     }
   }, [allServices, widgetTemplates]);
@@ -140,8 +137,10 @@ export function DashGrid() {
 
   const createWidgetFromDrop = useCallback(
     (_rglLayout: Layout[], item: Layout, e: Event) => {
-      if (!(e instanceof DragEvent)) return;
-      const raw = e.dataTransfer?.getData('widget-template');
+      // RGL passes a React SyntheticDragEvent; access dataTransfer via nativeEvent
+      const dataTransfer = (e as unknown as React.DragEvent).nativeEvent?.dataTransfer
+        ?? (e as unknown as DragEvent).dataTransfer;
+      const raw = dataTransfer?.getData('widget-template');
       if (!raw) return;
 
       let template: WidgetTemplate;
@@ -250,6 +249,7 @@ export function DashGrid() {
       )}
       <ReactGridLayout
         className="dash-grid"
+        style={{ minHeight: '100%' }}
         layout={layout.length > 0 ? layout : servicesAsLayout(allServices, widgetTemplates)}
         cols={cols}
         rowHeight={rowHeight}
@@ -260,7 +260,6 @@ export function DashGrid() {
         isResizable={editMode}
         isDroppable={editMode}
         compactType={null}
-        preventCollision={true}
         droppingItem={rglDropItem}
         onDrop={createWidgetFromDrop}
         onLayoutChange={recordDragPositions}
