@@ -41,6 +41,7 @@ interface CheckOptions {
   url: string;
   port?: number | undefined;
   timeoutMs?: number | undefined;
+  allowPrivateNetworks?: boolean | undefined;
 }
 
 interface CheckResult {
@@ -100,7 +101,7 @@ export async function runHealthcheck(opts: CheckOptions): Promise<CheckResult> {
     return { status: 'down', error: 'Invalid host', latencyMs: 0 };
   }
 
-  if (await isPrivateOrLoopback(host)) {
+  if (!opts.allowPrivateNetworks && await isPrivateOrLoopback(host)) {
     return { status: 'down', error: 'Private or reserved addresses are not allowed', latencyMs: 0 };
   }
 

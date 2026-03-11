@@ -37,6 +37,14 @@ export const EN_FALLBACK: Record<string, unknown> = {
     newPassword: 'New password',
     updating: 'Updating…',
     goToSignIn: 'Go to sign in',
+    ssoSignIn: 'Sign in with SSO',
+    or: 'or',
+    oidcError: 'SSO login failed. Please try again.',
+    oidcEmailNotVerified: 'Your SSO provider did not verify your email.',
+    oidcDisabled: 'SSO is not configured.',
+    oidcAccountInactive: 'Your account has been deactivated.',
+    accountDisabled: 'Your account has been disabled. Contact an administrator.',
+    accountCreated: 'Account created — please sign in.',
   },
   config: {
     tabs: {

@@ -72,11 +72,13 @@ describe('POST /api/auth/register', () => {
     expect(res.json().role).toBe('user');
   });
 
-  it('sets session cookie on registration', async () => {
+  it('does not set session cookie on registration', async () => {
     const res = await register();
-    expect(res.headers['set-cookie']).toBeDefined();
-    const cookie = extractSessionCookie(res.headers as Record<string, string | string[]>);
-    expect(cookie).toMatch(/^[A-Za-z0-9_-]{20,}/);
+    expect(res.statusCode).toBe(201);
+    const setCookieHeader = (res.headers as Record<string, string | string[]>)['set-cookie'];
+    const cookieStr = Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader;
+    const hasSession = cookieStr?.includes('dashdash_session') ?? false;
+    expect(hasSession).toBe(false);
   });
 
   it('rejects duplicate email', async () => {
@@ -121,11 +123,12 @@ describe('POST /api/auth/login', () => {
     expect(wrongPw.json().error).toBe(noUser.json().error);
   });
 
-  it('rejects deactivated user', async () => {
+  it('returns 403 for deactivated user', async () => {
     await register();
     db.prepare("UPDATE users SET is_active = 0 WHERE email = 'admin@test.local'").run();
     const res = await login();
-    expect(res.statusCode).toBe(401);
+    expect(res.statusCode).toBe(403);
+    expect(res.json().error).toContain('disabled');
   });
 });
 

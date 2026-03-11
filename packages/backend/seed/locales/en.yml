@@ -41,6 +41,8 @@ login:
   oidcEmailNotVerified: "Your SSO provider did not verify your email."
   oidcDisabled: "SSO is not configured."
   oidcAccountInactive: "Your account has been deactivated."
+  accountDisabled: "Your account has been disabled. Contact an administrator."
+  accountCreated: "Account created — please sign in."
 
 config:
   tabs:

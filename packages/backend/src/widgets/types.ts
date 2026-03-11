@@ -7,6 +7,7 @@ export interface ResolvedIntegration {
 
 export interface HandlerContext {
   integration: ResolvedIntegration | undefined;
+  allowPrivateNetworks: boolean;
 }
 
 export interface WidgetHandler {

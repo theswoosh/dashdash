@@ -164,7 +164,7 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
   await server.register(createServicesRoutes(getServices, configDir, db), { prefix: '/api' });
   await server.register(createSettingsRoutes(getSettings, configDir), { prefix: '/api' });
   await server.register(createBehaviorRoutes(getBehavior), { prefix: '/api' });
-  await server.register(createWidgetRoutes({ getServices, configDir }), { prefix: '/api' });
+  await server.register(createWidgetRoutes({ getServices, configDir, getSettings }), { prefix: '/api' });
   await server.register(createNotepadRoutes(db), { prefix: '/api' });
   await server.register(createPreferencesRoutes(db), { prefix: '/api' });
   await server.register(createWidgetTemplatesRoutes(configDir), { prefix: '/api' });

@@ -119,7 +119,7 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     icon: Search,
     description: 'Search bar with configurable engine',
     descriptionKey: 'widgets.search.description',
-    defaultSize: { w: 8, h: 4 },
+    defaultSize: { w: 4, h: 2 },
     defaultOptions: {},
     configFields: [
       { key: 'engine', label: 'Engine', type: 'engines-select' },
@@ -146,7 +146,7 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     icon: Globe,
     description: 'Embed any URL in a sandboxed frame',
     descriptionKey: 'widgets.iframe.description',
-    defaultSize: { w: 8, h: 8 },
+    defaultSize: { w: 6, h: 6 },
     defaultOptions: {},
     configFields: [
       { key: 'url', label: 'URL', type: 'url', placeholder: 'https://example.com', required: true },

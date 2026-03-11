@@ -266,7 +266,7 @@ export function DashGrid() {
         isDraggable={editMode}
         isResizable={editMode}
         isDroppable={editMode}
-        compactType="vertical"
+        compactType={null}
         droppingItem={rglDropItem}
         onDrop={createWidgetFromDrop}
         onDragStop={syncLayoutAfterDrag}

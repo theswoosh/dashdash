@@ -6,6 +6,7 @@ import { getHandler, isClientOnly } from '../widgets/registry.js';
 interface WidgetRouteOptions {
   getServices: () => Service[];
   configDir: string;
+  getSettings: () => import('../config/schemas.js').Settings;
 }
 
 export const createWidgetRoutes = (opts: WidgetRouteOptions): FastifyPluginAsync =>
@@ -56,8 +57,10 @@ export const createWidgetRoutes = (opts: WidgetRouteOptions): FastifyPluginAsync
           }
         }
 
+        const { allowPrivateNetworks } = opts.getSettings();
+
         try {
-          const widgetPayload = await handler.fetchData(options, { integration: resolvedIntegration });
+          const widgetPayload = await handler.fetchData(options, { integration: resolvedIntegration, allowPrivateNetworks });
           return { ok: true, data: widgetPayload };
         } catch (err) {
           const message = err instanceof Error ? err.message : 'Unknown error';

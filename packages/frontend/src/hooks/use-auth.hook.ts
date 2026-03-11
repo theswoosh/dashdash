@@ -60,8 +60,6 @@ export function useAuth() {
       const body = await res.json() as { error: string };
       throw new Error(body.error ?? 'Registration failed');
     }
-    await mutate(ME_KEY);
-    void mutate('/api/settings');
   }
 
   async function logout(): Promise<void> {

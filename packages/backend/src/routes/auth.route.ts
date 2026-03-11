@@ -133,9 +133,6 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
       const passwordHash = await hashPassword(password);
       const userId = createUser(db, { email, name, passwordHash, role });
 
-      const sessionId = createSession(db, userId, authConfig.session.maxAgeSeconds);
-      void reply.setCookie(COOKIE_NAME, sessionId, cookieOpts);
-
       const user = findUserById(db, userId)!;
       return reply.code(201).send({ id: user.id, email: user.email, name: user.name, role: user.role });
     });
@@ -158,8 +155,12 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
       const hashToCheck = user?.password_hash ?? '$2b$12$invalidhashsowerunverifyanyway00000000000000000000000000';
       const isValid = await verifyPassword(password, hashToCheck);
 
-      if (!user || !isValid || user.is_active === 0) {
+      if (!user || !isValid) {
         return reply.code(401).send({ error: 'Invalid email or password' });
+      }
+
+      if (user.is_active === 0) {
+        return reply.code(403).send({ error: 'Your account has been disabled. Contact an administrator.' });
       }
 
       const sessionId = createSession(db, user.id, authConfig.session.maxAgeSeconds);

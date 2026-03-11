@@ -40,7 +40,7 @@ function loginReducer(state: LoginState, action: LoginAction): LoginState {
     case 'SET_FIELD':
       return { ...state, [action.field]: action.value };
     case 'SWITCH_VIEW':
-      return { ...state, view: action.view, error: '', info: '', password: '', confirmPassword: '' };
+      return { ...state, view: action.view, email: '', error: '', info: '', password: '', confirmPassword: '' };
     case 'SET_ERROR':
       return { ...state, error: action.error };
     case 'SET_INFO':
@@ -95,6 +95,8 @@ export function LoginPage({ initialView = 'login', initialError = '' }: LoginPag
     dispatch({ type: 'SUBMIT_START' });
     try {
       await register(email, password, name);
+      dispatch({ type: 'SWITCH_VIEW', view: 'login' });
+      dispatch({ type: 'SET_INFO', info: t('login.accountCreated') });
     } catch (err) {
       dispatch({ type: 'SET_ERROR', error: err instanceof Error ? err.message : t('login.createAccount') });
     } finally {
@@ -130,16 +132,7 @@ export function LoginPage({ initialView = 'login', initialError = '' }: LoginPag
           <div className="login-form">
             <h1 className="login-title">{t('login.signIn')}</h1>
             {error && <p className="login-error" role="alert">{error}</p>}
-
-            {oidcEnabled && (
-              <a className="login-sso-btn" href="/api/auth/oidc/login">
-                {t('login.ssoSignIn')}
-              </a>
-            )}
-
-            {oidcEnabled && localEnabled && (
-              <div className="login-divider"><span>{t('login.or')}</span></div>
-            )}
+            {info && <p className="login-info" role="status">{info}</p>}
 
             {localEnabled && (
               <form onSubmit={e => void handleLogin(e)}>
@@ -185,6 +178,16 @@ export function LoginPage({ initialView = 'login', initialError = '' }: LoginPag
                   </button>
                 )}
               </div>
+            )}
+
+            {oidcEnabled && localEnabled && (
+              <div className="login-divider"><span>{t('login.or')}</span></div>
+            )}
+
+            {oidcEnabled && (
+              <a className="login-sso-btn" href="/api/auth/oidc/login">
+                {t('login.ssoSignIn')}
+              </a>
             )}
           </div>
         )}
