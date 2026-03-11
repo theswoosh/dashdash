@@ -141,3 +141,53 @@ describe('DELETE /api/services/:id', () => {
     expect(res.statusCode).toBe(404);
   });
 });
+
+describe('YAML layout field behaviour', () => {
+  it('returns layout x/y/w/h from services.yml as initial defaults', async () => {
+    const res = await server.inject({ method: 'GET', url: '/api/services', headers: { cookie: authCookie } });
+    const { services } = res.json<{ services: { id: string; layout: { x: number; y: number; w: number; h: number } }[] }>();
+    const clock = services.find(s => s.id === 'clock');
+    expect(clock).toBeDefined();
+    expect(clock!.layout.x).toBe(0);
+    expect(clock!.layout.y).toBe(0);
+    expect(clock!.layout.w).toBe(2);
+    expect(clock!.layout.h).toBe(2);
+  });
+
+  it('PATCH layout override persists across reload', async () => {
+    const patch = await server.inject({
+      method: 'PATCH',
+      url: '/api/services/clock',
+      headers: { cookie: authCookie },
+      payload: { layout: { x: 3, y: 1, w: 4, h: 3 } },
+    });
+    expect(patch.statusCode).toBe(200);
+
+    const get = await server.inject({ method: 'GET', url: '/api/services', headers: { cookie: authCookie } });
+    const { services } = get.json<{ services: { id: string; layout: { x: number; y: number; w: number; h: number } }[] }>();
+    const clock = services.find(s => s.id === 'clock');
+    expect(clock!.layout.x).toBe(3);
+    expect(clock!.layout.y).toBe(1);
+    expect(clock!.layout.w).toBe(4);
+    expect(clock!.layout.h).toBe(3);
+  });
+
+  it('uses YAML layout when a new service is added', async () => {
+    // Use a unique widget type so the derived id is predictable (widget name = id)
+    await server.inject({
+      method: 'POST',
+      url: '/api/services',
+      headers: { cookie: authCookie },
+      payload: { id: 'notepad', title: 'Layout Test', widget: 'notepad', layout: { x: 5, y: 2, w: 3, h: 3 } },
+    });
+
+    const get = await server.inject({ method: 'GET', url: '/api/services', headers: { cookie: authCookie } });
+    const { services } = get.json<{ services: { id: string; layout: { x: number; y: number; w: number; h: number } }[] }>();
+    const svc = services.find(s => s.id === 'notepad');
+    expect(svc).toBeDefined();
+    expect(svc!.layout.x).toBe(5);
+    expect(svc!.layout.y).toBe(2);
+    expect(svc!.layout.w).toBe(3);
+    expect(svc!.layout.h).toBe(3);
+  });
+});

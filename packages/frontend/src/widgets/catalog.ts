@@ -13,7 +13,7 @@ export interface ConfigField {
   key: string;
   label: string;
   labelKey?: string | undefined;
-  type: 'text' | 'url' | 'number' | 'boolean' | 'textarea' | 'select' | 'separator' | 'engines-select' | 'info';
+  type: 'text' | 'url' | 'number' | 'boolean' | 'textarea' | 'select' | 'separator' | 'engines-select' | 'info' | 'links-editor' | 'timezone-select';
   placeholder?: string | undefined;
   required?: boolean | undefined;
   default?: unknown;
@@ -84,7 +84,7 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
         ],
         default: '24h',
       },
-      { key: 'timezone', label: 'Timezone', type: 'text', placeholder: 'e.g. Europe/Berlin' },
+      { key: 'timezone', label: 'Timezone', type: 'timezone-select', placeholder: 'e.g. Europe/Berlin' },
       { key: 'showSeconds', label: 'Show seconds', type: 'boolean', default: true },
     ],
   },
@@ -110,9 +110,11 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     descriptionKey: 'widgets.bookmarks.description',
     defaultSize: { w: 6, h: 4 },
     defaultOptions: {
-      links: [{ title: 'Example', url: 'https://example.com' }],
+      links: [{ label: 'Example', url: 'https://example.com' }],
     },
-    configFields: [],
+    configFields: [
+      { key: 'links', label: 'Bookmarks', type: 'links-editor' },
+    ],
   },
   {
     type: 'search',

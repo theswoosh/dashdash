@@ -29,6 +29,65 @@ function buildRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(2)})`;
 }
 
+interface LinkRow {
+  label: string;
+  url: string;
+}
+
+function isLinkRow(x: unknown): x is LinkRow {
+  return typeof x === 'object' && x !== null
+    && typeof (x as Record<string, unknown>)['label'] === 'string'
+    && typeof (x as Record<string, unknown>)['url'] === 'string';
+}
+
+function LinksEditor({
+  value,
+  onChange,
+}: {
+  readonly value: unknown;
+  readonly onChange: (links: LinkRow[]) => void;
+}) {
+  const rows: LinkRow[] = Array.isArray(value) ? value.filter(isLinkRow) : [];
+
+  const updateRow = (i: number, field: keyof LinkRow, val: string) => {
+    onChange(rows.map((r, idx) => idx === i ? { ...r, [field]: val } : r));
+  };
+
+  return (
+    <div className="links-editor">
+      {rows.map((row, i) => (
+        <div key={i} className="links-editor__row">
+          <input
+            className="config-input links-editor__label"
+            type="text"
+            placeholder="Label"
+            value={row.label}
+            onChange={e => updateRow(i, 'label', e.target.value)}
+          />
+          <input
+            className="config-input links-editor__url"
+            type="url"
+            placeholder="https://example.com"
+            value={row.url}
+            onChange={e => updateRow(i, 'url', e.target.value)}
+          />
+          <button
+            type="button"
+            className="links-editor__remove"
+            onClick={() => onChange(rows.filter((_, idx) => idx !== i))}
+            aria-label="Remove bookmark"
+          >
+            ×
+          </button>
+        </div>
+      ))}
+      <button type="button" className="links-editor__add" onClick={() => onChange([...rows, { label: '', url: '' }])}>
+        + Add bookmark
+      </button>
+    </div>
+  );
+}
+
 function FieldInput({
   field,
   value,
@@ -114,6 +173,41 @@ function FieldInput({
         {noEngines && (
           <p className="config-field-info">{t('widgetConfig.noEnginesHint')}</p>
         )}
+      </div>
+    );
+  }
+
+  if (field.type === 'links-editor') {
+    return (
+      <div className="config-field">
+        <label className="config-label">{label}</label>
+        <LinksEditor
+          value={value}
+          onChange={links => onChange(field.key, links)}
+        />
+      </div>
+    );
+  }
+
+  if (field.type === 'timezone-select') {
+    const tzList = (Intl as unknown as { supportedValuesOf: (k: string) => string[] }).supportedValuesOf('timeZone');
+    const datalistId = `tz-list-${field.key}`;
+    return (
+      <div className="config-field">
+        <label className="config-label">{label}</label>
+        <input
+          className="config-input"
+          type="text"
+          list={datalistId}
+          value={strVal}
+          placeholder={field.placeholder ?? 'e.g. Europe/Berlin'}
+          onChange={e => onChange(field.key, e.target.value)}
+        />
+        <datalist id={datalistId}>
+          {tzList.map(tz => (
+            <option key={tz} value={tz} />
+          ))}
+        </datalist>
       </div>
     );
   }
