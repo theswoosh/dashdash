@@ -5,6 +5,7 @@ import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import { mutate } from 'swr';
 import { useUIStore } from '../store/uiStore';
+import { shallow } from 'zustand/shallow';
 import { useServices } from '../hooks/use-services.hook';
 import { useConfigReload } from '../hooks/use-config-reload.hook';
 import { useWidgetTemplates } from '../hooks/use-widget-templates.hook';
@@ -37,9 +38,14 @@ function servicesAsLayout(services: ServiceConfig[], templates: WidgetTemplateDe
 
 export function DashGrid() {
   const t = useT();
-  const editMode = useUIStore(s => s.editMode);
-  const droppingItem = useUIStore(s => s.droppingItem);
-  const setDroppingItem = useUIStore(s => s.setDroppingItem);
+  const { editMode, droppingItem, setDroppingItem } = useUIStore(
+    s => ({
+      editMode: s.editMode,
+      droppingItem: s.droppingItem,
+      setDroppingItem: s.setDroppingItem,
+    }),
+    shallow
+  );
 
   const { services, hasConfigErrors, reload: reloadServices } = useServices();
   const widgetTemplates = useWidgetTemplates();
@@ -65,10 +71,15 @@ export function DashGrid() {
   const editModeRef = useRef(editMode);
   editModeRef.current = editMode;
 
+  const baseLayout = useMemo(
+    () => (allServices.length > 0 ? servicesAsLayout(allServices, widgetTemplates) : []),
+    [allServices, widgetTemplates],
+  );
+
   useEffect(() => {
-    if (allServices.length > 0) {
+    if (baseLayout.length > 0) {
       setLayout(prev => {
-        const fromYaml = servicesAsLayout(allServices, widgetTemplates);
+        const fromYaml = baseLayout;
 
         // Outside edit mode (initial load, WS reload, post-save): always use
         // YAML positions so the layout is correct after a refresh.
@@ -81,7 +92,7 @@ export function DashGrid() {
         return fromYaml.map(item => prevMap.get(item.i) ?? item);
       });
     }
-  }, [allServices, widgetTemplates]);
+  }, [baseLayout]);
 
   // Tracks the latest drag positions for save-on-close.
   // Updated by handleLayoutChange (never by React state) so it never triggers
@@ -262,7 +273,7 @@ export function DashGrid() {
       <ReactGridLayout
         className="dash-grid"
         style={{ minHeight: '100%' }}
-        layout={layout.length > 0 ? layout : servicesAsLayout(allServices, widgetTemplates)}
+        layout={layout.length > 0 ? layout : baseLayout}
         cols={cols}
         rowHeight={rowHeight}
         width={width}
