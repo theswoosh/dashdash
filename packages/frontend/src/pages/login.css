@@ -183,3 +183,9 @@
   height: 1px;
   background: var(--card-border, rgba(255, 255, 255, 0.1));
 }
+
+.login-field-error {
+  font-size: 0.75rem;
+  color: #fca5a5;
+  margin: 2px 0 0;
+}

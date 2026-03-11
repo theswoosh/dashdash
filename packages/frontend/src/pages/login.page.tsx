@@ -23,6 +23,7 @@ interface LoginState {
   confirmPassword: string;
   name: string;
   error: string;
+  emailError: string;
   info: string;
   isSubmitting: boolean;
 }
@@ -31,6 +32,7 @@ type LoginAction =
   | { type: 'SET_FIELD'; field: 'email' | 'password' | 'confirmPassword' | 'name'; value: string }
   | { type: 'SWITCH_VIEW'; view: LoginView }
   | { type: 'SET_ERROR'; error: string }
+  | { type: 'SET_EMAIL_ERROR'; emailError: string }
   | { type: 'SET_INFO'; info: string }
   | { type: 'SUBMIT_START' }
   | { type: 'SUBMIT_END' };
@@ -38,18 +40,24 @@ type LoginAction =
 function loginReducer(state: LoginState, action: LoginAction): LoginState {
   switch (action.type) {
     case 'SET_FIELD':
-      return { ...state, [action.field]: action.value };
+      return { ...state, [action.field]: action.value, ...(action.field === 'email' ? { emailError: '' } : {}) };
     case 'SWITCH_VIEW':
-      return { ...state, view: action.view, email: '', error: '', info: '', password: '', confirmPassword: '' };
+      return { ...state, view: action.view, email: '', error: '', emailError: '', info: '', password: '', confirmPassword: '' };
     case 'SET_ERROR':
       return { ...state, error: action.error };
+    case 'SET_EMAIL_ERROR':
+      return { ...state, emailError: action.emailError };
     case 'SET_INFO':
       return { ...state, info: action.info };
     case 'SUBMIT_START':
-      return { ...state, isSubmitting: true, error: '' };
+      return { ...state, isSubmitting: true, error: '', emailError: '' };
     case 'SUBMIT_END':
       return { ...state, isSubmitting: false };
   }
+}
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 interface LoginPageProps {
@@ -68,14 +76,19 @@ export function LoginPage({ initialView = 'login', initialError = '' }: LoginPag
     confirmPassword: '',
     name: '',
     error: initialError ? resolveOidcError(initialError, t) : '',
+    emailError: '',
     info: '',
     isSubmitting: false,
   });
 
-  const { view, email, password, confirmPassword, name, error, info, isSubmitting } = state;
+  const { view, email, password, confirmPassword, name, error, emailError, info, isSubmitting } = state;
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
+    if (!isValidEmail(email)) {
+      dispatch({ type: 'SET_EMAIL_ERROR', emailError: t('login.invalidEmail') });
+      return;
+    }
     dispatch({ type: 'SUBMIT_START' });
     try {
       await login(email, password);
@@ -88,6 +101,10 @@ export function LoginPage({ initialView = 'login', initialError = '' }: LoginPag
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
+    if (!isValidEmail(email)) {
+      dispatch({ type: 'SET_EMAIL_ERROR', emailError: t('login.invalidEmail') });
+      return;
+    }
     if (password !== confirmPassword) {
       dispatch({ type: 'SET_ERROR', error: t('login.passwordMismatch') });
       return;
@@ -135,7 +152,7 @@ export function LoginPage({ initialView = 'login', initialError = '' }: LoginPag
             {info && <p className="login-info" role="status">{info}</p>}
 
             {localEnabled && (
-              <form onSubmit={e => void handleLogin(e)}>
+              <form onSubmit={e => void handleLogin(e)} noValidate>
                 <label className="login-label" htmlFor="login-email">{t('login.email')}</label>
                 <input
                   id="login-email"
@@ -147,6 +164,7 @@ export function LoginPage({ initialView = 'login', initialError = '' }: LoginPag
                   required
                   autoFocus={!oidcEnabled}
                 />
+                {emailError && <p className="login-field-error" role="alert">{emailError}</p>}
 
                 <label className="login-label" htmlFor="login-password">{t('login.password')}</label>
                 <input
@@ -193,7 +211,7 @@ export function LoginPage({ initialView = 'login', initialError = '' }: LoginPag
         )}
 
         {view === 'register' && (
-          <form className="login-form" onSubmit={e => void handleRegister(e)}>
+          <form className="login-form" onSubmit={e => void handleRegister(e)} noValidate>
             <h1 className="login-title">{t('login.createAccount')}</h1>
             {error && <p className="login-error" role="alert">{error}</p>}
 
@@ -220,6 +238,7 @@ export function LoginPage({ initialView = 'login', initialError = '' }: LoginPag
               onChange={e => dispatch({ type: 'SET_FIELD', field: 'email', value: e.target.value })}
               required
             />
+            {emailError && <p className="login-field-error" role="alert">{emailError}</p>}
 
             <label className="login-label" htmlFor="reg-password">{t('login.password')}</label>
             <input

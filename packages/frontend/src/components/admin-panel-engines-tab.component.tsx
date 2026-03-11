@@ -1,10 +1,48 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { mutate } from 'swr';
 import { Plus, Trash2, Pencil } from 'lucide-react';
 import { useSettings } from '../hooks/use-settings.hook';
+import { useBehavior } from '../hooks/use-behavior.hook';
 import { useT } from '../i18n';
 
 const SETTINGS_KEY = '/api/settings';
+
+function HoldDeleteButton({ onDelete, holdToDeleteMs, disabled }: { onDelete: () => void; holdToDeleteMs: number; disabled: boolean }) {
+  const t = useT();
+  const [holding, setHolding] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+
+  const start = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    setHolding(true);
+    timer.current = setTimeout(() => { onDelete(); }, holdToDeleteMs);
+  };
+
+  const cancel = () => {
+    if (timer.current) { clearTimeout(timer.current); timer.current = null; }
+    setHolding(false);
+  };
+
+  return (
+    <button
+      className={`widget-delete-btn${holding ? ' widget-delete-btn--holding' : ''}`}
+      style={{ '--hold-delete-duration': `${holdToDeleteMs}ms` } as React.CSSProperties}
+      onMouseDown={disabled ? undefined : start}
+      onMouseUp={cancel}
+      onMouseLeave={cancel}
+      onTouchStart={disabled ? undefined : start}
+      onTouchEnd={cancel}
+      disabled={disabled}
+      title={t('widgetCard.holdToDelete')}
+      aria-label={t('widgetCard.holdToDeleteAria')}
+    >
+      <span className="widget-delete-btn__fill" />
+      <span className="widget-delete-btn__icon"><Trash2 size={13} /></span>
+    </button>
+  );
+}
 
 interface SearchEngine {
   id: string;
@@ -67,6 +105,7 @@ function AddEngineForm({ onDone }: { onDone: () => void }) {
         <div className="admin-field">
           <label className="admin-label" htmlFor="engine-url">{t('admin.engineUrl')}</label>
           <input id="engine-url" className="admin-input" value={url} onChange={e => setUrl(e.target.value)} required placeholder="https://example.com/search?q={query}" />
+          <span className="field-hint">{t('admin.urlHint')}</span>
         </div>
         <div className="admin-field">
           <label className="admin-label" htmlFor="engine-placeholder">{t('admin.enginePlaceholder')}</label>
@@ -127,6 +166,7 @@ function EditEngineForm({ engine, onDone }: { engine: SearchEngine; onDone: () =
         <div className="admin-field">
           <label className="admin-label" htmlFor={`edit-url-${engine.id}`}>{t('admin.engineUrl')}</label>
           <input id={`edit-url-${engine.id}`} className="admin-input" value={url} onChange={e => setUrl(e.target.value)} required />
+          <span className="field-hint">{t('admin.urlHint')}</span>
         </div>
         <div className="admin-field">
           <label className="admin-label" htmlFor={`edit-ph-${engine.id}`}>{t('admin.enginePlaceholder')}</label>
@@ -146,6 +186,7 @@ function EditEngineForm({ engine, onDone }: { engine: SearchEngine; onDone: () =
 export function SearchEnginesTab() {
   const t = useT();
   const settings = useSettings();
+  const { holdToDeleteMs } = useBehavior();
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState('');
@@ -199,14 +240,11 @@ export function SearchEnginesTab() {
                   >
                     <Pencil size={14} />
                   </button>
-                  <button
-                    className="admin-icon-btn admin-icon-btn--danger"
-                    title={t('admin.deleteEngine')}
-                    onClick={() => void deleteEngine(engine.id)}
+                  <HoldDeleteButton
+                    onDelete={() => void deleteEngine(engine.id)}
+                    holdToDeleteMs={holdToDeleteMs}
                     disabled={isActionInFlight}
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  />
                 </div>
               </>
             )}

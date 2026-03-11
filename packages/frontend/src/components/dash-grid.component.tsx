@@ -41,7 +41,7 @@ export function DashGrid() {
   const droppingItem = useUIStore(s => s.droppingItem);
   const setDroppingItem = useUIStore(s => s.setDroppingItem);
 
-  const { services, reload: reloadServices } = useServices();
+  const { services, hasConfigErrors, reload: reloadServices } = useServices();
   const widgetTemplates = useWidgetTemplates();
   const gridConfig = useGridConfig();
 
@@ -247,6 +247,11 @@ export function DashGrid() {
 
   return (
     <div className="dash-grid-container" ref={containerRef}>
+      {hasConfigErrors && (
+        <div className="config-error-banner" role="alert">
+          {t('dashGrid.configErrorBanner')}
+        </div>
+      )}
       {editMode && (
         <div className="grid-overlay" aria-hidden="true">
           {Array.from({ length: cols }, (_, i) => (

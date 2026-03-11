@@ -38,6 +38,12 @@
   gap: 4px;
 }
 
+/* ───────────────────────────── Tiny layout ─────────────────────────── */
+.healthcheck-widget--tiny {
+  width: 100%;
+  height: 100%;
+}
+
 /* ───────────────────────────── Big layout ──────────────────────────── */
 
 .healthcheck-widget--big {
@@ -50,4 +56,33 @@
   height: 64px;
   border-radius: 14px;
   cursor: default;
+}
+
+/* ───────────────────────────── Big layout detail ───────────────────── */
+.healthcheck-widget__big-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.healthcheck-widget__big-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.healthcheck-widget__big-status {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.healthcheck-widget__big-status--up    { color: #22c55e; }
+.healthcheck-widget__big-status--down  { color: #ef4444; }
+.healthcheck-widget__big-status--unknown { color: var(--text-muted); }
+
+.healthcheck-widget__big-latency {
+  font-size: 11px;
+  color: var(--text-muted);
 }

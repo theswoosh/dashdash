@@ -5,6 +5,15 @@
   position: relative;
 }
 
+.config-error-banner {
+  background: var(--color-error, #c0392b);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
 .dash-grid-empty {
   display: flex;
   align-items: center;

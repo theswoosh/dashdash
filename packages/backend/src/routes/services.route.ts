@@ -3,6 +3,7 @@ import type { Service } from '../config/schemas.js';
 import type { Db } from '../db/index.js';
 import { patchService, appendService, removeService, batchPatchLayouts } from '../config/writer.js';
 import { suppressNextBroadcast } from '../config/watcher.js';
+import { validateConfig } from '../config/validator.js';
 
 interface PatchBody {
   title?: string;
@@ -18,7 +19,11 @@ export function createServicesRoutes(
   return async fastify => {
     const deleteNotepadContent = db.prepare<[string]>(`DELETE FROM notepad WHERE service_id = ?`);
     // GET /api/services
-    fastify.get('/services', async () => ({ services: getServices() }));
+    fastify.get('/services', async () => {
+      const issues = validateConfig(configDir);
+      const hasConfigErrors = issues.some(i => i.level === 'error');
+      return { services: getServices(), hasConfigErrors };
+    });
 
     // PUT /api/services/layouts — batch update all service layouts in one YAML write
     fastify.put<{ Body: { items: Array<{ id: string; layout: { x: number; y: number; w: number; h: number } }> } }>(

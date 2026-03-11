@@ -131,6 +131,10 @@ function validateSettingsYaml(raw: unknown, issues: ConfigIssue[], gridColumns: 
   }
 }
 
+function entryPrefix(index: number, id: string | undefined): string {
+  return id ? `Entry #${index + 1} ("${id}")` : `Entry #${index + 1}`;
+}
+
 function validateServicesYaml(raw: unknown, issues: ConfigIssue[], integrationIds: Set<string>, knownWidgetTypes: Set<string>, gridColumns: number): void {
   const file = 'services.yml';
   if (!Array.isArray(raw)) {
@@ -143,43 +147,57 @@ function validateServicesYaml(raw: unknown, issues: ConfigIssue[], integrationId
   for (let i = 0; i < raw.length; i++) {
     const svc = raw[i];
     if (!svc || typeof svc !== 'object' || Array.isArray(svc)) {
-      issues.push({ file, field: `[${i}]`, level: 'error', message: 'Each service must be a mapping' });
+      issues.push({ file, field: `[${i}]`, level: 'error', message: `${entryPrefix(i, undefined)}: must be a mapping` });
       continue;
     }
     const s = svc as Record<string, unknown>;
     const base = `[${i}]`;
+    const entryId = typeof s['id'] === 'string' ? s['id'] : undefined;
+    const prefix = entryPrefix(i, entryId);
 
-    checkString(issues, file, formatPath(base, 'title'), s['title'], { required: true, maxLength: 128 });
-    checkString(issues, file, formatPath(base, 'id'), s['id'], { maxLength: 128 });
-    checkString(issues, file, formatPath(base, 'icon'), s['icon'], { maxLength: 128 });
-    checkString(issues, file, formatPath(base, 'widget'), s['widget'], { required: true, maxLength: 64 });
+    // Collect issues into a local list so we can rewrite messages with the entry prefix
+    const entryIssues: ConfigIssue[] = [];
+
+    checkString(entryIssues, file, formatPath(base, 'title'), s['title'], { required: true, maxLength: 128 });
+    checkString(entryIssues, file, formatPath(base, 'id'), s['id'], { maxLength: 128 });
+    checkString(entryIssues, file, formatPath(base, 'icon'), s['icon'], { maxLength: 128 });
+    checkString(entryIssues, file, formatPath(base, 'widget'), s['widget'], { required: true, maxLength: 64 });
 
     // Warn if widget type is unknown
     if (typeof s['widget'] === 'string' && !knownWidgetTypes.has(s['widget'])) {
-      issues.push({ file, field: formatPath(base, 'widget'), level: 'warning', message: `Unknown widget type "${s['widget']}"` });
+      entryIssues.push({ file, field: formatPath(base, 'widget'), level: 'warning', message: `Unknown widget type "${s['widget']}"` });
     }
 
     // Warn if integration ref doesn't exist
     if (typeof s['integration'] === 'string') {
-      checkString(issues, file, formatPath(base, 'integration'), s['integration'], { maxLength: 128 });
+      checkString(entryIssues, file, formatPath(base, 'integration'), s['integration'], { maxLength: 128 });
       if (!integrationIds.has(s['integration'])) {
-        issues.push({ file, field: formatPath(base, 'integration'), level: 'warning', message: `Integration "${s['integration']}" not found in integrations.yml` });
+        entryIssues.push({ file, field: formatPath(base, 'integration'), level: 'warning', message: `Integration "${s['integration']}" not found in integrations.yml` });
       }
     }
 
     if (s['layout'] && typeof s['layout'] === 'object' && !Array.isArray(s['layout'])) {
       const layout = s['layout'] as Record<string, unknown>;
-      checkNumber(issues, file, formatPath(base, 'layout.w'), layout['w'], { integer: true, min: 1, max: 48 });
-      checkNumber(issues, file, formatPath(base, 'layout.h'), layout['h'], { integer: true, min: 1, max: 48 });
-      checkNumber(issues, file, formatPath(base, 'layout.x'), layout['x'], { integer: true, min: 0, max: 200 });
-      checkNumber(issues, file, formatPath(base, 'layout.y'), layout['y'], { integer: true, min: 0, max: 200 });
+      checkNumber(entryIssues, file, formatPath(base, 'layout.w'), layout['w'], { integer: true, min: 1, max: 48 });
+      checkNumber(entryIssues, file, formatPath(base, 'layout.h'), layout['h'], { integer: true, min: 1, max: 48 });
+      checkNumber(entryIssues, file, formatPath(base, 'layout.x'), layout['x'], { integer: true, min: 0, max: 200 });
+      checkNumber(entryIssues, file, formatPath(base, 'layout.y'), layout['y'], { integer: true, min: 0, max: 200 });
 
       // Warn if widget is wider than the grid
       if (typeof layout['w'] === 'number' && layout['w'] > gridColumns) {
-        issues.push({ file, field: formatPath(base, 'layout.w'), level: 'warning', message: `Widget width (${layout['w']}) exceeds grid columns (${gridColumns})` });
+        entryIssues.push({ file, field: formatPath(base, 'layout.w'), level: 'warning', message: `Widget width (${layout['w']}) exceeds grid columns (${gridColumns})` });
       }
     } else if (s['layout'] === undefined || s['layout'] === null) {
-      issues.push({ file, field: formatPath(base, 'layout'), level: 'error', message: 'Required field is missing' });
+      entryIssues.push({ file, field: formatPath(base, 'layout'), level: 'error', message: 'Required field is missing' });
+    }
+
+    // Rewrite messages to include human-readable entry prefix
+    for (const issue of entryIssues) {
+      const fieldName = issue.field.replace(/^\[\d+\]\.?/, '');
+      const readable = fieldName
+        ? `${prefix}: field "${fieldName}" — ${issue.message.charAt(0).toLowerCase()}${issue.message.slice(1)}`
+        : `${prefix}: ${issue.message}`;
+      issues.push({ ...issue, message: readable });
     }
   }
 }

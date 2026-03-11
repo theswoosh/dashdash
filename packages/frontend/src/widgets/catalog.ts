@@ -13,7 +13,7 @@ export interface ConfigField {
   key: string;
   label: string;
   labelKey?: string | undefined;
-  type: 'text' | 'url' | 'number' | 'boolean' | 'textarea' | 'select' | 'separator' | 'engines-select';
+  type: 'text' | 'url' | 'number' | 'boolean' | 'textarea' | 'select' | 'separator' | 'engines-select' | 'info';
   placeholder?: string | undefined;
   required?: boolean | undefined;
   default?: unknown;
@@ -97,7 +97,9 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     descriptionKey: 'widgets.stats.description',
     defaultSize: { w: 6, h: 6 },
     defaultOptions: {},
-    configFields: [],
+    configFields: [
+      { key: '_thresholds_info', label: 'Colours: green < 65 %, amber 65–84 %, red ≥ 85 %', type: 'info' },
+    ],
   },
   {
     type: 'bookmarks',

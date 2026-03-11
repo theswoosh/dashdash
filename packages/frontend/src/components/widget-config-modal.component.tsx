@@ -34,16 +34,22 @@ function FieldInput({
   value,
   onChange,
   engines = [],
+  fieldError,
 }: {
   field: ConfigField;
   value: unknown;
   onChange: (key: string, val: unknown) => void;
   engines?: readonly SearchEngine[] | undefined;
+  fieldError?: string | undefined;
 }) {
   const t = useT();
 
   if (field.type === 'separator') {
     return <hr className="config-separator" />;
+  }
+
+  if (field.type === 'info') {
+    return <p className="config-field-info">{field.label}</p>;
   }
 
   const label = field.labelKey ? (t(field.labelKey) || field.label) : field.label;
@@ -84,6 +90,7 @@ function FieldInput({
   }
 
   if (field.type === 'engines-select') {
+    const noEngines = engines.length === 0;
     return (
       <div className="config-field">
         <label className="config-label">{label}</label>
@@ -91,12 +98,22 @@ function FieldInput({
           className="config-input config-select"
           value={strVal}
           onChange={e => onChange(field.key, e.target.value || undefined)}
+          disabled={noEngines}
         >
-          <option value="">First available engine</option>
-          {engines.map(e => (
-            <option key={e.id} value={e.id}>{e.label}</option>
-          ))}
+          {noEngines ? (
+            <option value="" disabled>{t('widgetConfig.noEnginesConfigured')}</option>
+          ) : (
+            <>
+              <option value="">{t('widgetConfig.firstAvailableEngine')}</option>
+              {engines.map(e => (
+                <option key={e.id} value={e.id}>{e.label}</option>
+              ))}
+            </>
+          )}
         </select>
+        {noEngines && (
+          <p className="config-field-info">{t('widgetConfig.noEnginesHint')}</p>
+        )}
       </div>
     );
   }
@@ -133,6 +150,7 @@ function FieldInput({
           onChange(field.key, val);
         }}
       />
+      {fieldError && <p className="config-field-error">{fieldError}</p>}
     </div>
   );
 }
@@ -149,6 +167,7 @@ export function WidgetConfigModal() {
 
   const [title, setTitle] = useState('');
   const [options, setOptions] = useState<Record<string, unknown>>({});
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [testResult, setTestResult] = useState<'idle' | 'loading' | 'ok' | 'fail'>('idle');
   const [bgHex, setBgHex] = useState(DEFAULT_BG_HEX);
   const [bgAlpha, setBgAlpha] = useState(DEFAULT_BG_ALPHA);
@@ -218,6 +237,12 @@ export function WidgetConfigModal() {
 
   const handleOptionChange = useCallback((key: string, val: unknown) => {
     setOptions(prev => ({ ...prev, [key]: val }));
+    setFieldErrors(prev => {
+      if (!(key in prev)) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
   }, []);
 
   const updateBgColor = useCallback((hex: string, alpha: number) => {
@@ -235,6 +260,16 @@ export function WidgetConfigModal() {
   if (!configTarget || !service) return null;
 
   const saveWidgetConfiguration = async () => {
+    const errors: Record<string, string> = {};
+    for (const field of configFields) {
+      if (field.required && !options[field.key]) {
+        errors[field.key] = t('widgetConfig.fieldRequired');
+      }
+    }
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
     await fetch(`/api/services/${service.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -293,6 +328,7 @@ export function WidgetConfigModal() {
                 value={options[field.key] ?? field.default}
                 onChange={handleOptionChange}
                 engines={allEngines}
+                fieldError={fieldErrors[field.key]}
               />
             ))
           ) : (
@@ -303,14 +339,7 @@ export function WidgetConfigModal() {
 
           <hr className="config-separator" />
           <div className="config-field">
-            <label className="config-label">
-              {t('widgetConfig.widgetBackground')}
-              {options['bg_color'] != null && (
-                <button className="config-reset-link" onClick={resetBgColor} type="button">
-                  {t('common.reset')}
-                </button>
-              )}
-            </label>
+            <label className="config-label">{t('widgetConfig.widgetBackground')}</label>
             <div className="config-bg-picker">
               <input
                 type="color"
@@ -336,6 +365,11 @@ export function WidgetConfigModal() {
                 />
               )}
             </div>
+            {options['bg_color'] != null && (
+              <button className="config-reset-link" onClick={resetBgColor} type="button">
+                {t('common.reset')}
+              </button>
+            )}
           </div>
         </div>
         <div className="modal-footer">

@@ -1,9 +1,47 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import useSWR, { mutate } from 'swr';
 import { Plus, Trash2, ShieldCheck, ShieldOff, UserX, RefreshCw } from 'lucide-react';
+import { useBehavior } from '../hooks/use-behavior.hook';
 import { useT } from '../i18n';
 
 const USERS_KEY = '/api/users';
+
+function HoldDeleteButton({ onDelete, holdToDeleteMs, disabled }: { onDelete: () => void; holdToDeleteMs: number; disabled: boolean }) {
+  const t = useT();
+  const [holding, setHolding] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+
+  const start = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    setHolding(true);
+    timer.current = setTimeout(() => { onDelete(); }, holdToDeleteMs);
+  };
+
+  const cancel = () => {
+    if (timer.current) { clearTimeout(timer.current); timer.current = null; }
+    setHolding(false);
+  };
+
+  return (
+    <button
+      className={`widget-delete-btn${holding ? ' widget-delete-btn--holding' : ''}`}
+      style={{ '--hold-delete-duration': `${holdToDeleteMs}ms` } as React.CSSProperties}
+      onMouseDown={disabled ? undefined : start}
+      onMouseUp={cancel}
+      onMouseLeave={cancel}
+      onTouchStart={disabled ? undefined : start}
+      onTouchEnd={cancel}
+      disabled={disabled}
+      title={t('widgetCard.holdToDelete')}
+      aria-label={t('widgetCard.holdToDeleteAria')}
+    >
+      <span className="widget-delete-btn__fill" />
+      <span className="widget-delete-btn__icon"><Trash2 size={13} /></span>
+    </button>
+  );
+}
 
 interface UserSummary {
   id: string;
@@ -90,6 +128,7 @@ function AddUserForm({ onDone }: { onDone: () => void }) {
 
 export function UsersTab({ isOpen }: { isOpen: boolean }) {
   const t = useT();
+  const { holdToDeleteMs } = useBehavior();
   const [isAddingUser, setIsAddingUser] = useState(false);
   const [actionError, setActionError] = useState('');
   const [isActionInFlight, setIsActionInFlight] = useState(false);
@@ -173,14 +212,11 @@ export function UsersTab({ isOpen }: { isOpen: boolean }) {
                 <RefreshCw size={14} />
               </button>
               {user.role !== 'admin' && (
-                <button
-                  className="admin-icon-btn admin-icon-btn--danger"
-                  title={t('admin.deleteUser')}
-                  onClick={() => deleteUser(user)}
+                <HoldDeleteButton
+                  onDelete={() => deleteUser(user)}
+                  holdToDeleteMs={holdToDeleteMs}
                   disabled={isActionInFlight}
-                >
-                  <Trash2 size={14} />
-                </button>
+                />
               )}
             </div>
           </div>

@@ -130,10 +130,11 @@ export function ProfilePopup() {
     setIsPwSubmitting(true);
     try {
       await updateProfile({ password: newPassword, currentPassword });
-      setPwInfo(t('userMenu.profileUpdated'));
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
+      setPwInfo('');
+      setProfileView('edit');
     } catch (err) {
       setPwError(err instanceof Error ? err.message : t('userMenu.updateFailed'));
     } finally {
@@ -291,6 +292,7 @@ export function ProfilePopup() {
                   onChange={e => setConfirmPassword(e.target.value)}
                   required
                 />
+                {pwMismatch && <span className="field-error">{t('login.passwordMismatch')}</span>}
 
                 <div className="user-modal-actions">
                   <button type="button" className="user-modal-btn user-modal-btn--ghost" onClick={closePasswordView}>
@@ -318,6 +320,7 @@ export function ProfilePopup() {
                 onChange={e => setConfirmDeleteEmail(e.target.value)}
                 autoComplete="off"
               />
+              <span className="field-hint">{t('userMenu.deleteAccountHint')}</span>
               <button
                 type="button"
                 className={`user-modal-delete-btn${holdingDelete ? ' user-modal-delete-btn--holding' : ''}`}
