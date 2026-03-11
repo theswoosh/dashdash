@@ -106,12 +106,20 @@ export async function runHealthcheck(opts: CheckOptions): Promise<CheckResult> {
   }
 
   // Extract port from URL if not provided as an explicit option.
+  // Also infer 80/443 from http/https scheme so we use TCP instead of ICMP
+  // ping — ICMP is unavailable in most container environments.
   let effectivePort = port;
   if (effectivePort === undefined) {
     try {
       const normalized = trimmed.includes('://') ? trimmed : `http://${trimmed}`;
-      const urlPort = new URL(normalized).port;
-      if (urlPort) effectivePort = parseInt(urlPort, 10);
+      const parsed = new URL(normalized);
+      if (parsed.port) {
+        effectivePort = parseInt(parsed.port, 10);
+      } else if (parsed.protocol === 'https:') {
+        effectivePort = 443;
+      } else if (parsed.protocol === 'http:') {
+        effectivePort = 80;
+      }
     } catch { /* URL parsing failed — fall back to ping without explicit port */ }
   }
 

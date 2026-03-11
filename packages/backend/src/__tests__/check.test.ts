@@ -12,6 +12,33 @@ vi.mock('child_process', () => ({
   execFile: vi.fn(),
 }));
 
+// Mock net.Socket so TCP checks don't make real connections in tests.
+// vi.hoisted() ensures these run before vi.mock() factories and imports.
+const { mockSocket, mockSocketHandlers } = vi.hoisted(() => {
+  const handlers: Record<string, ((...args: unknown[]) => void)[]> = {};
+  const socket = {
+    setTimeout: vi.fn(),
+    connect: vi.fn(),
+    on: vi.fn((event: string, cb: (...args: unknown[]) => void) => {
+      handlers[event] = handlers[event] ?? [];
+      handlers[event]!.push(cb);
+    }),
+    destroy: vi.fn(),
+  };
+  return { mockSocket: socket, mockSocketHandlers: handlers };
+});
+
+vi.mock('net', async () => {
+  const actual = await vi.importActual<typeof import('net')>('net');
+  // Use a regular function (not arrow) so it works as a constructor.
+  function MockSocket(this: unknown) { return mockSocket; }
+  return {
+    ...actual,
+    default: { ...actual, Socket: MockSocket },
+    Socket: MockSocket,
+  };
+});
+
 import dns from 'dns/promises';
 import { execFile } from 'child_process';
 import { runHealthcheck } from '../widgets/healthcheck/check.js';
@@ -21,6 +48,14 @@ const mockExecFile = execFile as unknown as ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   vi.resetAllMocks();
+  for (const key of Object.keys(mockSocketHandlers)) {
+    delete mockSocketHandlers[key];
+  }
+  // Restore on() handler registration after resetAllMocks clears it.
+  mockSocket.on.mockImplementation((event: string, cb: (...args: unknown[]) => void) => {
+    mockSocketHandlers[event] = mockSocketHandlers[event] ?? [];
+    mockSocketHandlers[event]!.push(cb);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -124,28 +159,45 @@ describe('runHealthcheck — SSRF via DNS', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 5. Valid public hostname — ping path (no port)
+// 5. Valid public hostname — TCP path (http→80, https→443)
 // ---------------------------------------------------------------------------
-describe('runHealthcheck — valid host, ping path', () => {
-  it('returns up when ping succeeds', async () => {
-    mockResolve4.mockResolvedValue(['8.8.8.8']);
-    mockExecFile.mockImplementation((_cmd: string, _args: string[], cb: (err: Error | null) => void) => {
-      cb(null);
-    });
+describe('runHealthcheck — valid host, TCP path', () => {
+  it('returns up when TCP connect succeeds (http → port 80)', async () => {
+    mockResolve4.mockResolvedValue(['93.184.216.34']);
+    mockSocket.connect.mockImplementation(
+      (_port: number, _host: string, cb: () => void) => { cb(); }
+    );
 
     const result = await runHealthcheck({ url: 'http://example.com/' });
     expect(result.status).toBe('up');
     expect(result.latencyMs).toBeGreaterThanOrEqual(0);
     expect(result.error).toBeUndefined();
+    expect(mockExecFile).not.toHaveBeenCalled();
   });
 
-  it('returns down when ping fails', async () => {
-    mockResolve4.mockResolvedValue(['8.8.8.8']);
-    mockExecFile.mockImplementation((_cmd: string, _args: string[], cb: (err: Error | null) => void) => {
-      cb(new Error('ping failed'));
+  it('infers port 443 for https scheme', async () => {
+    mockResolve4.mockResolvedValue(['93.184.216.34']);
+    mockSocket.connect.mockImplementation(
+      (port: number, _host: string, cb: () => void) => {
+        expect(port).toBe(443);
+        cb();
+      }
+    );
+
+    const result = await runHealthcheck({ url: 'https://example.com/' });
+    expect(result.status).toBe('up');
+  });
+
+  it('returns down when TCP connect fails', async () => {
+    mockResolve4.mockResolvedValue(['93.184.216.34']);
+    mockSocket.connect.mockImplementation(() => {
+      // simulate async error event
+      setTimeout(() => {
+        for (const cb of mockSocketHandlers['error'] ?? []) cb(new Error('ECONNREFUSED'));
+      }, 0);
     });
 
-    const result = await runHealthcheck({ url: 'example.com' });
+    const result = await runHealthcheck({ url: 'http://example.com/' });
     expect(result.status).toBe('down');
     expect(result.error).toBe('unreachable');
   });
