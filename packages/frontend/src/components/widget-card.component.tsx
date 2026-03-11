@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, memo } from 'react';
+import { useState, useRef, useEffect, useMemo, memo, Suspense } from 'react';
 import { GripVertical, Settings, X, RefreshCw, Trash2 } from 'lucide-react';
 import { mutate as swrMutate } from 'swr';
 import type { ServiceConfig } from '@dashdash/types';
@@ -138,10 +138,8 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
     [service.options, service.widget, service.title, service.icon],
   );
 
-  const body = (() => {
-    if (!clientOnly && loading) return <WidgetSkeleton />;
-    if (!clientOnly && error) return <WidgetError message={error} />;
-    return (
+  const widgetContent = (
+    <Suspense fallback={<WidgetSkeleton />}>
       <Component
         serviceId={service.id}
         options={widgetOptions}
@@ -149,7 +147,13 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
         error={error}
         loading={loading}
       />
-    );
+    </Suspense>
+  );
+
+  const body = (() => {
+    if (!clientOnly && loading) return <WidgetSkeleton />;
+    if (!clientOnly && error) return <WidgetError message={error} />;
+    return widgetContent;
   })();
 
   const cardClassName = [

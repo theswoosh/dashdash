@@ -1,13 +1,14 @@
-import type { ComponentType } from 'react';
+import { lazy, type ComponentType } from 'react';
 import type { WidgetProps } from '@dashdash/types';
-import { ClockWidget } from './clock/clock.component';
-import { HealthcheckWidget } from './healthcheck/healthcheck.component';
-import { StatsWidget } from './stats/stats.component';
-import { BookmarksWidget } from './bookmarks/bookmarks.component';
-import { SearchWidget } from './search/search.component';
-import { IframeWidget } from './iframe/iframe.component';
 import { FallbackWidget } from './fallback/fallback.component';
-import { NotepadWidget } from './notepad/notepad.component';
+
+const ClockWidget = lazy(() => import('./clock/clock.component').then(m => ({ default: m.ClockWidget })));
+const HealthcheckWidget = lazy(() => import('./healthcheck/healthcheck.component').then(m => ({ default: m.HealthcheckWidget })));
+const StatsWidget = lazy(() => import('./stats/stats.component').then(m => ({ default: m.StatsWidget })));
+const BookmarksWidget = lazy(() => import('./bookmarks/bookmarks.component').then(m => ({ default: m.BookmarksWidget })));
+const SearchWidget = lazy(() => import('./search/search.component').then(m => ({ default: m.SearchWidget })));
+const IframeWidget = lazy(() => import('./iframe/iframe.component').then(m => ({ default: m.IframeWidget })));
+const NotepadWidget = lazy(() => import('./notepad/notepad.component').then(m => ({ default: m.NotepadWidget })));
 
 interface FrontendWidget {
   Component: ComponentType<WidgetProps>;
