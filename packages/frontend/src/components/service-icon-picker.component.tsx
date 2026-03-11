@@ -229,7 +229,6 @@ export function ServiceIconPicker({
             placeholder="Search apps…"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            // eslint-disable-next-line jsx-a11y/no-autofocus
             autoFocus
           />
 
