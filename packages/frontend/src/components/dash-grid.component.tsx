@@ -5,7 +5,7 @@ import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import { mutate } from 'swr';
 import { useUIStore } from '../store/uiStore';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/shallow';
 import { useServices } from '../hooks/use-services.hook';
 import { useConfigReload } from '../hooks/use-config-reload.hook';
 import { useWidgetTemplates } from '../hooks/use-widget-templates.hook';
@@ -39,12 +39,11 @@ function servicesAsLayout(services: ServiceConfig[], templates: WidgetTemplateDe
 export function DashGrid() {
   const t = useT();
   const { editMode, droppingItem, setDroppingItem } = useUIStore(
-    s => ({
+    useShallow(s => ({
       editMode: s.editMode,
       droppingItem: s.droppingItem,
       setDroppingItem: s.setDroppingItem,
-    }),
-    shallow
+    }))
   );
 
   const { services, hasConfigErrors, reload: reloadServices } = useServices();

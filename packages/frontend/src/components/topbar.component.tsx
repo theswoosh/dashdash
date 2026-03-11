@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Settings2, Save } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
-import { shallow } from 'zustand/shallow';
+import { useShallow } from 'zustand/shallow';
 import { usePreferences } from '../hooks/use-preferences.hook';
 import { useSettings } from '../hooks/use-settings.hook';
 import { useT } from '../i18n';
@@ -14,8 +14,7 @@ import './WidgetConfigModal.css';
 export function Topbar() {
   const t = useT();
   const { editMode, toggleEditMode } = useUIStore(
-    s => ({ editMode: s.editMode, toggleEditMode: s.toggleEditMode }),
-    shallow
+    useShallow(s => ({ editMode: s.editMode, toggleEditMode: s.toggleEditMode }))
   );
   const { preferences, savePreferences } = usePreferences();
   const settings = useSettings();
