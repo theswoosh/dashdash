@@ -12,32 +12,6 @@
     timezone: Europe/Berlin
     format: 24h
 
-- title: Sonarr
-  icon: sonarr
-  integration: sonarr-main     # references integrations.yml
-  widget: arr
-  layout:
-    w: 2
-    h: 2
-    x: 2
-    y: 0
-  options:
-    showQueue: true
-    refreshInterval: 30         # seconds
-
-- title: Proxmox
-  icon: proxmox
-  integration: pve-home
-  widget: proxmox-nodes
-  layout:
-    w: 4
-    h: 3
-    x: 4
-    y: 0
-  options:
-    showStorage: true
-    refreshInterval: 15
-
 - title: Search
   widget: search
   layout:
