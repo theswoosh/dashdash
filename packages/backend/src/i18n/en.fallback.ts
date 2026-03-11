@@ -145,6 +145,11 @@ export const EN_FALLBACK: Record<string, unknown> = {
     profileUpdated: 'Profile updated.',
     updateFailed: 'Update failed',
     language: 'Language',
+    dangerZone: 'Danger Zone',
+    deleteAccount: 'Delete Account',
+    deleteAccountConfirm: 'Type your email to confirm',
+    deleteAccountHold: 'Hold to delete account',
+    deleteAccountHint: 'Enter your account email to enable account deletion.',
   },
   widgets: {
     clock: { label: 'Clock', description: 'Display the current time' },

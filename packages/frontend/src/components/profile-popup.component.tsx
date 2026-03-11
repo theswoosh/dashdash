@@ -315,7 +315,8 @@ export function ProfilePopup() {
               <input
                 id="profile-delete-email"
                 className="user-modal-input"
-                type="email"
+                type="text"
+                inputMode="email"
                 value={confirmDeleteEmail}
                 onChange={e => setConfirmDeleteEmail(e.target.value)}
                 autoComplete="off"
