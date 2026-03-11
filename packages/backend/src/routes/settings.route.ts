@@ -5,7 +5,16 @@ import { writeSearchEngines } from '../config/writer.js';
 
 export function createSettingsRoutes(getSettings: () => Settings, configDir: string): FastifyPluginAsync {
   return async fastify => {
-    fastify.get('/settings', async () => getSettings());
+    fastify.get('/settings', async () => {
+      const settings = getSettings();
+      return {
+        title: settings.title,
+        timezone: settings.timezone,
+        language: settings.language,
+        searchEngines: settings.searchEngines,
+        grid: settings.grid,
+      };
+    });
 
     fastify.post('/settings/search-engines', async (request, reply) => {
       if (request.userRole !== 'admin') {

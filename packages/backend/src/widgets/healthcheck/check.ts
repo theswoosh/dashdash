@@ -23,9 +23,8 @@ const PRIVATE_IP_RE = [
   /^fd/i,
 ];
 
-async function isPrivateOrLoopback(host: string): Promise<boolean> {
-  const addresses = isIP(host) ? [host] : await dns.resolve4(host).catch(() => [] as string[]);
-  return addresses.some(ip => PRIVATE_IP_RE.some(re => re.test(ip)));
+function isPrivateIp(ip: string): boolean {
+  return PRIVATE_IP_RE.some(re => re.test(ip));
 }
 
 function extractHost(input: string): string {
@@ -97,12 +96,26 @@ export async function runHealthcheck(opts: CheckOptions): Promise<CheckResult> {
   const trimmed = urlInput.trim();
   const host = extractHost(trimmed);
 
-  if (!SAFE_HOST_RE.test(host) || host.length > MAX_HOSTNAME_LENGTH) {
+  if (!isIP(host) && (!SAFE_HOST_RE.test(host) || host.length > MAX_HOSTNAME_LENGTH)) {
     return { status: 'down', error: 'Invalid host', latencyMs: 0 };
   }
 
-  if (!opts.allowPrivateNetworks && await isPrivateOrLoopback(host)) {
-    return { status: 'down', error: 'Private or reserved addresses are not allowed', latencyMs: 0 };
+  let targetIp: string | null = null;
+  if (isIP(host)) {
+    if (!opts.allowPrivateNetworks && isPrivateIp(host)) {
+      return { status: 'down', error: 'Private or reserved addresses are not allowed', latencyMs: 0 };
+    }
+    targetIp = host;
+  } else {
+    const addresses = await dns.resolve4(host).catch(() => [] as string[]);
+    if (addresses.length === 0) {
+      return { status: 'down', error: 'Invalid host', latencyMs: 0 };
+    }
+    const allowed = opts.allowPrivateNetworks ? addresses : addresses.filter(ip => !isPrivateIp(ip));
+    if (allowed.length === 0) {
+      return { status: 'down', error: 'Private or reserved addresses are not allowed', latencyMs: 0 };
+    }
+    targetIp = allowed[0]!;
   }
 
   // Extract port from URL if not provided as an explicit option.
@@ -124,6 +137,6 @@ export async function runHealthcheck(opts: CheckOptions): Promise<CheckResult> {
   }
 
   return effectivePort !== undefined
-    ? tcpCheck(host, effectivePort, timeoutMs)
-    : pingHost(host, timeoutMs);
+    ? tcpCheck(targetIp, effectivePort, timeoutMs)
+    : pingHost(targetIp, timeoutMs);
 }

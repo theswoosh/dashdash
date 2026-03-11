@@ -16,8 +16,9 @@ function isBookmark(x: unknown): x is Bookmark {
 export function BookmarksWidget({ options }: WidgetProps) {
   const raw = options['links'];
   const links: Bookmark[] = Array.isArray(raw) ? raw.filter(isBookmark) : [];
+  const validLinks = links.filter(link => /^https?:\/\//i.test(link.url));
 
-  if (links.length === 0) {
+  if (validLinks.length === 0) {
     return (
       <div className="bookmarks-widget bookmarks-widget--empty">
         <span>No bookmarks configured</span>
@@ -27,7 +28,7 @@ export function BookmarksWidget({ options }: WidgetProps) {
 
   return (
     <div className="bookmarks-widget">
-      {links.map((link, i) => (
+      {validLinks.map((link, i) => (
         <a
           key={i}
           href={link.url}
