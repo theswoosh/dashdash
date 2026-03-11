@@ -61,10 +61,21 @@
   background: rgba(255, 255, 255, 0.06);
 }
 
-/* ── Emoji picker — panel ────────────────────────────────────────────────── */
+/* ── Emoji picker — overlay & centered panel ────────────────────────────── */
+
+.icon-picker__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+}
 
 .icon-picker__panel {
-  margin-top: 8px;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1201;
+  width: 340px;
   background: var(--bg-elevated);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
@@ -73,6 +84,7 @@
   flex-direction: column;
   gap: 6px;
   overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .icon-picker__search {

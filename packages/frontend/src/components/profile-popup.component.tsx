@@ -122,6 +122,10 @@ export function ProfilePopup() {
     setPwError('');
     setPwInfo('');
 
+    if (newPassword.length < 8) {
+      setPwError(t('login.minChars'));
+      return;
+    }
     if (newPassword !== confirmPassword) {
       setPwError(t('login.passwordMismatch'));
       return;
@@ -258,7 +262,7 @@ export function ProfilePopup() {
               {pwError && <p className="user-modal-error" role="alert">{pwError}</p>}
               {pwInfo && <p className="user-modal-info" role="status">{pwInfo}</p>}
 
-              <form onSubmit={e => void submitPasswordChange(e)}>
+              <form onSubmit={e => void submitPasswordChange(e)} noValidate>
                 <label className="user-modal-label" htmlFor="profile-cur-pw">{t('userMenu.currentPassword')}</label>
                 <input
                   id="profile-cur-pw"
@@ -267,7 +271,6 @@ export function ProfilePopup() {
                   autoComplete="current-password"
                   value={currentPassword}
                   onChange={e => setCurrentPassword(e.target.value)}
-                  required
                 />
 
                 <label className="user-modal-label" htmlFor="profile-new-pw">{t('login.newPassword')}</label>
@@ -278,8 +281,6 @@ export function ProfilePopup() {
                   autoComplete="new-password"
                   value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
-                  minLength={8}
-                  required
                 />
 
                 <label className="user-modal-label" htmlFor="profile-confirm-pw">{t('login.confirmPassword')}</label>
@@ -290,7 +291,6 @@ export function ProfilePopup() {
                   autoComplete="new-password"
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
-                  required
                 />
                 {pwMismatch && <span className="field-error">{t('login.passwordMismatch')}</span>}
 

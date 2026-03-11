@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useCallback, Fragment } from 'react';
+import { useState, useRef, useCallback, Fragment } from 'react';
+import { createPortal } from 'react-dom';
 import './EmojiPicker.css';
 
 // ── Types ─────────────────────────────────────────────────────────────────
@@ -99,23 +100,10 @@ export function BoardIconPicker({
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState(RECENT_KEY);
-  const pickerRef = useRef<HTMLDivElement>(null);
   const [recents, addRecent] = useRecentEmojis();
   const { groups, isLoading, load } = useEmojiData();
 
   const closePanel = useCallback(() => { setIsOpen(false); setSearch(''); }, []);
-
-  // Click-outside to close
-  useEffect(() => {
-    if (!isOpen) return;
-    const onMouseDown = (e: MouseEvent) => {
-      if (pickerRef.current && e.target instanceof Node && !pickerRef.current.contains(e.target)) {
-        closePanel();
-      }
-    };
-    document.addEventListener('mousedown', onMouseDown);
-    return () => document.removeEventListener('mousedown', onMouseDown);
-  }, [isOpen, closePanel]);
 
   const openPanel = () => {
     setIsOpen(o => !o);
@@ -153,7 +141,7 @@ export function BoardIconPicker({
   const showSectionLabels = search.trim().length > 0 && groups.length > 0;
 
   return (
-    <div className="icon-picker" ref={pickerRef}>
+    <div className="icon-picker">
       <div className="icon-picker__row">
         <button
           type="button"
@@ -180,13 +168,16 @@ export function BoardIconPicker({
         )}
       </div>
 
-      {isOpen && (
-        <div
-          className="icon-picker__panel"
-          role="dialog"
-          aria-label="Emoji picker"
-          onKeyDown={e => { if (e.key === 'Escape') closePanel(); }}
-        >
+      {isOpen && createPortal(
+        <>
+          <div className="icon-picker__overlay" onClick={closePanel} aria-hidden="true" />
+          <div
+            className="icon-picker__panel"
+            role="dialog"
+            aria-label="Emoji picker"
+            aria-modal="true"
+            onKeyDown={e => { if (e.key === 'Escape') closePanel(); }}
+          >
           <input
             className="config-option-input icon-picker__search"
             type="text"
@@ -261,6 +252,8 @@ export function BoardIconPicker({
             />
           </div>
         </div>
+        </>,
+        document.body,
       )}
     </div>
   );
