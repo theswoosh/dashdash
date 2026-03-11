@@ -5,6 +5,8 @@ import { useServices } from '../hooks/use-services.hook';
 import { useSettings, type SearchEngine } from '../hooks/use-settings.hook';
 import { getTemplate } from '../widgets/catalog';
 import type { ConfigField } from '../widgets/catalog';
+import { ServiceIconPicker } from './service-icon-picker.component';
+import { BgColorPicker } from './bg-color-picker.component';
 import { useT } from '../i18n';
 import './WidgetConfigModal.css';
 
@@ -229,6 +231,18 @@ function FieldInput({
     );
   }
 
+  if (field.type === 'icon-picker') {
+    return (
+      <div className="config-field">
+        <label className="config-label">{label}</label>
+        <ServiceIconPicker
+          value={strVal}
+          onChange={v => onChange(field.key, v)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="config-field">
       <label className="config-label">{label}{field.required && ' *'}</label>
@@ -260,6 +274,7 @@ export function WidgetConfigModal() {
   const template = service ? getTemplate(service.widget) : undefined;
 
   const [title, setTitle] = useState('');
+  const [icon, setIcon] = useState('');
   const [options, setOptions] = useState<Record<string, unknown>>({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [testResult, setTestResult] = useState<'idle' | 'loading' | 'ok' | 'fail'>('idle');
@@ -311,6 +326,7 @@ export function WidgetConfigModal() {
   useEffect(() => {
     if (service) {
       setTitle(service.title);
+      setIcon(service.icon ?? '');
       setOptions({ ...(service.options ?? {}) });
 
       const rawBg = service.options?.['bg_color'];
@@ -330,6 +346,11 @@ export function WidgetConfigModal() {
   }, [service?.id]);
 
   const handleOptionChange = useCallback((key: string, val: unknown) => {
+    // 'icon' is a service-level field, not stored in options
+    if (key === 'icon') {
+      setIcon(typeof val === 'string' ? val : '');
+      return;
+    }
     setOptions(prev => ({ ...prev, [key]: val }));
     setFieldErrors(prev => {
       if (!(key in prev)) return prev;
@@ -367,7 +388,7 @@ export function WidgetConfigModal() {
     await fetch(`/api/services/${service.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, options }),
+      body: JSON.stringify({ title, icon: icon || undefined, options }),
     });
     await reloadServices();
     setConfigTarget(null);
@@ -419,7 +440,7 @@ export function WidgetConfigModal() {
               <FieldInput
                 key={field.key}
                 field={field}
-                value={options[field.key] ?? field.default}
+                value={field.type === 'icon-picker' ? icon : (options[field.key] ?? field.default)}
                 onChange={handleOptionChange}
                 engines={allEngines}
                 fieldError={fieldErrors[field.key]}
@@ -434,36 +455,14 @@ export function WidgetConfigModal() {
           <hr className="config-separator" />
           <div className="config-field">
             <label className="config-label">{t('widgetConfig.widgetBackground')}</label>
-            <div className="config-bg-picker">
-              <input
-                type="color"
-                className="config-color-input"
-                value={bgHex}
-                onChange={e => updateBgColor(e.target.value, bgAlpha)}
-                title={t('widgetConfig.widgetBackground')}
-              />
-              <input
-                type="range"
-                className="config-alpha-slider"
-                min="0"
-                max="100"
-                value={Math.round(bgAlpha * 100)}
-                onChange={e => updateBgColor(bgHex, parseInt(e.target.value, 10) / 100)}
-                title="Opacity"
-              />
-              <span className="config-alpha-value">{Math.round(bgAlpha * 100)}%</span>
-              {options['bg_color'] != null && (
-                <div
-                  className="config-bg-preview"
-                  style={{ background: typeof options['bg_color'] === 'string' ? options['bg_color'] : undefined }}
-                />
-              )}
-            </div>
-            {options['bg_color'] != null && (
-              <button className="config-reset-link" onClick={resetBgColor} type="button">
-                {t('common.reset')}
-              </button>
-            )}
+            <BgColorPicker
+              hex={bgHex}
+              alpha={bgAlpha}
+              hasValue={options['bg_color'] != null}
+              previewColor={typeof options['bg_color'] === 'string' ? options['bg_color'] : undefined}
+              onChange={updateBgColor}
+              onReset={resetBgColor}
+            />
           </div>
         </div>
         <div className="modal-footer">

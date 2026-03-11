@@ -8,13 +8,20 @@
   box-sizing: border-box;
 }
 
-/* ───────────────────────────── Icon placeholder ────────────────────── */
-/* No background — just reserved space for a future app icon            */
+/* ───────────────────────────── Icon area ───────────────────────────── */
 
 .healthcheck-widget__icon-area {
   width: 32px;
   height: 32px;
   border-radius: 8px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.healthcheck-widget__icon-svg {
+  display: block;
   flex-shrink: 0;
 }
 

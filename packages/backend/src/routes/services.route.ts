@@ -7,6 +7,7 @@ import { validateConfig } from '../config/validator.js';
 
 interface PatchBody {
   title?: string;
+  icon?: string;
   options?: Record<string, unknown>;
   layout?: { x: number; y: number; w: number; h: number };
 }

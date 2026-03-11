@@ -28,7 +28,7 @@ function writeServices(configDir: string, services: Service[]): void {
 export function patchService(
   configDir: string,
   id: string,
-  patch: { title?: string; options?: Record<string, unknown>; layout?: { x: number; y: number; w: number; h: number } }
+  patch: { title?: string; icon?: string; options?: Record<string, unknown>; layout?: { x: number; y: number; w: number; h: number } }
 ): void {
   const services = readServices(configDir);
   const idx = services.findIndex(s => s.id === id);
@@ -36,6 +36,7 @@ export function patchService(
 
   const svc = services[idx]!;
   if (patch.title !== undefined) svc.title = patch.title;
+  if ('icon' in patch) svc.icon = patch.icon || undefined;
   if (patch.options !== undefined) {
     const merged: Record<string, unknown> = { ...svc.options, ...patch.options };
     for (const key of Object.keys(merged)) {

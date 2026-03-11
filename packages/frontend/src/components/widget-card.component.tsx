@@ -134,8 +134,8 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
   const cardStyle = bgColor ? { '--card-bg': bgColor } as React.CSSProperties : undefined;
 
   const widgetOptions = useMemo(
-    () => ({ ...service.options, _widgetId: service.widget, _title: service.title }),
-    [service.options, service.widget, service.title],
+    () => ({ ...service.options, _widgetId: service.widget, _title: service.title, _icon: service.icon }),
+    [service.options, service.widget, service.title, service.icon],
   );
 
   const body = (() => {

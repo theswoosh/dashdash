@@ -142,6 +142,9 @@ importers:
       swr:
         specifier: ^2.3.0
         version: 2.4.0(react@18.3.1)
+      unicode-emoji-json:
+        specifier: ^0.8.0
+        version: 0.8.0
       zustand:
         specifier: ^5.0.3
         version: 5.0.11(@types/react@18.3.28)(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1))
@@ -170,6 +173,9 @@ importers:
       jsdom:
         specifier: ^28.1.0
         version: 28.1.0
+      simple-icons:
+        specifier: ^16.11.0
+        version: 16.11.0
       typescript:
         specifier: '*'
         version: 5.9.3
@@ -2356,6 +2362,10 @@ packages:
   simple-get@4.0.1:
     resolution: {integrity: sha512-brv7p5WgH0jmQJr1ZDDfKDOSeWWg+OVypG99A/5vYGPqJ6pxiaHLy8nxtFjBA7oMa01ebA9gfh1uMCFqOuXxvA==}
 
+  simple-icons@16.11.0:
+    resolution: {integrity: sha512-6vqbcdaT6PsgUXud9rrP9w+nrmRzzStMEvyDavMeGwDgZSYM4uJ3tH7zurgTLHJO0RnMqU3Q09Vgo7WdTXV1eA==}
+    engines: {node: '>=0.12.18'}
+
   slash@3.0.0:
     resolution: {integrity: sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==}
     engines: {node: '>=8'}
@@ -2564,6 +2574,9 @@ packages:
   undici@7.22.0:
     resolution: {integrity: sha512-RqslV2Us5BrllB+JeiZnK4peryVTndy9Dnqq62S3yYRRTj0tFQCwEniUy2167skdGOy3vqRzEvl1Dm4sV2ReDg==}
     engines: {node: '>=20.18.1'}
+
+  unicode-emoji-json@0.8.0:
+    resolution: {integrity: sha512-3wDXXvp6YGoKGhS2O2H7+V+bYduOBydN1lnI0uVfr1cIdY02uFFiEH1i3kE5CCE4l6UqbLKVmEFW9USxTAMD1g==}
 
   update-browserslist-db@1.2.3:
     resolution: {integrity: sha512-Js0m9cx+qOgDxo0eMiFGEueWztz+d4+M3rGlmKPT+T4IS/jP4ylw3Nwpu6cpTTP8R1MAC1kF4VbdLt3ARf209w==}
@@ -5152,6 +5165,8 @@ snapshots:
       once: 1.4.0
       simple-concat: 1.0.1
 
+  simple-icons@16.11.0: {}
+
   slash@3.0.0: {}
 
   sonic-boom@4.2.1:
@@ -5382,6 +5397,8 @@ snapshots:
   undici-types@6.21.0: {}
 
   undici@7.22.0: {}
+
+  unicode-emoji-json@0.8.0: {}
 
   update-browserslist-db@1.2.3(browserslist@4.28.1):
     dependencies:

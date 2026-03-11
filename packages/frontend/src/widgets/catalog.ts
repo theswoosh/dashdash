@@ -13,7 +13,7 @@ export interface ConfigField {
   key: string;
   label: string;
   labelKey?: string | undefined;
-  type: 'text' | 'url' | 'number' | 'boolean' | 'textarea' | 'select' | 'separator' | 'engines-select' | 'info' | 'links-editor' | 'timezone-select';
+  type: 'text' | 'url' | 'number' | 'boolean' | 'textarea' | 'select' | 'separator' | 'engines-select' | 'info' | 'links-editor' | 'timezone-select' | 'icon-picker';
   placeholder?: string | undefined;
   required?: boolean | undefined;
   default?: unknown;
@@ -44,6 +44,7 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     defaultSize: { w: 6, h: 4 },
     defaultOptions: { url: '', ignoreTls: false, timeoutMs: 5000, ping: true, layoutSize: 'normal', showDescription: false },
     configFields: [
+      { key: 'icon', label: 'App icon', type: 'icon-picker' },
       { key: 'description', label: 'Description', type: 'textarea', placeholder: 'What does it do', maxLength: 50 },
       { key: 'showDescription', label: 'Show description', type: 'boolean', default: false },
       {

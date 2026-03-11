@@ -1,10 +1,11 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { Image } from 'lucide-react';
 import { usePreferences } from '../hooks/use-preferences.hook';
 import { useSettings } from '../hooks/use-settings.hook';
 import { useBoard } from '../hooks/use-board.hook';
 import { useT } from '../i18n';
 import { WallpaperPickerModal } from './wallpaper-picker.component';
+import { BoardIconPicker } from './emoji-picker.component';
 
 // ── Wallpaper button ──────────────────────────────────────────────────────────
 
@@ -42,154 +43,6 @@ function WallpaperButton() {
         />
       )}
     </>
-  );
-}
-
-// ── Board icon picker ─────────────────────────────────────────────────────────
-
-const HEADER_ICON_PRESETS = [
-  '🏠', '🖥️', '📊', '🌐', '⚡', '🎯', '🚀', '💻',
-  '🔧', '📡', '⭐', '🎛️', '🌙', '☀️', '🔒', '📈',
-  '🗂️', '📁', '🌊', '🔥', '🧭', '🕹️', '🏗️', '💫',
-];
-
-const EMOJI_NAMES: Record<string, string> = {
-  '🏠': 'home house',
-  '🖥️': 'desktop computer screen',
-  '📊': 'chart graph stats',
-  '🌐': 'globe web internet',
-  '⚡': 'bolt lightning',
-  '🎯': 'target goal',
-  '🚀': 'rocket launch',
-  '💻': 'laptop computer',
-  '🔧': 'wrench tool settings',
-  '📡': 'antenna signal satellite',
-  '⭐': 'star favourite',
-  '🎛️': 'control panel dial',
-  '🌙': 'moon night',
-  '☀️': 'sun day',
-  '🔒': 'lock security',
-  '📈': 'chart up trend',
-  '🗂️': 'folder files',
-  '📁': 'folder files',
-  '🌊': 'wave ocean',
-  '🔥': 'fire hot',
-  '🧭': 'compass navigation',
-  '🕹️': 'joystick game',
-  '🏗️': 'construction build',
-  '💫': 'sparkle star',
-};
-
-function BoardIconPicker({
-  value,
-  onChange,
-}: {
-  readonly value: string;
-  readonly onChange: (icon: string) => void;
-}) {
-  const t = useT();
-  const [isOpen, setIsOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const pickerRef = useRef<HTMLDivElement>(null);
-
-  const closePanel = () => { setIsOpen(false); setSearch(''); };
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const closeOnOutside = (e: MouseEvent) => {
-      if (pickerRef.current && e.target instanceof Node && !pickerRef.current.contains(e.target)) {
-        closePanel();
-      }
-    };
-    document.addEventListener('mousedown', closeOnOutside);
-    return () => document.removeEventListener('mousedown', closeOnOutside);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
-
-  const filteredPresets = search.trim()
-    ? HEADER_ICON_PRESETS.filter(e => {
-        const q = search.toLowerCase();
-        return e.includes(q) || (EMOJI_NAMES[e] ?? '').toLowerCase().includes(q);
-      })
-    : HEADER_ICON_PRESETS;
-
-  const selectPreset = (emoji: string) => {
-    onChange(emoji);
-    closePanel();
-  };
-
-  return (
-    <div className="icon-picker" ref={pickerRef}>
-      <div className="icon-picker__row">
-        <button
-          type="button"
-          className="icon-picker__trigger"
-          onClick={() => setIsOpen(o => !o)}
-          aria-expanded={isOpen}
-          title={t('config.boardIcon')}
-        >
-          {value
-            ? <span className="icon-picker__preview" aria-hidden="true">{value}</span>
-            : <span className="icon-picker__empty">＋</span>
-          }
-        </button>
-        {value && (
-          <button
-            type="button"
-            className="icon-picker__clear"
-            onClick={() => { onChange(''); closePanel(); }}
-            aria-label={t('common.delete')}
-          >
-            ×
-          </button>
-        )}
-      </div>
-      {isOpen && (
-        <div className="icon-picker__panel" role="dialog" aria-label={t('config.boardIcon')}>
-          <input
-            className="config-option-input icon-picker__search"
-            type="text"
-            placeholder="Search emoji…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            autoFocus
-          />
-          <div className="icon-picker__grid">
-            {filteredPresets.length === 0 && (
-              <p className="icon-picker__no-results">No results</p>
-            )}
-            {filteredPresets.map(emoji => (
-              <button
-                key={emoji}
-                type="button"
-                className={`icon-picker__option${value === emoji ? ' icon-picker__option--active' : ''}`}
-                onClick={() => selectPreset(emoji)}
-                title={emoji}
-                aria-pressed={value === emoji}
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
-          <div className="icon-picker__custom">
-            <input
-              className="config-option-input"
-              type="text"
-              placeholder="or type / paste any emoji…"
-              maxLength={8}
-              onKeyDown={e => {
-                if (e.key !== 'Enter') return;
-                if (!(e.target instanceof HTMLInputElement)) return;
-                const customEmoji = e.target.value.trim();
-                if (!customEmoji) return;
-                onChange(customEmoji);
-                setIsOpen(false);
-              }}
-            />
-          </div>
-        </div>
-      )}
-    </div>
   );
 }
 
