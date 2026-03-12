@@ -8,6 +8,7 @@ common:
   reset: "Zurücksetzen"
   admin: "Admin"
   profile: "Profil"
+  info: "Info"
   logout: "Abmelden"
 
 login:
@@ -80,6 +81,7 @@ widgetConfig:
   fieldRequired: "Dieses Feld ist erforderlich"
   urlRequired: "URL ist erforderlich"
   resetToDefault: "Auf Standard zurücksetzen"
+  hideHeader: "Kopfzeile im Anzeigemodus ausblenden"
 
 topbar:
   openConfig: "Konfiguration öffnen"
@@ -212,3 +214,10 @@ themes:
 languages:
   en: "English"
   de: "Deutsch"
+
+info:
+  title: "Über dashdash"
+  developedBy: "Entwickelt von"
+  license: "Lizenz"
+  support: "Projekt unterstützen"
+  kofi: "Kauf mir einen Kaffee"

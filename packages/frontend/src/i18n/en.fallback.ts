@@ -10,6 +10,7 @@ export const EN_FALLBACK: Record<string, unknown> = {
     reset: 'Reset',
     admin: 'Admin',
     profile: 'Profile',
+    info: 'Info',
     logout: 'Logout',
   },
   login: {
@@ -83,6 +84,7 @@ export const EN_FALLBACK: Record<string, unknown> = {
     fieldRequired: 'This field is required',
     urlRequired: 'URL is required',
     resetToDefault: 'Reset to default',
+    hideHeader: 'Hide header in display mode',
   },
   topbar: {
     openConfig: 'Open configuration',
@@ -193,5 +195,12 @@ export const EN_FALLBACK: Record<string, unknown> = {
   languages: {
     en: 'English',
     de: 'Deutsch',
+  },
+  info: {
+    title: 'About dashdash',
+    developedBy: 'Developed by',
+    license: 'License',
+    support: 'Support the project',
+    kofi: 'Buy me a coffee',
   },
 };

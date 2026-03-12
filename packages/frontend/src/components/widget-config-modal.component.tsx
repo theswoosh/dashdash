@@ -7,6 +7,7 @@ import { getTemplate } from '../widgets/catalog';
 import type { ConfigField } from '../widgets/catalog';
 import { ServiceIconPicker } from './service-icon-picker.component';
 import { BgColorPicker } from './bg-color-picker.component';
+import { WidgetTitleField } from './widget-title-field.component';
 import { useT } from '../i18n';
 import './WidgetConfigModal.css';
 
@@ -275,6 +276,7 @@ export function WidgetConfigModal() {
 
   const [title, setTitle] = useState('');
   const [icon, setIcon] = useState('');
+  const [hideHeader, setHideHeader] = useState(false);
   const [options, setOptions] = useState<Record<string, unknown>>({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [testResult, setTestResult] = useState<'idle' | 'loading' | 'ok' | 'fail'>('idle');
@@ -327,6 +329,7 @@ export function WidgetConfigModal() {
     if (service) {
       setTitle(service.title);
       setIcon(service.icon ?? '');
+      setHideHeader(service.options?.['hideHeader'] === true);
       setOptions({ ...(service.options ?? {}) });
 
       const rawBg = service.options?.['bg_color'];
@@ -344,6 +347,11 @@ export function WidgetConfigModal() {
     setTestResult('idle');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [service?.id]);
+
+  const handleHideHeaderChange = useCallback((hide: boolean) => {
+    setHideHeader(hide);
+    setOptions(prev => ({ ...prev, hideHeader: hide }));
+  }, []);
 
   const handleOptionChange = useCallback((key: string, val: unknown) => {
     // 'icon' is a service-level field, not stored in options
@@ -377,7 +385,7 @@ export function WidgetConfigModal() {
   const saveWidgetConfiguration = async () => {
     const errors: Record<string, string> = {};
     for (const field of configFields) {
-      if (field.required && !options[field.key]) {
+      if (field.required && options[field.key] === '') {
         errors[field.key] = t('widgetConfig.fieldRequired');
       }
     }
@@ -394,8 +402,11 @@ export function WidgetConfigModal() {
     setConfigTarget(null);
   };
 
-  const configFields = template?.configFields ?? [];
   const isHealthcheck = service.widget === 'healthcheck';
+  const isTinyLayout = options['layoutSize'] === 'tiny';
+  const configFields = (template?.configFields ?? []).filter(
+    f => !(isTinyLayout && f.key === 'pingIndicator'),
+  );
 
   const runHealthcheckTest = async () => {
     setTestResult('loading');
@@ -425,15 +436,13 @@ export function WidgetConfigModal() {
           </button>
         </div>
         <div className="modal-body">
-          <div className="config-field">
-            <label className="config-label">{t('widgetConfig.widgetTitle')}</label>
-            <input
-              className="config-input"
-              type="text"
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-            />
-          </div>
+          <WidgetTitleField
+            title={title}
+            hideHeader={hideHeader}
+            isTinyLayout={isTinyLayout}
+            onTitleChange={setTitle}
+            onHideHeaderChange={handleHideHeaderChange}
+          />
 
           {configFields.length > 0 ? (
             configFields.map(field => (
@@ -459,7 +468,6 @@ export function WidgetConfigModal() {
               hex={bgHex}
               alpha={bgAlpha}
               hasValue={options['bg_color'] != null}
-              previewColor={typeof options['bg_color'] === 'string' ? options['bg_color'] : undefined}
               onChange={updateBgColor}
               onReset={resetBgColor}
             />

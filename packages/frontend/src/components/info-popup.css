@@ -1,0 +1,109 @@
+.info-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 600;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.info-panel {
+  background: var(--card-bg, rgba(14, 14, 20, 0.97));
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.1));
+  border-radius: 14px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.info-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--card-border, rgba(255, 255, 255, 0.08));
+}
+
+.info-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+}
+
+.info-close {
+  background: none;
+  border: none;
+  color: var(--text-muted, rgba(255, 255, 255, 0.45));
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.info-close:hover {
+  color: var(--text-primary, #fff);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.info-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.info-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-row-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted, rgba(255, 255, 255, 0.4));
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.info-row-value {
+  font-size: 0.875rem;
+  color: var(--text-primary, #fff);
+}
+
+.info-link {
+  color: var(--accent, rgba(255, 255, 255, 0.7));
+  text-decoration: none;
+  font-size: 0.875rem;
+  transition: opacity 0.15s;
+}
+
+.info-link:hover {
+  opacity: 0.75;
+  text-decoration: underline;
+}
+
+.info-kofi-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: #ff5e5b;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.15s;
+  align-self: flex-start;
+}
+
+.info-kofi-btn:hover {
+  opacity: 0.85;
+}

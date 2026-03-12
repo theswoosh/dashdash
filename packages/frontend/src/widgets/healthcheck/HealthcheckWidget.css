@@ -4,51 +4,71 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 10px 12px;
   box-sizing: border-box;
 }
 
 /* ───────────────────────────── Icon area ───────────────────────────── */
 
 .healthcheck-widget__icon-area {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  transition: border-color 0.3s, box-shadow 0.3s;
 }
 
-.healthcheck-widget__icon-svg {
+/* pingIndicator = icon-glow: red border + glow when service is down */
+.healthcheck-widget__icon-area--down {
+  border-color: #ef4444;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+}
+
+.app-icon-svg {
   display: block;
   flex-shrink: 0;
 }
 
-/* ───────────────────────────── Description ─────────────────────────── */
+/* ───────────────────────────── Icon link ───────────────────────────── */
 
-.healthcheck-widget__description {
-  margin: 8px 0 0;
+.healthcheck-widget__icon-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 8px;
+  transition: opacity 0.15s;
+}
+
+.healthcheck-widget__icon-link:hover {
+  opacity: 0.75;
+}
+
+/* ───────────────────────────── App name ───────────────────────────── */
+
+.healthcheck-widget__name {
   font-size: 11px;
+  font-weight: 600;
   color: var(--text-muted);
-  line-height: 1.5;
+  text-align: center;
+  margin-top: 6px;
   overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* pingIndicator = name: red name when service is down */
+.healthcheck-widget__name--down {
+  color: #fca5a5;
 }
 
 /* ───────────────────────────── Normal layout ───────────────────────── */
 
 .healthcheck-widget--normal {
-  align-items: flex-start;
-  gap: 4px;
-}
-
-/* ───────────────────────────── Tiny layout ─────────────────────────── */
-.healthcheck-widget--tiny {
-  width: 100%;
-  height: 100%;
+  align-items: center;
+  padding: 4px 0;
 }
 
 /* ───────────────────────────── Big layout ──────────────────────────── */
@@ -58,38 +78,14 @@
   justify-content: center;
 }
 
-.healthcheck-widget--big .healthcheck-widget__icon-area {
+.healthcheck-widget__icon-area--big {
+  max-width: 80px;
+  max-height: 80px;
+  border-radius: 16px;
+}
+
+.healthcheck-widget__icon-area--big .app-icon-svg,
+.healthcheck-widget__icon-area--big .healthcheck-widget__icon-link {
   width: 64px;
   height: 64px;
-  border-radius: 14px;
-  cursor: default;
-}
-
-/* ───────────────────────────── Big layout detail ───────────────────── */
-.healthcheck-widget__big-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  margin-top: 8px;
-}
-
-.healthcheck-widget__big-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.healthcheck-widget__big-status {
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.healthcheck-widget__big-status--up    { color: #22c55e; }
-.healthcheck-widget__big-status--down  { color: #ef4444; }
-.healthcheck-widget__big-status--unknown { color: var(--text-muted); }
-
-.healthcheck-widget__big-latency {
-  font-size: 11px;
-  color: var(--text-muted);
 }

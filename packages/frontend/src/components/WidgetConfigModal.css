@@ -259,26 +259,10 @@
 }
 
 /* Background color picker */
-.config-reset-link {
-  background: none;
-  border: none;
-  padding: 0;
-  font-size: 11px;
-  color: var(--text-faint);
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  transition: color var(--transition);
-}
-
-.config-reset-link:hover {
-  color: var(--text-muted);
-}
-
 .config-bg-picker {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .config-color-input {
@@ -303,7 +287,8 @@
 }
 
 .config-hex-input {
-  width: 7ch;
+  flex: 2;
+  min-width: 0;
   font-family: monospace;
   font-size: 12px;
   padding: 3px 5px;
@@ -311,7 +296,6 @@
   border-radius: 4px;
   background: var(--input-bg, rgba(255, 255, 255, 0.05));
   color: var(--text-color);
-  flex-shrink: 0;
   text-align: center;
 }
 
@@ -321,6 +305,7 @@
 
 .config-alpha-slider {
   flex: 1;
+  min-width: 0;
   height: 4px;
   accent-color: var(--accent);
   cursor: pointer;
@@ -329,7 +314,7 @@
 .config-alpha-value {
   font-size: 12px;
   color: var(--text-muted);
-  min-width: 34px;
+  width: 36px;
   text-align: right;
   flex-shrink: 0;
 }
@@ -340,6 +325,28 @@
   border-radius: 6px;
   border: 1px solid var(--border-color);
   flex-shrink: 0;
+}
+
+.config-reset-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color var(--transition), opacity var(--transition);
+  flex-shrink: 0;
+}
+
+.config-reset-link:hover:not(:disabled) {
+  color: var(--text-color);
+}
+
+.config-reset-link:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
 .config-field-info {

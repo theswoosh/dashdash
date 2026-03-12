@@ -19,6 +19,8 @@ interface UIState {
   setAdminPanelOpen: (open: boolean) => void;
   isProfileOpen: boolean;
   setProfileOpen: (open: boolean) => void;
+  isInfoOpen: boolean;
+  setInfoOpen: (open: boolean) => void;
 }
 
 export const useUIStore = create<UIState>(set => ({
@@ -34,4 +36,6 @@ export const useUIStore = create<UIState>(set => ({
   setAdminPanelOpen: open => set({ isAdminPanelOpen: open }),
   isProfileOpen: false,
   setProfileOpen: open => set({ isProfileOpen: open }),
+  isInfoOpen: false,
+  setInfoOpen: open => set({ isInfoOpen: open }),
 }));

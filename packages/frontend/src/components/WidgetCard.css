@@ -122,6 +122,21 @@
   color: white;
 }
 
+/* Icon link in header (tiny layout) */
+.widget-header-icon-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+  flex-shrink: 0;
+  border-radius: 3px;
+  transition: opacity 0.15s;
+}
+
+.widget-header-icon-link:hover {
+  opacity: 0.7;
+}
+
 /* Tiny layout — header-only card: remove the bottom separator, balance padding */
 .widget-card--tiny-layout .widget-header {
   border-bottom: none;

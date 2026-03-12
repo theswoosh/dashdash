@@ -18,6 +18,7 @@ import { ConfigPanel } from './components/config-panel.component';
 import { WidgetConfigModal } from './components/widget-config-modal.component';
 import { AdminPanel } from './components/admin-panel.component';
 import { ProfilePopup } from './components/profile-popup.component';
+import { InfoPopup } from './components/info-popup.component';
 import { LoginPage } from './pages/login.page';
 import { ResetPasswordPage } from './pages/reset-password.page';
 
@@ -101,6 +102,7 @@ export function App() {
       {configTarget && <WidgetConfigModal />}
       <AdminPanel />
       <ProfilePopup />
+      <InfoPopup />
     </ThemeProvider>
     </I18nProvider>
   );

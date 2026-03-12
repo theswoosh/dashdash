@@ -8,6 +8,7 @@ common:
   reset: "Reset"
   admin: "Admin"
   profile: "Profile"
+  info: "Info"
   logout: "Logout"
 
 login:
@@ -80,6 +81,7 @@ widgetConfig:
   fieldRequired: "This field is required"
   urlRequired: "URL is required"
   resetToDefault: "Reset to default"
+  hideHeader: "Hide header in display mode"
 
 topbar:
   openConfig: "Open configuration"
@@ -212,3 +214,10 @@ themes:
 languages:
   en: "English"
   de: "Deutsch"
+
+info:
+  title: "About dashdash"
+  developedBy: "Developed by"
+  license: "License"
+  support: "Support the project"
+  kofi: "Buy me a coffee"

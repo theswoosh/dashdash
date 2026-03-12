@@ -6,6 +6,7 @@ import { useThemeCard } from '../themes/registry';
 import { getWidget } from '../widgets/registry';
 import { useWidgetData } from '../hooks/use-widget-data.hook';
 import { useUIStore } from '../store/uiStore';
+import { AppIcon, hasServiceIcon, toAbsoluteUrl } from '../widgets/shared/app-icon.component';
 import { useBehavior } from '../hooks/use-behavior.hook';
 import { useT } from '../i18n';
 import { WidgetSkeleton } from '../widgets/shared/widget-skeleton.component';
@@ -119,18 +120,23 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
   const { Component, clientOnly } = getWidget(service.widget);
   const { data, error, loading } = useWidgetData(service.id, !!clientOnly);
 
+  const isTinyLayout = service.options?.['layoutSize'] === 'tiny';
   const isPingEnabled = service.widget === 'healthcheck' && service.options?.['ping'] !== false;
   const hasConfiguredUrl = isPingEnabled && Boolean(service.options?.['url']);
   const pingData = isPingEnabled && !loading && isPingStatus(data) ? data : null;
+  const pingIndicator = service.options?.['pingIndicator'] ?? 'header-bar';
+  const showHeaderDot = isPingEnabled && (isTinyLayout || pingIndicator === 'header-bar');
   type PingDotState = 'up' | 'down' | 'unknown';
-  const pingDotState: PingDotState | null = !isPingEnabled
+  const pingDotState: PingDotState | null = !showHeaderDot
     ? null
     : !hasConfiguredUrl || pingData === null
     ? 'unknown'
     : pingData.status;
-
-  const isTinyLayout = service.options?.['layoutSize'] === 'tiny';
+  const isHeaderHidden = service.options?.['hideHeader'] === true && !editMode && !isTinyLayout;
   const bgColor = typeof service.options?.['bg_color'] === 'string' ? service.options['bg_color'] : undefined;
+  const tinyIconValue = isTinyLayout && service.icon && hasServiceIcon(service.icon) ? service.icon : null;
+  const tinyInternalUrl = isTinyLayout && typeof service.options?.['internalUrl'] === 'string' ? service.options['internalUrl'] : null;
+  const tinyDescription = isTinyLayout && typeof service.options?.['description'] === 'string' ? service.options['description'] : undefined;
   const cardStyle = bgColor ? { '--card-bg': bgColor } as React.CSSProperties : undefined;
 
   const widgetOptions = useMemo(
@@ -163,7 +169,7 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
 
   return (
     <Card className={cardClassName} style={cardStyle}>
-      <div className="widget-header">
+      {!isHeaderHidden && <div className="widget-header">
         {editMode && (
           <span className="widget-drag-handle" title={t('widgetCard.dragToMove')}>
             <GripVertical size={16} />
@@ -175,6 +181,13 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
             title={pingData ? buildPingTooltip(pingData) : (hasConfiguredUrl ? t('widgetCard.checking') : t('widgetCard.noHostConfigured'))}
             aria-label={pingDotState === 'up' ? t('widgetCard.up') : pingDotState === 'down' ? t('widgetCard.down') : t('widgetCard.unknown')}
           />
+        )}
+        {tinyIconValue && (
+          tinyInternalUrl
+            ? <a href={toAbsoluteUrl(tinyInternalUrl)} target="_blank" rel="noopener noreferrer" className="widget-header-icon-link" title={tinyDescription}>
+                <AppIcon iconValue={tinyIconValue} size={12} />
+              </a>
+            : <AppIcon iconValue={tinyIconValue} size={12} title={tinyDescription} />
         )}
         <span className="widget-title">{service.title}</span>
         {service.widget === 'notepad' && !editMode && (
@@ -203,7 +216,7 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
             {onDelete && <HoldDeleteButton id={service.id} holdToDeleteMs={holdToDeleteMs} onDelete={onDelete} />}
           </div>
         )}
-      </div>
+      </div>}
       {!isTinyLayout && (
         <div className="widget-body">
           {body}
