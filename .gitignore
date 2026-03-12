@@ -42,3 +42,39 @@ id_ed25519
 # Other sensitive files
 *.secrets
 .htpasswd
+
+
+# Build caches
+.next/
+out/
+.cache/
+.turbo/
+.parcel-cache/
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# IDE config
+.idea/
+.vscode/
+
+# OS debris
+Thumbs.db
+Desktop.ini
+
+# Temp / swap files
+*.tmp
+*.bak
+*.swp
+
+# Package archives
+*.tgz
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Certificates
+*.cert
