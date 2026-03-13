@@ -6,6 +6,7 @@ export function useConfigReload(onReload: () => void) {
   // Stable ref so the WS handler always calls the latest version of onReload
   // without needing to reconnect when the callback identity changes
   const onReloadRef = useRef(onReload);
+  // eslint-disable-next-line react-hooks/refs -- intentional stable-ref pattern (callback identity isolation)
   onReloadRef.current = onReload;
 
   useEffect(() => {

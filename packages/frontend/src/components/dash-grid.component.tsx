@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import ReactGridLayout from 'react-grid-layout';
-import type { Layout } from 'react-grid-layout';
+import ReactGridLayout, { noCompactor } from 'react-grid-layout';
+import type { Layout, LayoutItem } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import { mutate } from 'swr';
@@ -21,7 +21,7 @@ const CONTAINER_PADDING: [number, number] = [0, 0];
 
 /** Build RGL layout items directly from services (YAML is source of truth).
  *  Templates supply optional minW/minH constraints per widget type. */
-function servicesAsLayout(services: ServiceConfig[], templates: WidgetTemplateDef[]): Layout[] {
+function servicesAsLayout(services: ServiceConfig[], templates: WidgetTemplateDef[]): LayoutItem[] {
   return services.map(s => {
     const tmpl = templates.find(t => t.type === s.widget);
     return {
@@ -62,7 +62,7 @@ export function DashGrid() {
   const allServicesRef = useRef(allServices);
   allServicesRef.current = allServices;
 
-  const [layout, setLayout] = useState<Layout[]>([]);
+  const [layout, setLayout] = useState<LayoutItem[]>([]);
   const [width, setWidth] = useState(window.innerWidth - 32);
 
   // Synced every render so callbacks can read the current editMode
@@ -96,7 +96,7 @@ export function DashGrid() {
   // Tracks the latest drag positions for save-on-close.
   // Updated by handleLayoutChange (never by React state) so it never triggers
   // re-renders that would interfere with RGL's internal drop state.
-  const dragLayoutRef = useRef<Layout[]>([]);
+  const dragLayoutRef = useRef<LayoutItem[]>([]);
 
   // Save all layouts to YAML when edit mode is closed ("Save" button).
   const prevEditMode = useRef(editMode);
@@ -135,10 +135,10 @@ export function DashGrid() {
     void mutate('/api/settings');
   }, [reloadServices]));
 
-  const recordDragPositions = useCallback((newLayout: Layout[]) => {
+  const recordDragPositions = useCallback((newLayout: Layout) => {
     if (!editModeRef.current) return;
     const withoutGhost = newLayout.filter(l => l.i !== '__dropping-elem__');
-    if (withoutGhost.length > 0) dragLayoutRef.current = withoutGhost;
+    if (withoutGhost.length > 0) dragLayoutRef.current = [...withoutGhost];
   }, []);
 
   // onDragStop fires before RGL calls setState({ activeDrag: null }).
@@ -146,14 +146,15 @@ export function DashGrid() {
   // getDerivedStateFromProps sees nextProps.layout = finalLayout (with pushed
   // items at their new positions) instead of the stale original layout —
   // preventing the snap-back that would otherwise override RGL's pushed state.
-  const syncLayoutAfterDrag = useCallback((newLayout: Layout[]) => {
+  const syncLayoutAfterDrag = useCallback((newLayout: Layout) => {
     if (!editModeRef.current) return;
-    dragLayoutRef.current = newLayout;
-    setLayout(newLayout);
+    const items = [...newLayout];
+    dragLayoutRef.current = items;
+    setLayout(items);
   }, []);
 
   const createWidgetFromDrop = useCallback(
-    (rglLayout: Layout[], item: Layout, e: Event) => {
+    (rglLayout: Layout, item: LayoutItem | undefined, e: Event) => {
       // RGL passes a React SyntheticDragEvent; access dataTransfer via nativeEvent
       const dataTransfer = (e as unknown as React.DragEvent).nativeEvent?.dataTransfer
         ?? (e as unknown as DragEvent).dataTransfer;
@@ -192,7 +193,7 @@ export function DashGrid() {
       // Use rglLayout (RGL's internal state at drop time) as the base — it has the
       // correct pushed positions for all existing widgets. Using React layout state
       // here would snap pushed widgets back to their pre-drag YAML positions.
-      const pushedLayout = rglLayout.filter(l => l.i !== '__dropping-elem__');
+      const pushedLayout = [...rglLayout.filter(l => l.i !== '__dropping-elem__')];
       setLayout(() => [...pushedLayout, { i: id, x: item.x, y: item.y, w: dropWidth, h: dropHeight }]);
       setDropQueue(prev => [...prev, newService]);
       setDroppingItem(null);
@@ -224,7 +225,7 @@ export function DashGrid() {
     async (id: string) => {
       await fetch(`/api/services/${id}`, { method: 'DELETE' });
       await reloadServices();
-      setLayout(prev => prev.filter(l => l.i !== id));
+      setLayout(prev => prev.filter((l: LayoutItem) => l.i !== id));
     },
     [reloadServices]
   );
@@ -242,8 +243,8 @@ export function DashGrid() {
 
   const { columns: cols, rowHeight, gap } = gridConfig;
   const margin = useMemo<[number, number]>(() => [gap, gap], [gap]);
-  const rglDropItem = useMemo(
-    () => editMode ? { i: '__dropping-elem__', w: droppingItem?.w ?? 2, h: droppingItem?.h ?? 2 } : undefined,
+  const rglDropItem = useMemo<LayoutItem | undefined>(
+    () => editMode ? { i: '__dropping-elem__', x: 0, y: 0, w: droppingItem?.w ?? 2, h: droppingItem?.h ?? 2 } : undefined,
     [editMode, droppingItem?.w, droppingItem?.h],
   );
 
@@ -273,20 +274,16 @@ export function DashGrid() {
         className="dash-grid"
         style={{ minHeight: '100%' }}
         layout={layout.length > 0 ? layout : baseLayout}
-        cols={cols}
-        rowHeight={rowHeight}
         width={width}
-        margin={margin}
-        containerPadding={CONTAINER_PADDING}
-        isDraggable={editMode}
-        isResizable={editMode}
-        isDroppable={editMode}
-        compactType={null}
-        droppingItem={rglDropItem}
+        gridConfig={{ cols, rowHeight, margin, containerPadding: CONTAINER_PADDING }}
+        dragConfig={{ enabled: editMode, handle: '.widget-drag-handle' }}
+        resizeConfig={{ enabled: editMode }}
+        dropConfig={{ enabled: editMode, defaultItem: { w: droppingItem?.w ?? 2, h: droppingItem?.h ?? 2 } }}
+        compactor={noCompactor}
+        {...(rglDropItem !== undefined && { droppingItem: rglDropItem })}
         onDrop={createWidgetFromDrop}
         onDragStop={syncLayoutAfterDrag}
         onLayoutChange={recordDragPositions}
-        draggableHandle=".widget-drag-handle"
       >
         {allServices.map(s => (
           <div key={s.id}>

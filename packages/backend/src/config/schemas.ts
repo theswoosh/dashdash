@@ -15,7 +15,7 @@ const RawServiceSchema = z.object({
   integration: z.string().max(128).optional(),
   widget: z.string().max(64),
   layout: ServiceLayoutSchema,
-  options: z.record(z.unknown()).optional(),
+  options: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const RawServicesSchema = z.array(RawServiceSchema);
@@ -35,17 +35,16 @@ export function assignIds(
   });
 }
 
-const ServiceSchema = z.object({
+export const ServiceSchema = z.object({
   id: z.string().max(128),
   title: z.string().max(128),
   icon: z.string().max(128).optional(),
   integration: z.string().max(128).optional(),
   widget: z.string().max(64),
   layout: ServiceLayoutSchema,
-  options: z.record(z.unknown()).optional(),
+  options: z.record(z.string(), z.unknown()).optional(),
 });
 
-const ServicesSchema = z.array(ServiceSchema);
 
 const GridSchema = z.object({
   columns: z.number().int().positive().max(48).default(12).catch(12),
@@ -65,19 +64,19 @@ const BackgroundSchema = z.object({
 const AuthSessionSchema = z.object({
   maxAgeSeconds: z.number().int().nonnegative().default(604800),
   slidingWindow: z.boolean().default(true),
-}).default({});
+}).default({ maxAgeSeconds: 604800, slidingWindow: true });
 
 const AuthRegistrationSchema = z.object({
   enabled: z.boolean().default(true),
-}).default({});
+}).default({ enabled: true });
 
 const AuthConfigSchema = z.object({
   registration: AuthRegistrationSchema,
   session: AuthSessionSchema,
   local: z.object({
     enabled: z.boolean().default(true),
-  }).default({}),
-}).default({});
+  }).default({ enabled: true }),
+}).default({ registration: { enabled: true }, session: { maxAgeSeconds: 604800, slidingWindow: true }, local: { enabled: true } });
 
 export interface OidcConfig {
   enabled: boolean;
@@ -95,9 +94,9 @@ const MailConfigSchema = z.object({
     host: z.string().max(253).default(''),
     port: z.number().int().min(1).max(65535).default(587).catch(587),
     secure: z.boolean().default(false),
-  }).default({}),
+  }).default({ host: '', port: 587, secure: false }),
   from: z.string().max(320).default(''),
-}).default({});
+}).default({ smtp: { host: '', port: 587, secure: false }, from: '' });
 
 export const SearchEngineSchema = z.object({
   id: z.string().max(64).regex(/^[a-z0-9-]+$/, 'ID must be lowercase letters, digits and hyphens only'),
@@ -114,7 +113,7 @@ export const SettingsSchema = z.object({
   theme: z.string().max(64).default('dark').catch('dark'),
   language: z.string().max(16).optional(),
   background: BackgroundSchema.optional(),
-  grid: GridSchema.default({}),
+  grid: GridSchema.default({ columns: 12, rowHeight: 80, gap: 12 }),
   auth: AuthConfigSchema,
   mail: MailConfigSchema,
   searchEngines: SearchEnginesSchema.default([]),
@@ -126,12 +125,12 @@ export const IntegrationSchema = z.object({
   id: z.string().max(128),
   type: z.string().max(64),
   url: z.string().max(2048).optional(),
-  options: z.record(z.unknown()).optional(),
+  options: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const IntegrationsSchema = z.array(IntegrationSchema);
 
-export type Services = z.infer<typeof ServicesSchema>;
+export type Services = Service[];
 export type Settings = z.infer<typeof SettingsSchema>;
 export type Service = z.infer<typeof ServiceSchema>;
 export type SearchEngine = z.infer<typeof SearchEngineSchema>;
