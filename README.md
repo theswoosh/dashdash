@@ -13,16 +13,15 @@
 
 ## Features
 
-- **Drag-and-drop grid** — resize and reorder widgets freely, layout is saved per user
-- **YAML-first config** — edit `services.yml` and changes appear instantly, no restart needed
-- **Multiple themes** — Liquid Glass (default), Classic, ASCII; themes are pure CSS, fully extensible
-- **Healthcheck widgets** — ping or TCP-check any host, status dot in the header bar or icon glow
-- **Service icons** — 60+ curated Simple Icons with fuzzy search; set per widget
-- **Server-side API proxy** — credentials stay on the server, never reach the browser
-- **Multi-board** — multiple boards per user, switch like virtual desktops
-- **Multi-user** — local accounts or SSO via OIDC (Authentik, Keycloak, any spec-compliant provider)
-- **Admin panel** — manage users, search engines, and validate config from the UI
-- **Widget types** — healthcheck, clock, stats, bookmarks, search bar, notepad, iframe
+- **Drag-and-drop grid** — arrange and resize widgets however you like; layout is saved per user
+- **Live YAML config** — add or change anything in a text file and it reloads instantly, no restart needed
+- **Multiple themes** — Liquid Glass, Classic, and ASCII out of the box; add your own with a single CSS file
+- **Service status monitoring** — know at a glance which of your self-hosted apps are online, with a subtle indicator right in the widget header
+- **Service icons** — put a face to every app from a built-in icon library; recognise your services at a glance
+- **Credentials stay on the server** — API keys are never exposed to the browser; all external calls go through the backend
+- **Multiple boards** — organise widgets across several boards and switch between them in one click
+- **Multi-user with SSO** — local accounts or single sign-on via any OIDC provider (Authentik, Keycloak, …)
+- **Widgets** — service status, bookmarks, notepad, clock, search bar, embedded pages, and more
 
 ---
 
