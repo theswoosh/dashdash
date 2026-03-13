@@ -73,7 +73,6 @@ All configuration lives in the `/config` volume:
 | `settings.yml` | Theme, background, grid defaults, auth |
 | `services.yml` | Widget instances |
 | `integrations.yml` | Named API sources |
-| `users.yml` | Local user accounts (optional, admin panel preferred) |
 
 Annotated examples are in `config/*.yml.example`.
 
