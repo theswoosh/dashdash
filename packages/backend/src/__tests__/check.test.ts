@@ -41,13 +41,14 @@ vi.mock('net', async () => {
 
 import dns from 'dns/promises';
 import { execFile } from 'child_process';
-import { runHealthcheck } from '../widgets/healthcheck/check.js';
+import { runHealthcheck, clearHealthcheckCache } from '../widgets/healthcheck/check.js';
 
 const mockResolve4 = dns.resolve4 as ReturnType<typeof vi.fn>;
 const mockExecFile = execFile as unknown as ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   vi.resetAllMocks();
+  clearHealthcheckCache();
   for (const key of Object.keys(mockSocketHandlers)) {
     delete mockSocketHandlers[key];
   }

@@ -5,6 +5,7 @@ import type { ServiceConfig } from '@dashdash/types';
 import { useThemeCard } from '../themes/registry';
 import { getWidget } from '../widgets/registry';
 import { useWidgetData } from '../hooks/use-widget-data.hook';
+import { useHealthcheckBatch } from '../hooks/use-healthcheck-batch.hook';
 import { useUIStore } from '../store/uiStore';
 import { AppIcon, hasServiceIcon, toAbsoluteUrl } from '../widgets/shared/app-icon.component';
 import { useBehavior } from '../hooks/use-behavior.hook';
@@ -118,7 +119,19 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
   const setConfigTarget = useUIStore(s => s.setConfigTarget);
   const { holdToDeleteMs } = useBehavior();
   const { Component, clientOnly } = getWidget(service.widget);
-  const { data, error, loading } = useWidgetData(service.id, !!clientOnly);
+  const isHealthcheck = service.widget === 'healthcheck';
+  // Individual fetch — disabled for healthcheck widgets (those use the batch hook below).
+  const { data: singleData, error: singleError, loading: singleLoading } = useWidgetData(
+    service.id,
+    !!clientOnly || isHealthcheck,
+  );
+  // Batch fetch — only active for healthcheck widgets; null disables it for others.
+  const { data: batchData, error: batchError, loading: batchLoading } = useHealthcheckBatch(
+    isHealthcheck ? service.id : null,
+  );
+  const data = isHealthcheck ? batchData : singleData;
+  const error = isHealthcheck ? batchError : singleError;
+  const loading = isHealthcheck ? batchLoading : singleLoading;
 
   const isTinyLayout = service.options?.['layoutSize'] === 'tiny';
   const isPingEnabled = service.widget === 'healthcheck' && service.options?.['ping'] !== false;

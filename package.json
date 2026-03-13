@@ -29,7 +29,8 @@
     ],
     "overrides": {
       "minimatch": "^10.2.3",
-      "rollup": "^4.59.0"
+      "rollup": "^4.59.0",
+      "@jridgewell/trace-mapping": "^0.3.31"
     }
   }
 }

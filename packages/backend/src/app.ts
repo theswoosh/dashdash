@@ -27,6 +27,7 @@ import type { OidcConfig } from './config/schemas.js';
 import { createUsersRoutes } from './routes/users.route.js';
 import { createLocalesRoutes } from './routes/locales.route.js';
 import { createConfigValidateRoutes } from './routes/config-validate.route.js';
+import { createHealthcheckBatchRoutes } from './routes/healthcheck-batch.route.js';
 import { validateConfig } from './config/validator.js';
 import { registerAuthMiddleware } from './middleware/auth.middleware.js';
 import { cleanupExpiredSessions, validateSession } from './db/sessions.db.js';
@@ -172,6 +173,7 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
   await server.register(createBoardRoutes(db, configDir), { prefix: '/api' });
   await server.register(createLocalesRoutes(configDir), { prefix: '/api' });
   await server.register(createConfigValidateRoutes(configDir), { prefix: '/api' });
+  await server.register(createHealthcheckBatchRoutes({ getServices, getSettings }), { prefix: '/api' });
 
   server.get('/api/ws', { websocket: true }, (socket: WebSocket, request) => {
     const sessionId = request.cookies?.[COOKIE_NAME];

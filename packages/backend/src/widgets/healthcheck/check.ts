@@ -5,6 +5,7 @@ import dns from 'dns/promises';
 const MAX_HOSTNAME_LENGTH = 253;
 const MIN_PING_TIMEOUT_SEC = 1;
 const DEFAULT_TIMEOUT_MS = 5000;
+const CACHE_TTL_MS = 25_000;
 
 /** Strict host validation — prevents any shell/command injection. */
 const SAFE_HOST_RE = /^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?$/;
@@ -36,17 +37,25 @@ function extractHost(input: string): string {
   }
 }
 
+export interface CheckResult {
+  status: 'up' | 'down';
+  latencyMs: number;
+  error?: string | undefined;
+}
+
+/** In-process TTL cache: avoids duplicate DNS + subprocess calls within a 25s window. */
+const checkCache = new Map<string, { result: CheckResult; ts: number }>();
+
+/** Exposed for tests — clears the TTL cache between test cases. */
+export function clearHealthcheckCache(): void {
+  checkCache.clear();
+}
+
 interface CheckOptions {
   url: string;
   port?: number | undefined;
   timeoutMs?: number | undefined;
   allowPrivateNetworks?: boolean | undefined;
-}
-
-interface CheckResult {
-  status: 'up' | 'down';
-  latencyMs: number;
-  error?: string | undefined;
 }
 
 /** ICMP ping — is the host alive? */
@@ -82,9 +91,25 @@ function tcpCheck(host: string, port: number, timeoutMs: number): Promise<CheckR
   });
 }
 
+/** Resolve the effective port from URL scheme/explicit port, before DNS. */
+function resolveEffectivePort(trimmed: string, port: number | undefined): number | undefined {
+  if (port !== undefined) return port;
+  try {
+    const normalized = trimmed.includes('://') ? trimmed : `http://${trimmed}`;
+    const parsed = new URL(normalized);
+    if (parsed.port) return parseInt(parsed.port, 10);
+    if (parsed.protocol === 'https:') return 443;
+    if (parsed.protocol === 'http:') return 80;
+  } catch { /* fall back to ping */ }
+  return undefined;
+}
+
 /**
  * No port → ICMP ping (is the host reachable?).
  * Port specified → TCP connect (is the service listening?).
+ *
+ * Results are cached for 25 s keyed by host+port so duplicate widgets
+ * pointing at the same target only fire one DNS lookup + subprocess per interval.
  */
 export async function runHealthcheck(opts: CheckOptions): Promise<CheckResult> {
   const { url: urlInput, port, timeoutMs = DEFAULT_TIMEOUT_MS } = opts;
@@ -98,6 +123,14 @@ export async function runHealthcheck(opts: CheckOptions): Promise<CheckResult> {
 
   if (!isIP(host) && (!SAFE_HOST_RE.test(host) || host.length > MAX_HOSTNAME_LENGTH)) {
     return { status: 'down', error: 'Invalid host', latencyMs: 0 };
+  }
+
+  // Compute effective port before DNS so the cache key is stable.
+  const effectivePort = resolveEffectivePort(trimmed, port);
+  const cacheKey = `${host}:${effectivePort ?? 'ping'}`;
+  const cached = checkCache.get(cacheKey);
+  if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
+    return cached.result;
   }
 
   let targetIp: string | null = null;
@@ -118,25 +151,10 @@ export async function runHealthcheck(opts: CheckOptions): Promise<CheckResult> {
     targetIp = allowed[0]!;
   }
 
-  // Extract port from URL if not provided as an explicit option.
-  // Also infer 80/443 from http/https scheme so we use TCP instead of ICMP
-  // ping — ICMP is unavailable in most container environments.
-  let effectivePort = port;
-  if (effectivePort === undefined) {
-    try {
-      const normalized = trimmed.includes('://') ? trimmed : `http://${trimmed}`;
-      const parsed = new URL(normalized);
-      if (parsed.port) {
-        effectivePort = parseInt(parsed.port, 10);
-      } else if (parsed.protocol === 'https:') {
-        effectivePort = 443;
-      } else if (parsed.protocol === 'http:') {
-        effectivePort = 80;
-      }
-    } catch { /* URL parsing failed — fall back to ping without explicit port */ }
-  }
-
-  return effectivePort !== undefined
+  const result = await (effectivePort !== undefined
     ? tcpCheck(targetIp, effectivePort, timeoutMs)
-    : pingHost(targetIp, timeoutMs);
+    : pingHost(targetIp, timeoutMs));
+
+  checkCache.set(cacheKey, { result, ts: Date.now() });
+  return result;
 }
