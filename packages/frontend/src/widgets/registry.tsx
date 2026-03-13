@@ -9,6 +9,7 @@ const BookmarksWidget = lazy(() => import('./bookmarks/bookmarks.component').the
 const SearchWidget = lazy(() => import('./search/search.component').then(m => ({ default: m.SearchWidget })));
 const IframeWidget = lazy(() => import('./iframe/iframe.component').then(m => ({ default: m.IframeWidget })));
 const NotepadWidget = lazy(() => import('./notepad/notepad.component').then(m => ({ default: m.NotepadWidget })));
+const FrameWidget = lazy(() => import('./frame/frame.component').then(m => ({ default: m.FrameWidget })));
 
 interface FrontendWidget {
   Component: ComponentType<WidgetProps>;
@@ -23,6 +24,7 @@ const WIDGETS = new Map<string, FrontendWidget>([
   ['healthcheck', { Component: HealthcheckWidget                   }],
   ['stats',       { Component: StatsWidget                         }],
   ['notepad',     { Component: NotepadWidget,     clientOnly: true }],
+  ['frame',       { Component: FrameWidget,       clientOnly: true }],
 ]);
 
 /** Returns the frontend widget definition. Unknown widget types fall back to FallbackWidget. */

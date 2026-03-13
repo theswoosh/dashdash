@@ -1,0 +1,26 @@
+.frame-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.frame-card__body {
+  position: relative;
+  min-height: 80px;
+  padding: 6px;
+  flex: 1;
+}
+
+.frame-card__header {
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.frame-grid {
+  width: 100%;
+}
+
+.frame-grid .react-grid-placeholder {
+  background: rgba(var(--accent-rgb, 96, 165, 250), 0.15);
+  border-radius: var(--radius);
+}

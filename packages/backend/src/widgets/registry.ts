@@ -13,7 +13,7 @@ export function getHandler(widgetId: string): WidgetHandler | undefined {
 }
 
 /** Returns true if the widget type is known (either server-side or client-only). */
-const CLIENT_ONLY_WIDGETS = new Set(['clock', 'bookmarks', 'search', 'iframe', 'fallback']);
+const CLIENT_ONLY_WIDGETS = new Set(['clock', 'bookmarks', 'search', 'iframe', 'fallback', 'frame']);
 
 export function isClientOnly(widgetId: string): boolean {
   return CLIENT_ONLY_WIDGETS.has(widgetId);

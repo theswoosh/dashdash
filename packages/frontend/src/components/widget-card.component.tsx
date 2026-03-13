@@ -94,6 +94,7 @@ interface Props {
   service: ServiceConfig;
   editMode: boolean;
   onDelete?: ((id: string) => void) | undefined;
+  dragHandleClassName?: string | undefined;
 }
 
 interface PingStatus {
@@ -113,7 +114,7 @@ function buildPingTooltip(ping: PingStatus): string {
   return ping.error ?? 'Offline';
 }
 
-export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete }: Props) {
+export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete, dragHandleClassName }: Props) {
   const t = useT();
   const Card = useThemeCard();
   const setConfigTarget = useUIStore(s => s.setConfigTarget);
@@ -184,7 +185,7 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
     <Card className={cardClassName} style={cardStyle}>
       {!isHeaderHidden && <div className="widget-header">
         {editMode && (
-          <span className="widget-drag-handle" title={t('widgetCard.dragToMove')}>
+          <span className={dragHandleClassName ?? 'grid-drag-handle'} title={t('widgetCard.dragToMove')}>
             <GripVertical size={16} />
           </span>
         )}

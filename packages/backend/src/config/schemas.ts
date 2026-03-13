@@ -8,7 +8,7 @@ const ServiceLayoutSchema = z.object({
 });
 
 /** Schema used when reading from YAML — id is optional, auto-assigned if absent. */
-const RawServiceSchema = z.object({
+const RawServiceSchemaBase = z.object({
   id: z.string().max(128).optional(),
   title: z.string().max(128),
   icon: z.string().max(128).optional(),
@@ -18,24 +18,75 @@ const RawServiceSchema = z.object({
   options: z.record(z.string(), z.unknown()).optional(),
 });
 
+type RawService = z.infer<typeof RawServiceSchemaBase> & { children?: RawService[] | undefined };
+
+const RawServiceSchema: z.ZodType<RawService> = z.lazy(() =>
+  RawServiceSchemaBase.extend({
+    children: z.array(RawServiceSchema).optional(),
+  }).superRefine((value, ctx) => {
+    if (value.children && value.widget !== 'frame') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['children'],
+        message: 'children is only allowed for widget: frame',
+      });
+    }
+    if (value.children && value.children.some(child => child.widget === 'frame')) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['children'],
+        message: 'nested frame widgets are not allowed',
+      });
+    }
+  })
+);
+
 export const RawServicesSchema = z.array(RawServiceSchema);
 
 /** Assigns stable readable IDs to services that don't have one. */
 export function assignIds(
-  services: Array<z.infer<typeof RawServiceSchema>>
+  services: RawService[]
 ): Service[] {
-  const usedIds = new Set(services.filter(s => s.id).map(s => s.id!));
-  return services.map(s => {
-    if (s.id) return s as Service;
-    let id = s.widget;
-    let suffix = 2;
-    while (usedIds.has(id)) { id = `${s.widget}-${suffix++}`; }
-    usedIds.add(id);
-    return { ...s, id };
-  });
+  const usedIds = new Set<string>();
+
+  const reserveId = (id: string) => { usedIds.add(id); };
+  const gather = (items: RawService[]) => {
+    for (const item of items) {
+      if (item.id) reserveId(item.id);
+      if (item.children && item.children.length > 0) gather(item.children);
+    }
+  };
+  gather(services);
+
+  const ensureId = (item: RawService): Service => {
+    let id = item.id;
+    if (!id) {
+      const base = item.widget;
+      let suffix = 2;
+      id = base;
+      while (usedIds.has(id)) { id = `${base}-${suffix++}`; }
+      reserveId(id);
+    }
+
+    const children = item.children?.map(child => ensureId(child));
+    return { ...(item as Service), id, ...(children ? { children } : {}) };
+  };
+
+  return services.map(s => ensureId(s));
 }
 
-export const ServiceSchema = z.object({
+export interface Service {
+  id: string;
+  title: string;
+  icon?: string | undefined;
+  integration?: string | undefined;
+  widget: string;
+  layout: { w: number; h: number; x: number; y: number };
+  options?: Record<string, unknown> | undefined;
+  children?: Service[] | undefined;
+}
+
+export const ServiceSchema: z.ZodType<Service> = z.object({
   id: z.string().max(128),
   title: z.string().max(128),
   icon: z.string().max(128).optional(),
@@ -43,6 +94,22 @@ export const ServiceSchema = z.object({
   widget: z.string().max(64),
   layout: ServiceLayoutSchema,
   options: z.record(z.string(), z.unknown()).optional(),
+  children: z.array(z.lazy(() => ServiceSchema)).optional(),
+}).superRefine((value, ctx) => {
+  if (value.children && value.widget !== 'frame') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['children'],
+      message: 'children is only allowed for widget: frame',
+    });
+  }
+  if (value.children && value.children.some(child => child.widget === 'frame')) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['children'],
+      message: 'nested frame widgets are not allowed',
+    });
+  }
 });
 
 
@@ -132,7 +199,6 @@ export const IntegrationsSchema = z.array(IntegrationSchema);
 
 export type Services = Service[];
 export type Settings = z.infer<typeof SettingsSchema>;
-export type Service = z.infer<typeof ServiceSchema>;
 export type SearchEngine = z.infer<typeof SearchEngineSchema>;
 export type Integration = z.infer<typeof IntegrationSchema>;
 export type AuthConfig = z.infer<typeof AuthConfigSchema>;

@@ -2,7 +2,7 @@ import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import yaml from 'js-yaml';
 import { RawServicesSchema, SettingsSchema, assignIds } from './schemas.js';
-import type { Services, Settings } from './schemas.js';
+import type { Services, Settings, Service } from './schemas.js';
 
 interface Logger { warn: (msg: string, ...args: unknown[]) => void }
 
@@ -27,6 +27,18 @@ export function loadServices(configDir: string, logger: Logger = defaultLogger):
     return [];
   }
   return assignIds(parseResult.data);
+}
+
+export function flattenServices(services: Services): Service[] {
+  const items: Service[] = [];
+  const walk = (list: Service[]) => {
+    for (const svc of list) {
+      items.push(svc);
+      if (svc.children && svc.children.length > 0) walk(svc.children);
+    }
+  };
+  walk(services);
+  return items;
 }
 
 export function loadSettings(configDir: string, logger: Logger = defaultLogger): Settings {

@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
 import type { Service, Settings } from '../config/schemas.js';
 import { runHealthcheck, type CheckResult } from '../widgets/healthcheck/check.js';
+import { flattenServices } from '../config/loader.js';
 
 const MAX_BATCH_SIZE = 100;
 
@@ -25,7 +26,7 @@ export const createHealthcheckBatchRoutes = (opts: HealthcheckBatchRouteOptions)
           return reply.code(400).send({ ok: false, error: 'No ids provided' });
         }
 
-        const services = opts.getServices();
+        const services = flattenServices(opts.getServices());
         const { allowPrivateNetworks } = opts.getSettings();
 
         const entries = await Promise.all(

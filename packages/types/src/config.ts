@@ -60,4 +60,5 @@ export interface ServiceConfig {
   widget: string;
   layout: ServiceLayout;
   options?: Record<string, unknown> | undefined;
+  children?: ServiceConfig[] | undefined;
 }

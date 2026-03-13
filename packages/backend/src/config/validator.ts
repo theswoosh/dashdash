@@ -11,7 +11,7 @@ export interface ConfigIssue {
   message: string;
 }
 
-const KNOWN_WIDGET_TYPES = ['clock', 'healthcheck', 'stats', 'bookmarks', 'search', 'notepad', 'iframe'];
+const KNOWN_WIDGET_TYPES = ['clock', 'healthcheck', 'stats', 'bookmarks', 'search', 'notepad', 'iframe', 'frame'];
 
 function readYaml(filePath: string): unknown {
   if (!existsSync(filePath)) return null;
@@ -144,40 +144,44 @@ function validateServicesYaml(raw: unknown, issues: ConfigIssue[], integrationId
     return;
   }
 
-  for (let i = 0; i < raw.length; i++) {
-    const svc = raw[i];
-    if (!svc || typeof svc !== 'object' || Array.isArray(svc)) {
-      issues.push({ file, field: `[${i}]`, level: 'error', message: `${entryPrefix(i, undefined)}: must be a mapping` });
-      continue;
-    }
-    const s = svc as Record<string, unknown>;
-    const base = `[${i}]`;
-    const entryId = typeof s['id'] === 'string' ? s['id'] : undefined;
-    const prefix = entryPrefix(i, entryId);
-
+  const validateEntry = (
+    svc: Record<string, unknown>,
+    base: string,
+    prefix: string,
+    parentIsFrame: boolean
+  ) => {
     // Collect issues into a local list so we can rewrite messages with the entry prefix
     const entryIssues: ConfigIssue[] = [];
 
-    checkString(entryIssues, file, formatPath(base, 'title'), s['title'], { required: true, maxLength: 128 });
-    checkString(entryIssues, file, formatPath(base, 'id'), s['id'], { maxLength: 128 });
-    checkString(entryIssues, file, formatPath(base, 'icon'), s['icon'], { maxLength: 128 });
-    checkString(entryIssues, file, formatPath(base, 'widget'), s['widget'], { required: true, maxLength: 64 });
+    checkString(entryIssues, file, formatPath(base, 'title'), svc['title'], { required: true, maxLength: 128 });
+    checkString(entryIssues, file, formatPath(base, 'id'), svc['id'], { maxLength: 128 });
+    checkString(entryIssues, file, formatPath(base, 'icon'), svc['icon'], { maxLength: 128 });
+    checkString(entryIssues, file, formatPath(base, 'widget'), svc['widget'], { required: true, maxLength: 64 });
 
     // Warn if widget type is unknown
-    if (typeof s['widget'] === 'string' && !knownWidgetTypes.has(s['widget'])) {
-      entryIssues.push({ file, field: formatPath(base, 'widget'), level: 'warning', message: `Unknown widget type "${s['widget']}"` });
+    if (typeof svc['widget'] === 'string' && !knownWidgetTypes.has(svc['widget'])) {
+      entryIssues.push({ file, field: formatPath(base, 'widget'), level: 'warning', message: `Unknown widget type "${svc['widget']}"` });
+    }
+
+    const widgetType = typeof svc['widget'] === 'string' ? svc['widget'] : undefined;
+    const hasChildren = svc['children'] !== undefined && svc['children'] !== null;
+    if (hasChildren && widgetType !== 'frame') {
+      entryIssues.push({ file, field: formatPath(base, 'children'), level: 'error', message: 'children is only allowed for widget: frame' });
+    }
+    if (widgetType === 'frame' && parentIsFrame) {
+      entryIssues.push({ file, field: formatPath(base, 'widget'), level: 'error', message: 'nested frame widgets are not allowed' });
     }
 
     // Warn if integration ref doesn't exist
-    if (typeof s['integration'] === 'string') {
-      checkString(entryIssues, file, formatPath(base, 'integration'), s['integration'], { maxLength: 128 });
-      if (!integrationIds.has(s['integration'])) {
-        entryIssues.push({ file, field: formatPath(base, 'integration'), level: 'warning', message: `Integration "${s['integration']}" not found in integrations.yml` });
+    if (typeof svc['integration'] === 'string') {
+      checkString(entryIssues, file, formatPath(base, 'integration'), svc['integration'], { maxLength: 128 });
+      if (!integrationIds.has(svc['integration'])) {
+        entryIssues.push({ file, field: formatPath(base, 'integration'), level: 'warning', message: `Integration "${svc['integration']}" not found in integrations.yml` });
       }
     }
 
-    if (s['layout'] && typeof s['layout'] === 'object' && !Array.isArray(s['layout'])) {
-      const layout = s['layout'] as Record<string, unknown>;
+    if (svc['layout'] && typeof svc['layout'] === 'object' && !Array.isArray(svc['layout'])) {
+      const layout = svc['layout'] as Record<string, unknown>;
       checkNumber(entryIssues, file, formatPath(base, 'layout.w'), layout['w'], { integer: true, min: 1, max: 48 });
       checkNumber(entryIssues, file, formatPath(base, 'layout.h'), layout['h'], { integer: true, min: 1, max: 48 });
       checkNumber(entryIssues, file, formatPath(base, 'layout.x'), layout['x'], { integer: true, min: 0, max: 200 });
@@ -187,7 +191,7 @@ function validateServicesYaml(raw: unknown, issues: ConfigIssue[], integrationId
       if (typeof layout['w'] === 'number' && layout['w'] > gridColumns) {
         entryIssues.push({ file, field: formatPath(base, 'layout.w'), level: 'warning', message: `Widget width (${layout['w']}) exceeds grid columns (${gridColumns})` });
       }
-    } else if (s['layout'] === undefined || s['layout'] === null) {
+    } else if (svc['layout'] === undefined || svc['layout'] === null) {
       entryIssues.push({ file, field: formatPath(base, 'layout'), level: 'error', message: 'Required field is missing' });
     }
 
@@ -199,6 +203,40 @@ function validateServicesYaml(raw: unknown, issues: ConfigIssue[], integrationId
         : `${prefix}: ${issue.message}`;
       issues.push({ ...issue, message: readable });
     }
+
+    // Recurse into children if present
+    if (svc['children'] !== undefined) {
+      if (!Array.isArray(svc['children'])) {
+        issues.push({ file, field: formatPath(base, 'children'), level: 'error', message: `${prefix}: field "children" — must be a list` });
+        return;
+      }
+      const children = svc['children'] as unknown[];
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i];
+        if (!child || typeof child !== 'object' || Array.isArray(child)) {
+          issues.push({ file, field: formatPath(base, 'children', i), level: 'error', message: `${prefix} > child #${i + 1}: must be a mapping` });
+          continue;
+        }
+        const c = child as Record<string, unknown>;
+        const childId = typeof c['id'] === 'string' ? c['id'] : undefined;
+        const childPrefix = `${prefix} > child #${i + 1}${childId ? ` ("${childId}")` : ''}`;
+        const childBase = formatPath(base, 'children', i);
+        validateEntry(c, childBase, childPrefix, widgetType === 'frame');
+      }
+    }
+  };
+
+  for (let i = 0; i < raw.length; i++) {
+    const svc = raw[i];
+    if (!svc || typeof svc !== 'object' || Array.isArray(svc)) {
+      issues.push({ file, field: `[${i}]`, level: 'error', message: `${entryPrefix(i, undefined)}: must be a mapping` });
+      continue;
+    }
+    const s = svc as Record<string, unknown>;
+    const base = `[${i}]`;
+    const entryId = typeof s['id'] === 'string' ? s['id'] : undefined;
+    const prefix = entryPrefix(i, entryId);
+    validateEntry(s, base, prefix, false);
   }
 }
 

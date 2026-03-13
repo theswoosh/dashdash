@@ -22,3 +22,21 @@
   options:
     engine: duckduckgo          # duckduckgo | google | brave | custom
     # customUrl: https://search.example.com/?q=
+
+- title: Servers
+  widget: frame
+  layout:
+    w: 8
+    h: 6
+    x: 0
+    y: 4
+  children:
+    - title: Healthcheck
+      widget: healthcheck
+      layout: { w: 2, h: 2, x: 0, y: 0 }
+      options:
+        url: 192.168.1.1
+        ping: true
+    - title: System Stats
+      widget: stats
+      layout: { w: 3, h: 3, x: 2, y: 0 }

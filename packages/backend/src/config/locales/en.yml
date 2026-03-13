@@ -194,6 +194,9 @@ widgets:
   iframe:
     label: "iFrame"
     description: "Embed any URL in a sandboxed frame"
+  frame:
+    label: "Frame"
+    description: "Group widgets inside a visual frame"
 
 themes:
   liquidGlass:

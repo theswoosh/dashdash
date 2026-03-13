@@ -3,6 +3,10 @@
   outline-offset: -1px;
 }
 
+.widget-card--edit iframe {
+  pointer-events: none;
+}
+
 .widget-header {
   display: flex;
   align-items: center;
@@ -12,7 +16,9 @@
   flex-shrink: 0;
 }
 
-.widget-drag-handle {
+.grid-drag-handle,
+.frame-drag-handle,
+.frame-widget-drag-handle {
   color: var(--text-muted);
   cursor: grab;
   display: flex;
@@ -20,7 +26,9 @@
   touch-action: none;
 }
 
-.widget-drag-handle:active {
+.grid-drag-handle:active,
+.frame-drag-handle:active,
+.frame-widget-drag-handle:active {
   cursor: grabbing;
 }
 

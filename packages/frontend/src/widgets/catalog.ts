@@ -7,6 +7,7 @@ import {
   FileText,
   BarChart2,
   Globe,
+  Layers,
 } from 'lucide-react';
 
 export interface ConfigField {
@@ -167,6 +168,17 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     configFields: [
       { key: 'url', label: 'URL', type: 'url', placeholder: 'https://example.com', required: true },
     ],
+  },
+  {
+    type: 'frame',
+    label: 'Frame',
+    labelKey: 'widgets.frame.label',
+    icon: Layers,
+    description: 'Group widgets inside a visual frame',
+    descriptionKey: 'widgets.frame.description',
+    defaultSize: { w: 6, h: 4 },
+    defaultOptions: {},
+    configFields: [],
   },
 ];
 

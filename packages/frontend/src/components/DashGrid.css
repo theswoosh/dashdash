@@ -1,5 +1,6 @@
 .dash-grid-container {
   flex: 1;
+  overflow-x: auto;
   overflow-y: auto;
   padding: 16px;
   position: relative;
@@ -28,8 +29,9 @@
   color: var(--accent);
 }
 
+/* Grid never compresses below this width — window shrinkage produces scrollbars instead */
 .dash-grid {
-  /* react-grid-layout override: transparent background */
+  min-width: 800px;
 }
 
 /* Edit mode: show grid placeholder */
@@ -68,6 +70,18 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 4px;
+}
+
+/* No shadow while resizing — cascade CSS vars so every theme is covered. */
+.react-grid-item.resizing {
+  --shadow: none;
+  --shadow-sm: none;
+  --card-glow: none;
+}
+/* liquid-overlay is the SVG shadow band — hide visually, keep filter/mask defs alive */
+.react-grid-item.resizing .liquid-overlay {
+  opacity: 0;
+  transition: none;
 }
 
 /* Drop indicator */

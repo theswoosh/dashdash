@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import type { Service } from '../config/schemas.js';
 import { loadIntegrations, resolveCredentials } from '../config/integrations.js';
 import { getHandler, isClientOnly } from '../widgets/registry.js';
+import { flattenServices } from '../config/loader.js';
 
 interface WidgetRouteOptions {
   getServices: () => Service[];
@@ -17,7 +18,7 @@ export const createWidgetRoutes = (opts: WidgetRouteOptions): FastifyPluginAsync
         const { serviceId } = request.params;
 
         // Find the service in config
-        const services = opts.getServices();
+        const services = flattenServices(opts.getServices());
         const service = services.find(s => s.id === serviceId);
 
         if (!service) {

@@ -188,6 +188,7 @@ export const EN_FALLBACK: Record<string, unknown> = {
     search: { label: 'Search', description: 'Search bar with configurable engine' },
     notepad: { label: 'Notepad', description: 'Persistent text notes with clickable links' },
     iframe: { label: 'iFrame', description: 'Embed any URL in a sandboxed frame' },
+    frame: { label: 'Frame', description: 'Group widgets inside a visual frame' },
   },
   themes: {
     liquidGlass: { name: 'Liquid Glass', description: 'Squircle cards with backdrop blur and lens distortion' },

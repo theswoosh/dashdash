@@ -10,6 +10,7 @@ interface PatchBody {
   icon?: string;
   options?: Record<string, unknown>;
   layout?: { x: number; y: number; w: number; h: number };
+  parentId?: string | null;
 }
 
 export function createServicesRoutes(
@@ -27,7 +28,7 @@ export function createServicesRoutes(
     });
 
     // PUT /api/services/layouts — batch update all service layouts in one YAML write
-    fastify.put<{ Body: { items: Array<{ id: string; layout: { x: number; y: number; w: number; h: number } }> } }>(
+    fastify.put<{ Body: { items: Array<{ id: string; layout: { x: number; y: number; w: number; h: number } }>; parentId?: string } }>(
       '/services/layouts',
       {
         schema: {
@@ -36,6 +37,7 @@ export function createServicesRoutes(
             required: ['items'],
             properties: {
               items: { type: 'array' },
+              parentId: { type: 'string' },
             },
           },
         },
@@ -43,7 +45,7 @@ export function createServicesRoutes(
       async (req, reply) => {
         try {
           suppressNextBroadcast();
-          batchPatchLayouts(configDir, req.body.items);
+          batchPatchLayouts(configDir, req.body.items, req.body.parentId);
           return { ok: true };
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
@@ -53,7 +55,7 @@ export function createServicesRoutes(
     );
 
     // POST /api/services — append a new service to services.yml
-    fastify.post<{ Body: Service }>(
+    fastify.post<{ Body: Service & { parentId?: string } }>(
       '/services',
       {
         schema: {
@@ -66,6 +68,7 @@ export function createServicesRoutes(
               widget: { type: 'string' },
               layout: { type: 'object' },
               options: { type: 'object' },
+              parentId: { type: 'string' },
             },
           },
         },
@@ -73,7 +76,7 @@ export function createServicesRoutes(
       async (req, reply) => {
         try {
           suppressNextBroadcast();
-          appendService(configDir, req.body);
+          appendService(configDir, req.body, req.body.parentId);
           return { ok: true };
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
@@ -88,7 +91,16 @@ export function createServicesRoutes(
       {
         schema: {
           params: { type: 'object', required: ['id'], properties: { id: { type: 'string' } } },
-          body: { type: 'object' },
+          body: {
+            type: 'object',
+            properties: {
+              title: { type: 'string' },
+              icon: { type: 'string' },
+              options: { type: 'object' },
+              layout: { type: 'object' },
+              parentId: { anyOf: [{ type: 'string' }, { type: 'null' }] },
+            },
+          },
         },
       },
       async (req, reply) => {

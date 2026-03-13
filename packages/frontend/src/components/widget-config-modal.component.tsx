@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { X, CheckCircle, XCircle, Loader } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
 import { useServices } from '../hooks/use-services.hook';
+import { findServiceById } from '../utils/service-tree';
 import { useSettings, type SearchEngine } from '../hooks/use-settings.hook';
 import { getTemplate } from '../widgets/catalog';
 import type { ConfigField } from '../widgets/catalog';
@@ -271,7 +272,7 @@ export function WidgetConfigModal() {
   const { services, reload: reloadServices } = useServices();
   const allEngines = useSettings().searchEngines ?? [];
 
-  const service = services.find(s => s.id === configTarget);
+  const service = configTarget ? findServiceById(services, configTarget) : undefined;
   const template = service ? getTemplate(service.widget) : undefined;
 
   const [title, setTitle] = useState('');

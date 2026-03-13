@@ -20,8 +20,8 @@ describe('widget registry', () => {
     expect(w.Component).toBeTruthy();
   });
 
-  it('marks bookmarks, search, iframe as clientOnly', () => {
-    for (const id of ['bookmarks', 'search', 'iframe']) {
+  it('marks bookmarks, search, iframe, frame as clientOnly', () => {
+    for (const id of ['bookmarks', 'search', 'iframe', 'frame']) {
       const w = getWidget(id);
       expect(w.clientOnly).toBe(true);
     }

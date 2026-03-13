@@ -29,3 +29,7 @@
 - type: iframe
   defaultSize: { w: 4, h: 4 }
   minSize: { w: 2, h: 2 }
+
+- type: frame
+  defaultSize: { w: 6, h: 4 }
+  minSize: { w: 2, h: 2 }
