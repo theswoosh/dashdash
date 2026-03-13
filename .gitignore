@@ -20,6 +20,9 @@ data/
 *.log
 config/uploads/
 _dev/
+DEV.md
+docs/
+opt_dashdash.md
 
 # Private keys and certificates
 *.pem
