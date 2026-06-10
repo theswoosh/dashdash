@@ -113,10 +113,19 @@ export const ServiceSchema: z.ZodType<Service> = z.object({
 });
 
 
+// Square-cell grid. `sizes` are the slider stops (each value = N for an N×N cell);
+// `cellSize` is the active stop. Column count is derived to fill the viewport.
+const GRID_SIZE_STOPS = [10, 20, 40, 60, 80];
+
 const GridSchema = z.object({
-  columns: z.number().int().positive().max(48).default(12).catch(12),
-  rowHeight: z.number().int().positive().max(500).default(80).catch(80),
-  gap: z.number().int().nonnegative().max(100).default(12).catch(12),
+  sizes: z.array(z.number().int().min(1).max(100)).min(1).default(GRID_SIZE_STOPS).catch(GRID_SIZE_STOPS),
+  cellSize: z.number().int().min(1).max(100).default(40).catch(40),
+  gap: z.number().int().nonnegative().max(100).default(4).catch(4),
+});
+
+// Body schema for the admin grid write — just the active (square) cell size.
+export const GridUpdateSchema = z.object({
+  cellSize: z.number().int().min(1).max(100),
 });
 
 const BackgroundSchema = z.object({
@@ -180,7 +189,7 @@ export const SettingsSchema = z.object({
   theme: z.string().max(64).default('dark').catch('dark'),
   language: z.string().max(16).optional(),
   background: BackgroundSchema.optional(),
-  grid: GridSchema.default({ columns: 12, rowHeight: 80, gap: 12 }),
+  grid: GridSchema.default({ sizes: [10, 20, 40, 60, 80], cellSize: 40, gap: 4 }),
   auth: AuthConfigSchema,
   mail: MailConfigSchema,
   searchEngines: SearchEnginesSchema.default([]),

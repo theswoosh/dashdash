@@ -2,8 +2,10 @@
   flex: 1;
   overflow-x: auto;
   overflow-y: auto;
-  padding: 16px;
+  padding: 0;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .config-error-banner {
@@ -55,21 +57,24 @@
   border-color: var(--accent) !important;
 }
 
-/* Column overlay shown in edit mode */
-.grid-overlay {
-  position: absolute;
-  inset: 16px;
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 12px;
-  pointer-events: none;
-  z-index: 0;
+/* Fixed-width grid, left-aligned (no responsive stretching). flex: 1 gives the
+   canvas a definite height so the RGL child's `min-height: 100%` resolves —
+   otherwise an empty/short board collapses to 0px and rejects drops. */
+.dash-grid-canvas {
+  position: relative;
+  margin: 0;
+  flex: 1 0 auto;
 }
 
-.grid-overlay__col {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 4px;
+/* Edit mode: dotted grid lines (background-size set inline = cell pitch × dot spacing) */
+.grid-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(circle at 0 0, rgba(255, 255, 255, 0.08) 1px, transparent 1.6px),
+    radial-gradient(circle at 0 0, rgba(255, 255, 255, 0.08) 1px, transparent 1.6px);
 }
 
 /* No shadow while resizing — cascade CSS vars so every theme is covered. */

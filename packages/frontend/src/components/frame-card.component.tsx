@@ -68,7 +68,7 @@ interface Props {
   service: ServiceConfig;
   editMode: boolean;
   widgetTemplates: WidgetTemplateDef[];
-  gridConfig: { columns: number; rowHeight: number; gap: number };
+  gridConfig: { rowHeight: number; gap: number };
   frameLayout?: LayoutItem | undefined;
   onDelete?: ((id: string) => void) | undefined;
   reloadServices: () => unknown;

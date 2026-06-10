@@ -59,6 +59,7 @@ config:
   engine: "Suchmaschine"
   searchPlaceholder: "Platzhaltertext"
   comingSoon: "Demnächst"
+  gridSize: "Rastergröße"
 
 widgetConfig:
   configure: "Konfigurieren: {{title}}"

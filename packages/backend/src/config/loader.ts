@@ -20,7 +20,7 @@ function readYaml(filePath: string, logger: Logger): unknown {
 
 export function loadServices(configDir: string, logger: Logger = defaultLogger): Services {
   const raw = readYaml(join(configDir, 'services.yml'), logger);
-  if (raw === null) return [];
+  if (raw == null) return [];
   const parseResult = RawServicesSchema.safeParse(raw);
   if (!parseResult.success) {
     logger.warn('services.yml validation errors:', parseResult.error.format());

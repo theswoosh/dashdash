@@ -20,7 +20,6 @@ import { flattenServices, findServiceWithParent } from '../utils/service-tree';
 import './DashGrid.css';
 
 const CONTAINER_PADDING: [number, number] = [0, 0];
-const MIN_GRID_WIDTH = 800;
 
 /** Build RGL layout items directly from services (YAML is source of truth).
  *  Templates supply optional minW/minH constraints per widget type. */
@@ -85,7 +84,7 @@ export function DashGrid() {
   allServicesRef.current = flatServices;
 
   const [layout, setLayout] = useState<LayoutItem[]>([]);
-  const [width, setWidth] = useState(Math.max(MIN_GRID_WIDTH, window.innerWidth - 32));
+  const [availableWidth, setAvailableWidth] = useState(() => window.innerWidth);
 
   // Synced every render so callbacks can read the current editMode
   // without adding it as a dep (which would re-run effects on toggle).
@@ -410,19 +409,26 @@ export function DashGrid() {
     [reloadServices]
   );
 
+  // Measure the available width so the column count can fill the viewport.
   const roRef = useRef<ResizeObserver | null>(null);
   const containerRef = useCallback((node: HTMLDivElement | null) => {
     if (roRef.current) { roRef.current.disconnect(); roRef.current = null; }
     if (!node) return;
     const ro = new ResizeObserver(([entry]) => {
-      if (entry) setWidth(Math.max(MIN_GRID_WIDTH, entry.contentRect.width));
+      if (entry) setAvailableWidth(entry.contentRect.width);
     });
     ro.observe(node);
     roRef.current = ro;
   }, []);
 
-  const { columns: cols, rowHeight, gap } = gridConfig;
+  const { rowHeight, gap } = gridConfig;
   const margin = useMemo<[number, number]>(() => [gap, gap], [gap]);
+  // Fixed-size square cells (cell size = rowHeight). The column COUNT is derived
+  // purely from the cell size so the grid always fills the viewport width — a
+  // wider window yields more columns, never wider cells.
+  const cellPitch = rowHeight + gap;
+  const cols = Math.max(1, Math.floor((availableWidth + gap) / cellPitch));
+  const gridWidth = cols * cellPitch - gap;
   const rglDropItem = useMemo<LayoutItem | undefined>(
     () => editMode ? { i: '__dropping-elem__', x: 0, y: 0, w: droppingItem?.w ?? 2, h: droppingItem?.h ?? 2 } : undefined,
     [editMode, droppingItem?.w, droppingItem?.h],
@@ -443,19 +449,20 @@ export function DashGrid() {
           {t('dashGrid.configErrorBanner')}
         </div>
       )}
-      {editMode && (
-        <div className="grid-overlay" aria-hidden="true">
-          {Array.from({ length: cols }, (_, i) => (
-            <div key={i} className="grid-overlay__col" />
-          ))}
-        </div>
-      )}
-      <ReactGridLayout
-        className="dash-grid"
-        style={{ minHeight: '100%' }}
-        layout={layout.length > 0 ? layout : baseLayout}
-        width={width}
-        gridConfig={{ cols, rowHeight, margin, containerPadding: CONTAINER_PADDING }}
+      <div className="dash-grid-canvas" style={{ width: gridWidth }}>
+        {editMode && (
+          <div
+            className="grid-overlay"
+            aria-hidden="true"
+            style={{ backgroundSize: `${cellPitch}px 8px, 8px ${cellPitch}px` }}
+          />
+        )}
+        <ReactGridLayout
+          className="dash-grid"
+          style={{ minHeight: '100%' }}
+          layout={layout.length > 0 ? layout : baseLayout}
+          width={gridWidth}
+          gridConfig={{ cols, rowHeight, margin, containerPadding: CONTAINER_PADDING }}
         dragConfig={{ enabled: editMode, handle: '.grid-drag-handle' }}
         resizeConfig={{ enabled: editMode }}
         dropConfig={{ enabled: editMode, defaultItem: { w: droppingItem?.w ?? 2, h: droppingItem?.h ?? 2 } }}
@@ -488,6 +495,7 @@ export function DashGrid() {
           </div>
         ))}
       </ReactGridLayout>
+      </div>
     </div>
   );
 }

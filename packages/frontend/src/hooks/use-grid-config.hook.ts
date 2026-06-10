@@ -1,18 +1,18 @@
 import { useSettings } from './use-settings.hook';
 
 export interface GridConfig {
-  columns: number;
   rowHeight: number;
   gap: number;
 }
 
-const DEFAULT_GRID: GridConfig = { columns: 12, rowHeight: 80, gap: 12 };
+const DEFAULT_GRID: GridConfig = { rowHeight: 40, gap: 4 };
 
 export function useGridConfig(): GridConfig {
   const settings = useSettings();
+  const grid = settings.grid;
+  // Square cells: rowHeight is the active cell size; columns are derived to fill width.
   return {
-    columns: settings.grid?.columns ?? DEFAULT_GRID.columns,
-    rowHeight: settings.grid?.rowHeight ?? DEFAULT_GRID.rowHeight,
-    gap: settings.grid?.gap ?? DEFAULT_GRID.gap,
+    rowHeight: grid?.cellSize ?? DEFAULT_GRID.rowHeight,
+    gap: grid?.gap ?? DEFAULT_GRID.gap,
   };
 }

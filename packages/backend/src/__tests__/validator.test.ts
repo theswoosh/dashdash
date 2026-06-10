@@ -37,6 +37,34 @@ describe('validateConfig', () => {
     }
   });
 
+  it('treats an empty services.yml as no widgets, not an error', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'dashdash-validator-emptysvc-'));
+    try {
+      // User deleted every widget — file is now empty (js-yaml parses to undefined)
+      writeYml(dir, 'services.yml', '');
+      writeYml(dir, 'integrations.yml', '\n');
+      writeYml(dir, 'widgets.yml', '# only a comment\n');
+      const issues = validateConfig(dir);
+      expect(issues).toEqual([]);
+    } finally {
+      rmSync(dir, { recursive: true });
+    }
+  });
+
+  it('reports error when grid cellSize/sizes violate the 1–100 range', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'dashdash-validator-grid-'));
+    try {
+      writeYml(dir, 'settings.yml', 'grid:\n  cellSize: 200\n  sizes: [10, 0, 40]\n');
+      const issues = validateConfig(dir);
+      const cellIssue = issues.find(i => i.file === 'settings.yml' && i.field === 'grid.cellSize' && i.level === 'error');
+      const sizeIssue = issues.find(i => i.file === 'settings.yml' && i.field === 'grid.sizes[1]' && i.level === 'error');
+      expect(cellIssue).toBeDefined();
+      expect(sizeIssue).toBeDefined();
+    } finally {
+      rmSync(dir, { recursive: true });
+    }
+  });
+
   it('reports error for title exceeding max length', () => {
     const dir = mkdtempSync(join(tmpdir(), 'dashdash-validator-title-'));
     try {
@@ -130,25 +158,6 @@ describe('validateConfig', () => {
     }
   });
 
-  it('reports warning when service layout.w exceeds grid columns', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'dashdash-validator-layout-'));
-    try {
-      writeYml(dir, 'settings.yml', 'grid:\n  columns: 12\n');
-      writeYml(dir, 'services.yml', `
-- title: Wide Widget
-  widget: clock
-  layout:
-    w: 20
-    h: 2
-`);
-      const issues = validateConfig(dir);
-      const layoutIssue = issues.find(i => i.file === 'services.yml' && i.field.includes('layout.w') && i.level === 'warning');
-      expect(layoutIssue).toBeDefined();
-      expect(layoutIssue?.message).toMatch(/exceeds grid columns/);
-    } finally {
-      rmSync(dir, { recursive: true });
-    }
-  });
 
   it('reports error for invalid YAML syntax', () => {
     const dir = mkdtempSync(join(tmpdir(), 'dashdash-validator-yaml-'));

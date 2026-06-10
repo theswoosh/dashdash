@@ -52,8 +52,8 @@ export function ConfigValidationTab() {
             <div key={idx} className="admin-issue-row">
               <span className={`admin-issue-badge admin-issue-badge--${issue.level}`}>{issue.level}</span>
               <span className="admin-issue-file">{issue.file}</span>
-              <span className="admin-issue-field">{issue.field}</span>
-              <span className="admin-issue-msg">{issue.message}</span>
+              <span className="admin-issue-field" title={issue.field}>{issue.field}</span>
+              <span className="admin-issue-msg" title={issue.message}>{issue.message}</span>
             </div>
           ))}
         </div>

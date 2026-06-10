@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync, writeFileSync, readFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import yaml from 'js-yaml';
-import { patchService, appendService, removeService } from '../config/writer.js';
+import { patchService, appendService, removeService, writeGrid } from '../config/writer.js';
 
 const BASE_YML = `
 - id: clock-1
@@ -110,5 +110,22 @@ describe('removeService', () => {
 
   it('throws for unknown id', () => {
     expect(() => removeService(tmpDir, 'ghost')).toThrow("'ghost'");
+  });
+});
+
+describe('writeGrid', () => {
+  it('updates the active cell size and preserves sizes + gap', () => {
+    writeFileSync(join(tmpDir, 'settings.yml'), 'title: Home\ngrid:\n  sizes: [10, 20, 40, 60, 80]\n  cellSize: 40\n  gap: 4\n');
+
+    writeGrid(tmpDir, { cellSize: 60 });
+
+    const raw = yaml.load(readFileSync(join(tmpDir, 'settings.yml'), 'utf8')) as Record<string, unknown>;
+    const grid = raw['grid'] as Record<string, unknown>;
+    expect(grid['cellSize']).toBe(60);
+    // Untouched file-authored fields survive the write.
+    expect(grid['sizes']).toEqual([10, 20, 40, 60, 80]);
+    expect(grid['gap']).toBe(4);
+    // Sibling top-level keys are preserved.
+    expect(raw['title']).toBe('Home');
   });
 });

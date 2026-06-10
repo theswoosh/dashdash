@@ -13,8 +13,8 @@ export interface DashSettings {
   language?: string | undefined;
   searchEngines?: SearchEngine[] | undefined;
   grid?: {
-    columns: number;
-    rowHeight: number;
+    sizes: number[];
+    cellSize: number;
     gap: number;
   } | undefined;
 }

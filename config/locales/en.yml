@@ -59,6 +59,7 @@ config:
   engine: "Engine"
   searchPlaceholder: "Placeholder text"
   comingSoon: "Coming soon"
+  gridSize: "Grid size"
 
 widgetConfig:
   configure: "Configure: {{title}}"

@@ -77,9 +77,15 @@ function validateSettingsYaml(raw: unknown, issues: ConfigIssue[], gridColumns: 
 
   if (data['grid'] && typeof data['grid'] === 'object' && !Array.isArray(data['grid'])) {
     const grid = data['grid'] as Record<string, unknown>;
-    checkNumber(issues, file, 'grid.columns', grid['columns'], { integer: true, min: 1, max: 48 });
-    checkNumber(issues, file, 'grid.rowHeight', grid['rowHeight'], { integer: true, min: 1, max: 500 });
+    checkNumber(issues, file, 'grid.cellSize', grid['cellSize'], { integer: true, min: 1, max: 100 });
     checkNumber(issues, file, 'grid.gap', grid['gap'], { integer: true, min: 0, max: 100 });
+    if (grid['sizes'] !== undefined) {
+      if (!Array.isArray(grid['sizes'])) {
+        issues.push({ file, field: 'grid.sizes', level: 'error', message: 'Must be a list of numbers (1–100)' });
+      } else {
+        grid['sizes'].forEach((s, i) => checkNumber(issues, file, `grid.sizes[${i}]`, s, { integer: true, min: 1, max: 100 }));
+      }
+    }
   }
 
   if (data['background'] && typeof data['background'] === 'object' && !Array.isArray(data['background'])) {
@@ -138,7 +144,7 @@ function entryPrefix(index: number, id: string | undefined): string {
 function validateServicesYaml(raw: unknown, issues: ConfigIssue[], integrationIds: Set<string>, knownWidgetTypes: Set<string>, gridColumns: number): void {
   const file = 'services.yml';
   if (!Array.isArray(raw)) {
-    if (raw !== null) {
+    if (raw != null) {
       issues.push({ file, field: '(root)', level: 'error', message: 'services.yml must be a YAML sequence (list)' });
     }
     return;
@@ -243,7 +249,7 @@ function validateServicesYaml(raw: unknown, issues: ConfigIssue[], integrationId
 function validateIntegrationsYaml(raw: unknown, issues: ConfigIssue[]): void {
   const file = 'integrations.yml';
   if (!Array.isArray(raw)) {
-    if (raw !== null) {
+    if (raw != null) {
       issues.push({ file, field: '(root)', level: 'error', message: 'integrations.yml must be a YAML sequence (list)' });
     }
     return;
@@ -273,7 +279,7 @@ function validateIntegrationsYaml(raw: unknown, issues: ConfigIssue[]): void {
 function validateWidgetsYaml(raw: unknown, issues: ConfigIssue[], knownWidgetTypes: Set<string>): void {
   const file = 'widgets.yml';
   if (!Array.isArray(raw)) {
-    if (raw !== null) {
+    if (raw != null) {
       issues.push({ file, field: '(root)', level: 'error', message: 'widgets.yml must be a YAML sequence (list)' });
     }
     return;
@@ -314,26 +320,15 @@ export function validateConfig(configDir: string): ConfigIssue[] {
   const widgetTemplates = loadWidgetTemplates(configDir);
   const knownWidgetTypes = new Set([...KNOWN_WIDGET_TYPES, ...widgetTemplates.map(t => t.type)]);
 
-  // Default grid columns (used for layout width checks)
-  let gridColumns = 12;
+  // Column count is derived per-screen (fill-to-width), so there is no fixed
+  // column bound for layout-width checks — a high value disables that warning.
+  const gridColumns = 1000;
 
   // Parse and validate each config file
   const files: Array<{ name: string; validate: (raw: unknown) => void }> = [
     {
       name: 'settings.yml',
-      validate: (raw) => {
-        // Extract grid columns for cross-file checks
-        if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
-          const data = raw as Record<string, unknown>;
-          if (data['grid'] && typeof data['grid'] === 'object' && !Array.isArray(data['grid'])) {
-            const grid = data['grid'] as Record<string, unknown>;
-            if (typeof grid['columns'] === 'number' && grid['columns'] > 0) {
-              gridColumns = grid['columns'];
-            }
-          }
-        }
-        validateSettingsYaml(raw, issues, gridColumns);
-      },
+      validate: (raw) => validateSettingsYaml(raw, issues, gridColumns),
     },
     {
       name: 'services.yml',

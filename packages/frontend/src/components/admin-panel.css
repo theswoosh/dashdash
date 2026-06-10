@@ -399,7 +399,7 @@
 .admin-issue-row {
   display: grid;
   grid-template-columns: auto auto 1fr 2fr;
-  align-items: baseline;
+  align-items: start;
   gap: 8px;
   padding: 8px 12px;
   border-radius: 7px;
@@ -448,9 +448,8 @@
 .admin-issue-msg {
   font-size: 0.8rem;
   color: var(--text-muted, rgba(255, 255, 255, 0.7));
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .admin-issue-ok {
