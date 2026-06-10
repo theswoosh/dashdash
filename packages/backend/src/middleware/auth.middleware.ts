@@ -1,5 +1,6 @@
 import type { FastifyRequest, FastifyReply, FastifyInstance } from 'fastify';
 import { validateSession, extendSession } from '../db/sessions.db.js';
+import { SESSION_COOKIE_NAME, getSessionCookieOptions } from './session-cookie.js';
 import type { Db } from '../db/index.js';
 
 const PUBLIC_PATHS = new Set([
@@ -14,7 +15,7 @@ const PUBLIC_PATHS = new Set([
   '/api/locales',
 ]);
 
-const COOKIE_NAME = 'dashdash_session';
+const COOKIE_NAME = SESSION_COOKIE_NAME;
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -39,7 +40,7 @@ export function registerAuthMiddleware(server: FastifyInstance, db: Db, slidingW
 
     const session = validateSession(db, sessionId);
     if (!session) {
-      void reply.clearCookie(COOKIE_NAME, { path: '/' });
+      void reply.clearCookie(COOKIE_NAME, getSessionCookieOptions());
       return reply.code(401).send({ error: 'Session expired or invalid' });
     }
 

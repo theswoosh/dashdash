@@ -9,10 +9,11 @@ import { hashPassword, verifyPassword, generateResetToken, hashResetToken } from
 import { sendPasswordResetEmail, isMailConfigured } from '../services/mail.service.js';
 import { buildOidcConfig, buildAuthorizationUrl, exchangeCode, extractUserClaims, generateCodeVerifier, generateState, getEndSessionUrl } from '../services/oidc.service.js';
 import type { AuthConfig, MailConfig, OidcConfig } from '../config/schemas.js';
+import { SESSION_COOKIE_NAME, getSessionCookieOptions } from '../middleware/session-cookie.js';
 
 const OIDC_STATE_EXPIRES_SECONDS = 600; // 10 minutes
 
-const COOKIE_NAME = 'dashdash_session';
+const COOKIE_NAME = SESSION_COOKIE_NAME;
 const RESET_TOKEN_EXPIRES_SECONDS = 3600; // 1 hour
 
 const RATE_WINDOWS = {
@@ -90,12 +91,9 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
   pruneTimer.unref();
 
   return async (fastify) => {
+    const clearCookieOpts = getSessionCookieOptions();
     const cookieOpts = {
-      httpOnly: true,
-      secure: process.env['DASHDASH_COOKIE_SECURE'] !== 'false'
-        && process.env['NODE_ENV'] === 'production',
-      sameSite: 'strict' as const,
-      path: '/',
+      ...clearCookieOpts,
       maxAge: authConfig.session.maxAgeSeconds,
     };
 
@@ -174,7 +172,7 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
       const sessionId = request.cookies?.[COOKIE_NAME];
       const user = findUserById(db, request.userId);
       if (sessionId) destroySession(db, sessionId);
-      void reply.clearCookie(COOKIE_NAME, { path: '/' });
+      void reply.clearCookie(COOKIE_NAME, clearCookieOpts);
 
       // For OIDC users, check if the provider supports RP-initiated logout.
       if (user?.auth_method === 'oidc' && oidcConfig.enabled && oidcConfig.issuer) {
@@ -263,7 +261,7 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
 
       destroyAllUserSessions(db, request.userId);
       deleteUser(db, request.userId);
-      reply.clearCookie('dashdash_session', { path: '/' });
+      reply.clearCookie(COOKIE_NAME, clearCookieOpts);
       return reply.send({ ok: true });
     });
 
