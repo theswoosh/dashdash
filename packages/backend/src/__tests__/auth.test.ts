@@ -478,3 +478,51 @@ describe('Admin user management', () => {
     expect(res.json().role).toBe('user');
   });
 });
+
+// ============================================================
+// Rate limiting (SQLite-backed)
+// ============================================================
+
+describe('login rate limiting', () => {
+  beforeEach(setup);
+  afterEach(teardown);
+
+  it('blocks the 6th attempt in the window with 429', async () => {
+    await register();
+    for (let i = 0; i < 5; i++) {
+      const res = await login('admin@test.local', 'wrongpassword');
+      expect(res.statusCode).toBe(401);
+    }
+    const blocked = await login('admin@test.local', 'wrongpassword');
+    expect(blocked.statusCode).toBe(429);
+  });
+
+  it('lockout survives a server restart (persisted in SQLite)', async () => {
+    await register();
+    for (let i = 0; i < 5; i++) {
+      await login('admin@test.local', 'wrongpassword');
+    }
+
+    // Simulate a container restart: close app + db, rebuild on the same dataDir.
+    await server.close();
+    db.close();
+    ({ server, db } = await buildApp({ dataDir: tmpDir, configDir: tmpDir }));
+    await server.ready();
+
+    const blocked = await login('admin@test.local', 'password123');
+    expect(blocked.statusCode).toBe(429);
+  });
+
+  it('successful login resets the failure counter', async () => {
+    await register();
+    for (let i = 0; i < 4; i++) {
+      await login('admin@test.local', 'wrongpassword');
+    }
+    const ok = await login('admin@test.local', 'password123');
+    expect(ok.statusCode).toBe(200);
+
+    // Counter was cleared — further attempts start a fresh window.
+    const afterReset = await login('admin@test.local', 'wrongpassword');
+    expect(afterReset.statusCode).toBe(401);
+  });
+});

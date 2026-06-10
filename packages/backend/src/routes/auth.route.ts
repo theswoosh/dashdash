@@ -4,6 +4,7 @@ import { z } from 'zod';
 import type { Db } from '../db/index.js';
 import { findUserByEmail, findUserById, createUser, updateUser, deleteUser, countAdmins, isFirstUser, findUserByOidc, createOidcUser, linkOidcToUser } from '../db/users.db.js';
 import { createSession, destroySession, destroyAllUserSessions } from '../db/sessions.db.js';
+import { consumeRateLimit, resetRateLimit, cleanupExpiredRateLimits } from '../db/rate-limits.db.js';
 import { createOidcState, consumeOidcState } from '../db/oidc-state.db.js';
 import { hashPassword, verifyPassword, generateResetToken, hashResetToken } from '../services/password.service.js';
 import { sendPasswordResetEmail, isMailConfigured } from '../services/mail.service.js';
@@ -21,21 +22,6 @@ const RATE_WINDOWS = {
   register: { maxAttempts: 3,  windowMs: 60 * 60 * 1000 },
   forgot:   { maxAttempts: 3,  windowMs: 60 * 60 * 1000 },
 } as const;
-
-function checkRateLimit(store: Map<string, { count: number; windowStart: number }>, key: string, limitKey: keyof typeof RATE_WINDOWS): boolean {
-  const { maxAttempts, windowMs } = RATE_WINDOWS[limitKey]!;
-  const now = Date.now();
-  const entry = store.get(key);
-
-  if (!entry || now - entry.windowStart > windowMs) {
-    store.set(key, { count: 1, windowStart: now });
-    return true;
-  }
-
-  if (entry.count >= maxAttempts) return false;
-  entry.count++;
-  return true;
-}
 
 const RegisterBodySchema = z.object({
   email: z.string().email(),
@@ -66,27 +52,16 @@ const ResetPasswordBodySchema = z.object({
 
 const RATE_LIMIT_PRUNE_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
 
-function pruneExpiredEntries(
-  store: Map<string, { count: number; windowStart: number }>,
-  windowMs: number
-): void {
-  const now = Date.now();
-  for (const [key, entry] of store) {
-    if (now - entry.windowStart > windowMs) store.delete(key);
-  }
-}
-
 export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: MailConfig, oidcConfig: OidcConfig): FastifyPluginAsync {
-  // Rate limiter stores are per-server-instance — reset when server restarts or test teardown.
-  const loginAttempts = new Map<string, { count: number; windowStart: number }>();
-  const registerAttempts = new Map<string, { count: number; windowStart: number }>();
-  const forgotAttempts = new Map<string, { count: number; windowStart: number }>();
+  // Rate limits live in SQLite so lockouts survive server restarts.
+  function isWithinRateLimit(scope: keyof typeof RATE_WINDOWS, identifier: string): boolean {
+    const { maxAttempts, windowMs } = RATE_WINDOWS[scope];
+    return consumeRateLimit(db, `${scope}:${identifier}`, maxAttempts, windowMs);
+  }
 
-  // Prevent unbounded memory growth — prune expired windows every 15 minutes.
+  // Prevent unbounded table growth — prune expired windows every 15 minutes.
   const pruneTimer = setInterval(() => {
-    pruneExpiredEntries(loginAttempts, RATE_WINDOWS.login.windowMs);
-    pruneExpiredEntries(registerAttempts, RATE_WINDOWS.register.windowMs);
-    pruneExpiredEntries(forgotAttempts, RATE_WINDOWS.forgot.windowMs);
+    cleanupExpiredRateLimits(db);
   }, RATE_LIMIT_PRUNE_INTERVAL_MS);
   pruneTimer.unref();
 
@@ -112,7 +87,7 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
       }
 
       const ip = request.ip;
-      if (!checkRateLimit(registerAttempts, ip, 'register')) {
+      if (!isWithinRateLimit('register', ip)) {
         return reply.code(429).send({ error: 'Too many registration attempts' });
       }
 
@@ -144,7 +119,7 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
 
       const { email, password } = parsed.data;
 
-      if (!checkRateLimit(loginAttempts, email.toLowerCase(), 'login')) {
+      if (!isWithinRateLimit('login', email.toLowerCase())) {
         return reply.code(429).send({ error: 'Too many login attempts. Try again later.' });
       }
 
@@ -160,6 +135,10 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
       if (user.is_active === 0) {
         return reply.code(403).send({ error: 'Your account has been disabled. Contact an administrator.' });
       }
+
+      // Successful login clears the counter — only failures should accumulate
+      // toward the lockout now that limits persist across restarts.
+      resetRateLimit(db, `login:${email.toLowerCase()}`);
 
       const sessionId = createSession(db, user.id, authConfig.session.maxAgeSeconds);
       void reply.setCookie(COOKIE_NAME, sessionId, cookieOpts);
@@ -274,7 +253,7 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
       }
 
       const { email } = parsed.data;
-      if (!checkRateLimit(forgotAttempts, email.toLowerCase(), 'forgot')) {
+      if (!isWithinRateLimit('forgot', email.toLowerCase())) {
         // Still return 200 to prevent enumeration
         return reply.send({ ok: true });
       }
