@@ -96,7 +96,8 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
         scriptSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", 'data:', 'https:'],
-        frameSrc: ["'self'", 'https:'],
+        // http: too — the iframe widget embeds homelab services that are plain http on LAN
+        frameSrc: ["'self'", 'https:', 'http:'],
         connectSrc: ["'self'", 'wss:'],
       },
     },
