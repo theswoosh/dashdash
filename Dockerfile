@@ -1,5 +1,6 @@
 # ── Stage 0: Shared base with pnpm ────────────────────────────────────────────
-FROM node:20-alpine AS base
+# node:22-alpine (Node 20 EOL 2026-04-30); digest-pinned for reproducible builds
+FROM node:22-alpine@sha256:968df39aedcea65eeb078fb336ed7191baf48f972b4479711397108be0966920 AS base
 RUN corepack enable && corepack prepare pnpm@10.30.1 --activate
 
 
@@ -47,7 +48,7 @@ RUN pnpm --filter @dashdash/backend --prod deploy --legacy /deploy
 
 
 # ── Stage 3: Runtime image ────────────────────────────────────────────────────
-FROM node:20-alpine AS runtime
+FROM node:22-alpine@sha256:968df39aedcea65eeb078fb336ed7191baf48f972b4479711397108be0966920 AS runtime
 
 # su-exec: lightweight privilege-drop utility (replaces gosu for alpine)
 RUN apk add --no-cache su-exec
@@ -83,8 +84,11 @@ ENV NODE_ENV=production \
 
 VOLUME ["/config", "/data"]
 
+# --spider fails on any non-2xx status (plain -qO- succeeds on some error responses).
+# 127.0.0.1, not localhost: busybox wget resolves localhost to ::1 first and the
+# server binds IPv4 0.0.0.0 — the ::1 connection is refused with no IPv4 fallback.
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-  CMD wget -qO- http://localhost:3000/api/health || exit 1
+  CMD wget -q --spider http://127.0.0.1:3000/api/health || exit 1
 
 EXPOSE 3000
 

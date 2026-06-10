@@ -31,7 +31,7 @@
 |---|---|
 | Frontend | React 19, Vite 8, SWR, Zustand |
 | Grid | react-grid-layout |
-| Backend | Node.js 20, Fastify |
+| Backend | Node.js 22, Fastify |
 | Database | SQLite (better-sqlite3) |
 | Config | YAML + Zod 4, live reload via chokidar |
 | Auth | Local + OIDC Authorization Code + PKCE (openid-client) |
@@ -100,7 +100,7 @@ DASHDASH_OIDC_SECRET=your-client-secret
 
 ## Development
 
-Requires Node.js 20 and pnpm.
+Requires Node.js 22 and pnpm.
 
 ```bash
 pnpm install
