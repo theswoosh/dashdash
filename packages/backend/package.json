@@ -5,7 +5,8 @@
   "type": "module",
   "main": "dist/server.js",
   "files": [
-    "dist"
+    "dist",
+    "seed"
   ],
   "scripts": {
     "dev": "node --watch --loader ts-node/esm src/server.ts",
@@ -16,7 +17,6 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@dashdash/types": "workspace:*",
     "@fastify/cookie": "^11.0.2",
     "@fastify/cors": "^11.2.0",
     "@fastify/helmet": "^13.0.2",

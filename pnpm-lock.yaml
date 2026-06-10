@@ -40,9 +40,6 @@ importers:
 
   packages/backend:
     dependencies:
-      '@dashdash/types':
-        specifier: workspace:*
-        version: link:../types
       '@fastify/cookie':
         specifier: ^11.0.2
         version: 11.0.2
