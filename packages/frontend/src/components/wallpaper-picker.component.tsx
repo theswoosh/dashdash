@@ -1,11 +1,40 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Ban, Plus, Check } from 'lucide-react';
 import type { WallpaperEntry } from '../hooks/use-board.hook';
+import { useBehavior } from '../hooks/use-behavior.hook';
+import { useHoldAction } from '../hooks/use-hold-action.hook';
 import { useT } from '../i18n';
 import './wallpaper-picker.css';
 
 const MAX_WALLPAPERS = 8; // 3×3 grid − 1 reserved slot for "no background"
+
+function HoldDeleteWallpaperButton({ wallpaperId, holdToDeleteMs, onDelete }: {
+  wallpaperId: string;
+  holdToDeleteMs: number;
+  onDelete: (id: string) => void;
+}) {
+  const t = useT();
+  const deleteWallpaper = useCallback(() => onDelete(wallpaperId), [onDelete, wallpaperId]);
+  const { isHolding, startHold, cancelHold } = useHoldAction(deleteWallpaper, holdToDeleteMs);
+
+  return (
+    <button
+      className={`wp-delete${isHolding ? ' wp-delete--holding' : ''}`}
+      style={{ '--hold-delete-duration': `${holdToDeleteMs}ms` } as React.CSSProperties}
+      onMouseDown={startHold}
+      onMouseUp={cancelHold}
+      onMouseLeave={cancelHold}
+      onTouchStart={startHold}
+      onTouchEnd={cancelHold}
+      title={t('widgetCard.holdToDelete')}
+      aria-label={t('wallpaper.deleteWallpaper')}
+    >
+      <span className="wp-delete__fill" />
+      <span className="wp-delete__icon"><X size={11} /></span>
+    </button>
+  );
+}
 
 interface Props {
   boardId: string;
@@ -27,6 +56,7 @@ export function WallpaperPickerModal({
   onClose,
 }: Props) {
   const t = useT();
+  const { holdToDeleteMs } = useBehavior();
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -140,13 +170,11 @@ export function WallpaperPickerModal({
                       <Check size={10} />
                     </span>
                   )}
-                  <button
-                    className="wp-delete"
-                    onClick={() => onDelete(wallpaper.id)}
-                    aria-label={t('wallpaper.deleteWallpaper')}
-                  >
-                    <X size={11} />
-                  </button>
+                  <HoldDeleteWallpaperButton
+                    wallpaperId={wallpaper.id}
+                    holdToDeleteMs={holdToDeleteMs}
+                    onDelete={onDelete}
+                  />
                 </div>
               );
             }
