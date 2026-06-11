@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "dev": "node --watch --loader ts-node/esm src/server.ts",
-    "build": "tsc && cp -r src/db/migrations dist/db/migrations",
+    "build": "rm -rf dist && tsc && cp -r src/db/migrations dist/db/migrations",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
