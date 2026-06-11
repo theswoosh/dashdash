@@ -195,10 +195,23 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
       root: publicDir,
       prefix: '/',
       wildcard: false,
+      index: false,                // '/' falls through to the SPA handler below
+      preCompressed: true,         // serve .br/.gz siblings produced by the frontend build
+      cacheControl: false,         // headers set per file class below
+      setHeaders: (res, filePath) => {
+        // Vite content-hashes everything under assets/ — safe to cache forever.
+        // Anything else (index.html) must revalidate so deploys propagate.
+        res.setHeader(
+          'cache-control',
+          filePath.includes('/assets/')
+            ? 'public, max-age=31536000, immutable'
+            : 'no-cache'
+        );
+      },
     });
 
     server.setNotFoundHandler((_req, reply) => {
-      void reply.type('text/html').send(indexHtml);
+      void reply.header('cache-control', 'no-cache').type('text/html').send(indexHtml);
     });
   }
 
