@@ -46,7 +46,6 @@ id_ed25519
 *.secrets
 .htpasswd
 
-
 # Build caches
 .next/
 out/
@@ -81,7 +80,6 @@ yarn-error.log*
 
 # Certificates
 *.cert
-
 
 # E2E
 e2e/.runtime/
