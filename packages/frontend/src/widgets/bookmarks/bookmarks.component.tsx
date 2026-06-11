@@ -30,7 +30,7 @@ export function BookmarksWidget({ options }: WidgetProps) {
     <div className="bookmarks-widget">
       {validLinks.map((link, i) => (
         <a
-          key={i}
+          key={`${link.url}#${i}`}
           href={link.url}
           className="bookmarks-widget__link"
           target="_blank"

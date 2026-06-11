@@ -1,10 +1,11 @@
+import { memo } from 'react';
 import { useUIStore } from '../store/uiStore';
 import { WIDGET_CATALOG } from '../widgets/catalog';
 import { useWidgetTemplates } from '../hooks/use-widget-templates.hook';
 import { useT } from '../i18n';
 import type { WidgetTemplate } from '../widgets/catalog';
 
-function SidebarItem({ template }: { template: WidgetTemplate }) {
+const SidebarItem = memo(function SidebarItem({ template }: { template: WidgetTemplate }) {
   const t = useT();
   const setDroppingItem = useUIStore(s => s.setDroppingItem);
   const widgetTemplates = useWidgetTemplates();
@@ -41,7 +42,7 @@ function SidebarItem({ template }: { template: WidgetTemplate }) {
       </div>
     </div>
   );
-}
+});
 
 export function WidgetsTab() {
   const t = useT();

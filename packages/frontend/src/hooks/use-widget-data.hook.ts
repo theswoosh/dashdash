@@ -1,11 +1,9 @@
+import { useEffect, useRef } from 'react';
 import useSWR from 'swr';
 import type { WidgetDataResponse } from '@dashdash/types';
 
 const REFRESH_BASE_MS = 30_000;
 const STAGGER_WINDOW_MS = 10_000;
-
-const fetcher = (url: string): Promise<WidgetDataResponse> =>
-  fetch(url).then(r => r.json() as Promise<WidgetDataResponse>);
 
 /** Spread polls across a 10 s window to avoid simultaneous bursts. */
 function refreshInterval(serviceId: string): number {
@@ -16,11 +14,21 @@ function refreshInterval(serviceId: string): number {
 /**
  * Fetches widget data from the backend.
  * Passes a null SWR key for clientOnly widgets — SWR skips the fetch entirely.
+ * In-flight requests are aborted when the widget unmounts (delete, type switch)
+ * so slow backends don't accumulate orphaned requests.
  */
 export function useWidgetData(serviceId: string, clientOnly: boolean) {
+  const abortRef = useRef<AbortController | null>(null);
+  useEffect(() => () => abortRef.current?.abort(), []);
+
   const { data, error, isLoading } = useSWR<WidgetDataResponse>(
     clientOnly ? null : `/api/widget/${serviceId}/data`,
-    fetcher,
+    (url: string) => {
+      const controller = new AbortController();
+      abortRef.current = controller;
+      return fetch(url, { signal: controller.signal })
+        .then(r => r.json() as Promise<WidgetDataResponse>);
+    },
     { refreshInterval: refreshInterval(serviceId), revalidateOnFocus: false }
   );
 
