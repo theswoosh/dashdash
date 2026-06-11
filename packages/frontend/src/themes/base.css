@@ -130,3 +130,26 @@ body {
   background: var(--border-color);
   border-radius: 3px;
 }
+
+/* ── Accessibility baseline ──────────────────────────────────────────────── */
+
+/* Keyboard users get a visible focus ring; mouse clicks don't trigger it. */
+:focus-visible {
+  outline: 2px solid var(--accent, #7aa2f7);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Honor the OS-level reduced-motion preference: collapse transitions and
+   animations to near-zero. Layout drag still works — only cosmetic motion
+   (card transitions, hover effects, progress fills) is disabled. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
