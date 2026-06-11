@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import { useState, useMemo, useRef, useCallback, useEffect, memo } from 'react';
 import ReactGridLayout, { noCompactor } from 'react-grid-layout';
 import type { Layout, LayoutItem } from 'react-grid-layout';
 import { GripVertical, Settings, X } from 'lucide-react';
@@ -12,6 +12,9 @@ import { WidgetCard } from './widget-card.component';
 import './FrameCard.css';
 
 const CONTAINER_PADDING: [number, number] = [0, 0];
+const FRAME_DROP_CONFIG = { enabled: false };
+const FRAME_COMPACTOR = { ...noCompactor, allowOverlap: true };
+const CHILD_DRAG_HANDLE = '.frame-widget-drag-handle';
 
 function servicesAsLayout(services: ServiceConfig[], templates: WidgetTemplateDef[]): LayoutItem[] {
   return services.map(s => {
@@ -74,7 +77,7 @@ interface Props {
   reloadServices: () => unknown;
 }
 
-export function FrameCard({ service, editMode, widgetTemplates, gridConfig, frameLayout, onDelete, reloadServices }: Props) {
+export const FrameCard = memo(function FrameCard({ service, editMode, widgetTemplates, gridConfig, frameLayout, onDelete, reloadServices }: Props) {
   const t = useT();
   const Card = useThemeCard();
   const { holdToDeleteMs } = useBehavior();
@@ -162,7 +165,12 @@ export function FrameCard({ service, editMode, widgetTemplates, gridConfig, fram
   const { rowHeight, gap } = gridConfig;
   const frameCols = frameLayout?.w ?? service.layout.w;
   const margin = useMemo<[number, number]>(() => [gap, gap], [gap]);
-  const childDragHandle = '.frame-widget-drag-handle';
+  const innerGridConfig = useMemo(
+    () => ({ cols: frameCols, rowHeight, margin, containerPadding: CONTAINER_PADDING }),
+    [frameCols, rowHeight, margin],
+  );
+  const dragConfig = useMemo(() => ({ enabled: editMode, handle: CHILD_DRAG_HANDLE }), [editMode]);
+  const resizeConfig = useMemo(() => ({ enabled: editMode }), [editMode]);
   const isHeaderHidden = service.options?.['hideHeader'] === true && !editMode;
   const bgColor = typeof service.options?.['bg_color'] === 'string' ? service.options['bg_color'] : undefined;
   const cardStyle = bgColor ? { '--card-bg': bgColor } as React.CSSProperties : undefined;
@@ -199,11 +207,11 @@ export function FrameCard({ service, editMode, widgetTemplates, gridConfig, fram
           className="frame-grid"
           layout={layout.length > 0 ? layout : baseLayout}
           width={width}
-          gridConfig={{ cols: frameCols, rowHeight, margin, containerPadding: CONTAINER_PADDING }}
-          dragConfig={{ enabled: editMode, handle: childDragHandle }}
-          resizeConfig={{ enabled: editMode }}
-          dropConfig={{ enabled: false }}
-          compactor={{ ...noCompactor, allowOverlap: true }}
+          gridConfig={innerGridConfig}
+          dragConfig={dragConfig}
+          resizeConfig={resizeConfig}
+          dropConfig={FRAME_DROP_CONFIG}
+          compactor={FRAME_COMPACTOR}
           onDragStop={syncLayoutAfterDrag}
           onLayoutChange={recordDragPositions}
         >
@@ -221,4 +229,4 @@ export function FrameCard({ service, editMode, widgetTemplates, gridConfig, fram
       </div>
     </Card>
   );
-}
+});

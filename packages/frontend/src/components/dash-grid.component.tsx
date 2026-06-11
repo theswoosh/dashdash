@@ -433,6 +433,18 @@ export function DashGrid() {
     () => editMode ? { i: '__dropping-elem__', x: 0, y: 0, w: droppingItem?.w ?? 2, h: droppingItem?.h ?? 2 } : undefined,
     [editMode, droppingItem?.w, droppingItem?.h],
   );
+  // Stable RGL config objects — recreating them inline would re-render the whole
+  // grid subtree (incl. memoized FrameCard/WidgetCard children) on every render.
+  const rglGridConfig = useMemo(
+    () => ({ cols, rowHeight, margin, containerPadding: CONTAINER_PADDING }),
+    [cols, rowHeight, margin],
+  );
+  const rglDragConfig = useMemo(() => ({ enabled: editMode, handle: '.grid-drag-handle' }), [editMode]);
+  const rglResizeConfig = useMemo(() => ({ enabled: editMode }), [editMode]);
+  const rglDropConfig = useMemo(
+    () => ({ enabled: editMode, defaultItem: { w: droppingItem?.w ?? 2, h: droppingItem?.h ?? 2 } }),
+    [editMode, droppingItem?.w, droppingItem?.h],
+  );
 
   if (rootServices.length === 0 && !editMode) {
     return (
@@ -462,17 +474,17 @@ export function DashGrid() {
           style={{ minHeight: '100%' }}
           layout={layout.length > 0 ? layout : baseLayout}
           width={gridWidth}
-          gridConfig={{ cols, rowHeight, margin, containerPadding: CONTAINER_PADDING }}
-        dragConfig={{ enabled: editMode, handle: '.grid-drag-handle' }}
-        resizeConfig={{ enabled: editMode }}
-        dropConfig={{ enabled: editMode, defaultItem: { w: droppingItem?.w ?? 2, h: droppingItem?.h ?? 2 } }}
-        compactor={noCompactor}
-        {...(rglDropItem !== undefined && { droppingItem: rglDropItem })}
-        onDrop={createWidgetFromDrop}
-        onDragStart={lockFramesDuringDrag}
-        onDragStop={syncLayoutAfterDrag}
-        onLayoutChange={recordDragPositions}
-      >
+          gridConfig={rglGridConfig}
+          dragConfig={rglDragConfig}
+          resizeConfig={rglResizeConfig}
+          dropConfig={rglDropConfig}
+          compactor={noCompactor}
+          {...(rglDropItem !== undefined && { droppingItem: rglDropItem })}
+          onDrop={createWidgetFromDrop}
+          onDragStart={lockFramesDuringDrag}
+          onDragStop={syncLayoutAfterDrag}
+          onLayoutChange={recordDragPositions}
+        >
         {rootServices.map(s => (
           <div key={s.id} {...(isFrameService(s) ? { 'data-frame-id': s.id } : {})}>
             {isFrameService(s) ? (
