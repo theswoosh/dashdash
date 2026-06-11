@@ -62,3 +62,11 @@ export interface ServiceConfig {
   options?: Record<string, unknown> | undefined;
   children?: ServiceConfig[] | undefined;
 }
+
+/** Issue reported by the backend config validator (services/settings/integrations YAML). */
+export interface ConfigIssue {
+  file: string;
+  field: string;
+  level: 'error' | 'warning';
+  message: string;
+}

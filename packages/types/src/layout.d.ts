@@ -1,0 +1,13 @@
+export interface Layout {
+    i: string;
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    minW?: number;
+    minH?: number;
+    maxW?: number;
+    maxH?: number;
+    static?: boolean;
+}
+//# sourceMappingURL=layout.d.ts.map

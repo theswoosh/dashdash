@@ -19,7 +19,7 @@ COPY tsconfig.base.json          ./
 COPY packages/types              ./packages/types
 COPY packages/frontend           ./packages/frontend
 
-RUN pnpm --filter @dashdash/frontend build
+RUN pnpm --filter @dashdash/types build && pnpm --filter @dashdash/frontend build
 
 
 # ── Stage 2: Build backend ────────────────────────────────────────────────────
@@ -38,8 +38,8 @@ COPY tsconfig.base.json      ./
 COPY packages/types          ./packages/types
 COPY packages/backend        ./packages/backend
 
-# Compile TypeScript → dist/
-RUN pnpm --filter @dashdash/backend build
+# Compile TypeScript → dist/ (types package provides the shared .d.ts)
+RUN pnpm --filter @dashdash/types build && pnpm --filter @dashdash/backend build
 
 # Bundle into a self-contained deployment directory:
 # - flat node_modules (no virtual-store symlinks) with production deps only

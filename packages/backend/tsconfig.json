@@ -6,10 +6,7 @@
     "moduleResolution": "node16",
     "lib": ["ES2022"],
     "outDir": "./dist",
-    "rootDir": "./src",
-    "paths": {
-      "@dashdash/types": ["../types/src/index.ts"]
-    }
+    "rootDir": "./src"
   },
   "include": ["src"],
   "ts-node": {

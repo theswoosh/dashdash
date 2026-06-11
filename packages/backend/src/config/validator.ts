@@ -1,15 +1,11 @@
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import yaml from 'js-yaml';
+import type { ConfigIssue } from '@dashdash/types';
 import { loadIntegrations } from './integrations.js';
 import { loadWidgetTemplates } from './widgetTemplates.js';
 
-export interface ConfigIssue {
-  file: string;
-  field: string;
-  level: 'error' | 'warning';
-  message: string;
-}
+export type { ConfigIssue };
 
 const KNOWN_WIDGET_TYPES = ['clock', 'healthcheck', 'stats', 'bookmarks', 'search', 'notepad', 'iframe', 'frame'];
 

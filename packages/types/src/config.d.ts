@@ -1,0 +1,67 @@
+export type ThemeId = 'glass' | 'dark' | 'light' | 'custom';
+export type BackgroundKind = 'image' | 'gradient' | 'color' | 'unsplash' | 'video';
+export interface BackgroundConfig {
+    type: BackgroundKind;
+    url?: string;
+    blur?: number;
+    overlay?: string;
+    parallax?: boolean;
+}
+export interface GridConfig {
+    columns: number;
+    rowHeight: number;
+    gap: number;
+}
+export interface OidcConfig {
+    enabled: boolean;
+    issuer: string;
+    clientId: string;
+    scopes: string;
+    groupsClaim?: string;
+}
+export interface AuthConfig {
+    oidc?: OidcConfig;
+    local?: {
+        enabled: boolean;
+    };
+}
+export interface Settings {
+    title: string;
+    theme: ThemeId;
+    background?: BackgroundConfig;
+    grid: GridConfig;
+    auth?: AuthConfig;
+    css?: {
+        custom?: string;
+    };
+}
+export interface IntegrationConfig {
+    id: string;
+    type: string;
+    url: string;
+    [key: string]: unknown;
+}
+export interface ServiceLayout {
+    w: number;
+    h: number;
+    x?: number;
+    y?: number;
+}
+export interface ServiceConfig {
+    id: string;
+    title: string;
+    icon?: string | undefined;
+    integration?: string | undefined;
+    widget: string;
+    layout: ServiceLayout;
+    options?: Record<string, unknown> | undefined;
+    children?: ServiceConfig[] | undefined;
+}
+/** Issue reported by the backend config validator (services/settings/integrations YAML). */
+export interface ConfigIssue {
+    file: string;
+    field: string;
+    level: 'error' | 'warning';
+    message: string;
+}
+//# sourceMappingURL=config.d.ts.map

@@ -4,10 +4,10 @@
   "private": true,
   "packageManager": "pnpm@10.30.1",
   "scripts": {
-    "dev": "pnpm --parallel -r run dev",
+    "dev": "pnpm --filter @dashdash/types build && pnpm --parallel -r run dev",
     "build": "pnpm -r run build",
     "lint": "eslint packages/*/src",
-    "typecheck": "pnpm -r run typecheck",
+    "typecheck": "pnpm --filter @dashdash/types build && pnpm -r run typecheck",
     "test": "pnpm -r run test",
     "format": "prettier --write \"packages/*/src/**/*.{ts,tsx,css}\"",
     "kill-dev": "bash scripts/kill-dev.sh"

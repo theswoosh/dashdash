@@ -1,13 +1,7 @@
 import useSWR from 'swr';
 import { RefreshCw, CheckCircle } from 'lucide-react';
 import { useT } from '../i18n';
-
-interface ConfigIssue {
-  file: string;
-  field: string;
-  level: 'error' | 'warning';
-  message: string;
-}
+import type { ConfigIssue } from '@dashdash/types';
 
 async function jsonFetcher<T>(url: string): Promise<T> {
   const res = await fetch(url);
