@@ -139,6 +139,8 @@ wallpaper:
   setAsWallpaper: "Als Hintergrundbild setzen"
 
 widgetCard:
+  crashed: "Widget abgestürzt"
+  retry: "Erneut versuchen"
   holdToDelete: "Halten zum Löschen"
   holdToDeleteAria: "Widget durch Halten löschen"
   dragToMove: "Ziehen zum Verschieben"

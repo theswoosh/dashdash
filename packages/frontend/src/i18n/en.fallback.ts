@@ -142,6 +142,8 @@ export const EN_FALLBACK: Record<string, unknown> = {
     setAsWallpaper: 'Set as wallpaper',
   },
   widgetCard: {
+    crashed: 'Widget crashed',
+    retry: 'Retry',
     holdToDelete: 'Hold to delete',
     holdToDeleteAria: 'Hold to delete widget',
     dragToMove: 'Drag to move',

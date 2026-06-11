@@ -20,3 +20,26 @@
   line-height: 1.4;
   word-break: break-word;
 }
+
+.widget-error-boundary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.widget-error-boundary__retry {
+  margin-bottom: 12px;
+  padding: 4px 12px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2));
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.widget-error-boundary__retry:hover {
+  color: var(--text-primary, inherit);
+}

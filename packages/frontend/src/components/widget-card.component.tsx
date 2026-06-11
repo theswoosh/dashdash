@@ -12,6 +12,7 @@ import { useBehavior } from '../hooks/use-behavior.hook';
 import { useT } from '../i18n';
 import { WidgetSkeleton } from '../widgets/shared/widget-skeleton.component';
 import { WidgetError } from '../widgets/shared/widget-error.component';
+import { WidgetErrorBoundary } from '../widgets/shared/widget-error-boundary.component';
 import './WidgetCard.css';
 
 function HoldClearNotepadButton({ serviceId, holdToDeleteMs }: { serviceId: string; holdToDeleteMs: number }) {
@@ -159,15 +160,21 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
   );
 
   const widgetContent = (
-    <Suspense fallback={<WidgetSkeleton />}>
-      <Component
-        serviceId={service.id}
-        options={widgetOptions}
-        data={data}
-        error={error}
-        loading={loading}
-      />
-    </Suspense>
+    <WidgetErrorBoundary
+      widgetType={service.widget}
+      crashedLabel={t('widgetCard.crashed')}
+      retryLabel={t('widgetCard.retry')}
+    >
+      <Suspense fallback={<WidgetSkeleton />}>
+        <Component
+          serviceId={service.id}
+          options={widgetOptions}
+          data={data}
+          error={error}
+          loading={loading}
+        />
+      </Suspense>
+    </WidgetErrorBoundary>
   );
 
   const body = (() => {
