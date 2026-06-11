@@ -11,10 +11,11 @@ background:
   overlay: "rgba(0,0,0,0.35)"
   parallax: false
 
+# Advanced, YAML-only — no UI. Square cells; column count fills the viewport.
+# Changing cellSize rescales all widget layouts (stored in grid units).
 grid:
-  columns: 24          # increase for finer horizontal placement
-  rowHeight: 40        # px per row unit — decrease for finer vertical placement
-  gap: 10              # px gap between widgets
+  cellSize: 10         # px per square cell
+  gap: 4               # px gap between cells
 
 auth:
   local:

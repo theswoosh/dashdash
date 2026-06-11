@@ -72,7 +72,6 @@ export const EN_FALLBACK: Record<string, unknown> = {
     engine: 'Engine',
     searchPlaceholder: 'Placeholder text',
     comingSoon: 'Coming soon',
-    gridSize: 'Grid size',
   },
   widgetConfig: {
     configure: 'Configure: {{title}}',

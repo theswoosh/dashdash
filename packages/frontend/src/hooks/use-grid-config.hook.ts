@@ -6,7 +6,8 @@ export interface GridConfig {
   gap: number;
 }
 
-const DEFAULT_GRID: GridConfig = { rowHeight: 40, gap: 4 };
+// Hardcoded fine-grid fallback — used when settings.yml has no grid block.
+const DEFAULT_GRID: GridConfig = { rowHeight: 10, gap: 4 };
 
 export function useGridConfig(): GridConfig {
   const settings = useSettings();

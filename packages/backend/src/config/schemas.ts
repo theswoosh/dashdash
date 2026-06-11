@@ -1,10 +1,16 @@
 import { z } from 'zod';
 
+// Layout bounds in grid units (1 unit = cellSize + gap px, default 14). Sized for
+// large displays: a 4K screen is ~274 units across. One out-of-bounds widget fails
+// the whole services.yml parse (board renders empty), so keep these generous.
+export const MAX_LAYOUT_SIZE_UNITS = 500;
+export const MAX_LAYOUT_POSITION_UNITS = 2000;
+
 const ServiceLayoutSchema = z.object({
-  w: z.number().int().positive().max(48),
-  h: z.number().int().positive().max(48),
-  x: z.number().int().nonnegative().max(200).default(0),
-  y: z.number().int().nonnegative().max(200).default(0),
+  w: z.number().int().positive().max(MAX_LAYOUT_SIZE_UNITS),
+  h: z.number().int().positive().max(MAX_LAYOUT_SIZE_UNITS),
+  x: z.number().int().nonnegative().max(MAX_LAYOUT_POSITION_UNITS).default(0),
+  y: z.number().int().nonnegative().max(MAX_LAYOUT_POSITION_UNITS).default(0),
 });
 
 /** Schema used when reading from YAML — id is optional, auto-assigned if absent. */
@@ -113,19 +119,14 @@ export const ServiceSchema: z.ZodType<Service> = z.object({
 });
 
 
-// Square-cell grid. `sizes` are the slider stops (each value = N for an N×N cell);
-// `cellSize` is the active stop. Column count is derived to fill the viewport.
-const GRID_SIZE_STOPS = [10, 20, 40, 60, 80];
+// Square-cell grid, fixed fine pitch. `cellSize` is the N×N cell size in px,
+// YAML-only (no UI writes it). Column count is derived to fill the viewport.
+const DEFAULT_CELL_SIZE = 10;
+const DEFAULT_GRID_GAP = 4;
 
 const GridSchema = z.object({
-  sizes: z.array(z.number().int().min(1).max(100)).min(1).default(GRID_SIZE_STOPS).catch(GRID_SIZE_STOPS),
-  cellSize: z.number().int().min(1).max(100).default(40).catch(40),
-  gap: z.number().int().nonnegative().max(100).default(4).catch(4),
-});
-
-// Body schema for the admin grid write — just the active (square) cell size.
-export const GridUpdateSchema = z.object({
-  cellSize: z.number().int().min(1).max(100),
+  cellSize: z.number().int().min(1).max(100).default(DEFAULT_CELL_SIZE).catch(DEFAULT_CELL_SIZE),
+  gap: z.number().int().nonnegative().max(100).default(DEFAULT_GRID_GAP).catch(DEFAULT_GRID_GAP),
 });
 
 const BackgroundSchema = z.object({
@@ -189,7 +190,7 @@ export const SettingsSchema = z.object({
   theme: z.string().max(64).default('dark').catch('dark'),
   language: z.string().max(16).optional(),
   background: BackgroundSchema.optional(),
-  grid: GridSchema.default({ sizes: [10, 20, 40, 60, 80], cellSize: 40, gap: 4 }),
+  grid: GridSchema.default({ cellSize: DEFAULT_CELL_SIZE, gap: DEFAULT_GRID_GAP }),
   auth: AuthConfigSchema,
   mail: MailConfigSchema,
   searchEngines: SearchEnginesSchema.default([]),

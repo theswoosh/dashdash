@@ -13,7 +13,6 @@ export interface DashSettings {
   language?: string | undefined;
   searchEngines?: SearchEngine[] | undefined;
   grid?: {
-    sizes: number[];
     cellSize: number;
     gap: number;
   } | undefined;

@@ -15,27 +15,17 @@ import { FrameCard } from './frame-card.component';
 import { useT } from '../i18n';
 import type { ServiceConfig } from '@dashdash/types';
 import type { WidgetTemplate } from '../widgets/catalog';
-import type { WidgetTemplateDef } from '../hooks/use-widget-templates.hook';
 import { flattenServices, findServiceWithParent } from '../utils/service-tree';
+import { serviceAsGridItem, persistedHeight, isTinyLayoutService } from '../utils/widget-layout';
+import type { GridConfigLike } from '../utils/widget-layout';
 import './DashGrid.css';
 
 const CONTAINER_PADDING: [number, number] = [0, 0];
 
 /** Build RGL layout items directly from services (YAML is source of truth).
- *  Templates supply optional minW/minH constraints per widget type. */
-function servicesAsLayout(services: ServiceConfig[], templates: WidgetTemplateDef[]): LayoutItem[] {
-  return services.map(s => {
-    const tmpl = templates.find(t => t.type === s.widget);
-    return {
-      i: s.id,
-      x: s.layout.x ?? 0,
-      y: s.layout.y ?? 0,
-      w: s.layout.w,
-      h: s.layout.h,
-      minW: tmpl?.minSize?.w ?? 1,
-      minH: tmpl?.minSize?.h ?? 1,
-    };
-  });
+ *  Tiny-layout services get their height pinned to the visible bar height. */
+function servicesAsLayout(services: ServiceConfig[], gridConfig: GridConfigLike): LayoutItem[] {
+  return services.map(s => serviceAsGridItem(s, gridConfig));
 }
 
 function isFrameService(service: ServiceConfig): boolean {
@@ -83,6 +73,12 @@ export function DashGrid() {
   const allServicesRef = useRef(flatServices);
   allServicesRef.current = flatServices;
 
+  // Same pattern for templates: SWR resolves after mount, but createWidgetFromDrop
+  // is memoized without it — a plain closure would keep the initial empty list and
+  // silently fall back to catalog default sizes, ignoring widgets.yml.
+  const widgetTemplatesRef = useRef(widgetTemplates);
+  widgetTemplatesRef.current = widgetTemplates;
+
   const [layout, setLayout] = useState<LayoutItem[]>([]);
   const [availableWidth, setAvailableWidth] = useState(() => window.innerWidth);
 
@@ -92,8 +88,8 @@ export function DashGrid() {
   editModeRef.current = editMode;
 
   const baseLayout = useMemo(
-    () => (rootServices.length > 0 ? servicesAsLayout(rootServices, widgetTemplates) : []),
-    [rootServices, widgetTemplates],
+    () => (rootServices.length > 0 ? servicesAsLayout(rootServices, gridConfig) : []),
+    [rootServices, gridConfig],
   );
   const layoutById = useMemo(() => {
     const source = layout.length > 0 ? layout : baseLayout;
@@ -213,7 +209,7 @@ export function DashGrid() {
       const source = dragLayoutRef.current.length > 0 ? dragLayoutRef.current : layout;
       const items = source
         .filter(l => l.i !== '__dropping-elem__')
-        .map(l => ({ id: l.i, layout: { x: l.x, y: l.y, w: l.w, h: l.h } }));
+        .map(l => ({ id: l.i, layout: { x: l.x, y: l.y, w: l.w, h: persistedHeight(l, allServicesRef.current) } }));
       void fetch('/api/services/layouts', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -232,6 +228,7 @@ export function DashGrid() {
     void reloadServices();
     void mutate('/api/locales');
     void mutate('/api/settings');
+    void mutate('/api/widget-templates');
   }, [reloadServices]));
 
   const recordDragPositions = useCallback((newLayout: Layout) => {
@@ -294,7 +291,7 @@ export function DashGrid() {
             x: newItem.x - target.frameLayout.x,
             y: newItem.y - target.frameLayout.y,
             w: newItem.w,
-            h: newItem.h,
+            h: isTinyLayoutService(found.service) ? found.service.layout.h : newItem.h,
           };
           const filtered = items.filter(i => i.i !== newItem.i);
           dragLayoutRef.current = filtered;
@@ -346,7 +343,7 @@ export function DashGrid() {
       if (!item) return;
 
       // Use widgets.yml sizes if available, fall back to catalog defaults.
-      const tmpl = widgetTemplates.find(t => t.type === template.type);
+      const tmpl = widgetTemplatesRef.current.find(t => t.type === template.type);
       const dropWidth = tmpl?.defaultSize.w ?? template.defaultSize?.w ?? 2;
       const dropHeight = tmpl?.defaultSize.h ?? template.defaultSize?.h ?? 2;
 
@@ -394,9 +391,6 @@ export function DashGrid() {
         }
       });
     },
-    // widgetTemplates intentionally omitted — it's slow-changing and the
-    // fallback to catalog defaults is acceptable for the rare stale case.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [findParentFrame, reloadServices, setDroppingItem]
   );
 
@@ -492,7 +486,6 @@ export function DashGrid() {
                 service={s}
                 editMode={editMode}
                 onDelete={deleteService}
-                widgetTemplates={widgetTemplates}
                 gridConfig={gridConfig}
                 frameLayout={layoutById.get(s.id)}
                 reloadServices={reloadServices}

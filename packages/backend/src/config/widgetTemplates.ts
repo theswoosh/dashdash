@@ -2,16 +2,16 @@ import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import yaml from 'js-yaml';
 import { z } from 'zod';
+import { MAX_LAYOUT_SIZE_UNITS } from './schemas.js';
 
 const SizeSchema = z.object({
-  w: z.number().int().positive().max(48),
-  h: z.number().int().positive().max(48),
+  w: z.number().int().positive().max(MAX_LAYOUT_SIZE_UNITS),
+  h: z.number().int().positive().max(MAX_LAYOUT_SIZE_UNITS),
 });
 
 const WidgetTemplateSchema = z.object({
   type: z.string().max(64),
   defaultSize: SizeSchema,
-  minSize: SizeSchema.optional(),
 });
 
 const WidgetTemplatesSchema = z.array(WidgetTemplateSchema);

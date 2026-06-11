@@ -8,7 +8,6 @@ interface WidgetTemplateSize {
 export interface WidgetTemplateDef {
   type: string;
   defaultSize: WidgetTemplateSize;
-  minSize?: WidgetTemplateSize | undefined;
 }
 
 const fetcher = (url: string) => fetch(url).then(res => res.json()) as Promise<WidgetTemplateDef[]>;

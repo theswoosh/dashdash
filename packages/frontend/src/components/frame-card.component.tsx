@@ -3,12 +3,13 @@ import ReactGridLayout, { noCompactor } from 'react-grid-layout';
 import type { Layout, LayoutItem } from 'react-grid-layout';
 import { GripVertical, Settings, X } from 'lucide-react';
 import type { ServiceConfig } from '@dashdash/types';
-import type { WidgetTemplateDef } from '../hooks/use-widget-templates.hook';
 import { useUIStore } from '../store/uiStore';
 import { useThemeCard } from '../themes/registry';
 import { useBehavior } from '../hooks/use-behavior.hook';
 import { useT } from '../i18n';
 import { WidgetCard } from './widget-card.component';
+import { serviceAsGridItem, persistedHeight } from '../utils/widget-layout';
+import type { GridConfigLike } from '../utils/widget-layout';
 import './FrameCard.css';
 
 const CONTAINER_PADDING: [number, number] = [0, 0];
@@ -16,19 +17,8 @@ const FRAME_DROP_CONFIG = { enabled: false };
 const FRAME_COMPACTOR = { ...noCompactor, allowOverlap: true };
 const CHILD_DRAG_HANDLE = '.frame-widget-drag-handle';
 
-function servicesAsLayout(services: ServiceConfig[], templates: WidgetTemplateDef[]): LayoutItem[] {
-  return services.map(s => {
-    const tmpl = templates.find(t => t.type === s.widget);
-    return {
-      i: s.id,
-      x: s.layout.x ?? 0,
-      y: s.layout.y ?? 0,
-      w: s.layout.w,
-      h: s.layout.h,
-      minW: tmpl?.minSize?.w ?? 1,
-      minH: tmpl?.minSize?.h ?? 1,
-    };
-  });
+function servicesAsLayout(services: ServiceConfig[], gridConfig: GridConfigLike): LayoutItem[] {
+  return services.map(s => serviceAsGridItem(s, gridConfig));
 }
 
 function HoldDeleteButton({ id, holdToDeleteMs, onDelete }: { id: string; holdToDeleteMs: number; onDelete: (id: string) => void }) {
@@ -70,14 +60,13 @@ function HoldDeleteButton({ id, holdToDeleteMs, onDelete }: { id: string; holdTo
 interface Props {
   service: ServiceConfig;
   editMode: boolean;
-  widgetTemplates: WidgetTemplateDef[];
   gridConfig: { rowHeight: number; gap: number };
   frameLayout?: LayoutItem | undefined;
   onDelete?: ((id: string) => void) | undefined;
   reloadServices: () => unknown;
 }
 
-export const FrameCard = memo(function FrameCard({ service, editMode, widgetTemplates, gridConfig, frameLayout, onDelete, reloadServices }: Props) {
+export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig, frameLayout, onDelete, reloadServices }: Props) {
   const t = useT();
   const Card = useThemeCard();
   const { holdToDeleteMs } = useBehavior();
@@ -85,8 +74,8 @@ export const FrameCard = memo(function FrameCard({ service, editMode, widgetTemp
   const children = useMemo(() => service.children ?? [], [service.children]);
 
   const baseLayout = useMemo(
-    () => (children.length > 0 ? servicesAsLayout(children, widgetTemplates) : []),
-    [children, widgetTemplates],
+    () => (children.length > 0 ? servicesAsLayout(children, gridConfig) : []),
+    [children, gridConfig],
   );
 
   const [layout, setLayout] = useState<LayoutItem[]>([]);
@@ -117,7 +106,7 @@ export const FrameCard = memo(function FrameCard({ service, editMode, widgetTemp
       const source = dragLayoutRef.current.length > 0 ? dragLayoutRef.current : layout;
       const items = source
         .filter(l => l.i !== '__dropping-elem__')
-        .map(l => ({ id: l.i, layout: { x: l.x, y: l.y, w: l.w, h: l.h } }));
+        .map(l => ({ id: l.i, layout: { x: l.x, y: l.y, w: l.w, h: persistedHeight(l, children) } }));
       void fetch('/api/services/layouts', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },

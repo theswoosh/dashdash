@@ -1,10 +1,8 @@
 import { useState } from 'react';
-import { mutate } from 'swr';
 import { Image } from 'lucide-react';
 import { usePreferences } from '../hooks/use-preferences.hook';
 import { useSettings } from '../hooks/use-settings.hook';
 import { useBoard } from '../hooks/use-board.hook';
-import { useAuth } from '../hooks/use-auth.hook';
 import { useT } from '../i18n';
 import { WallpaperPickerModal } from './wallpaper-picker.component';
 import { BoardIconPicker } from './emoji-picker.component';
@@ -65,83 +63,6 @@ function ToggleRow({ id, label, checked, onChange }: { id: string; label: string
       </button>
     </div>
   );
-}
-
-// ── Grid size (admin-only, global) ──────────────────────────────────────────────
-
-interface GridSettings {
-  sizes: number[];
-  cellSize: number;
-  gap: number;
-}
-
-const FALLBACK_GRID: GridSettings = { sizes: [10, 20, 40, 60, 80], cellSize: 40, gap: 4 };
-
-function saveCellSize(cellSize: number) {
-  void fetch('/api/settings/grid', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ cellSize }),
-  }).then(() => mutate('/api/settings'));
-}
-
-function nearestSizeIndex(sizes: number[], value: number): number {
-  let best = 0;
-  let bestDiff = Infinity;
-  sizes.forEach((s, i) => {
-    const diff = Math.abs(s - value);
-    if (diff < bestDiff) { bestDiff = diff; best = i; }
-  });
-  return best;
-}
-
-// Initial index derives from props; a changing `key` (in GridSection) re-seeds
-// after each save, so no state-syncing effect is needed.
-function GridSizeSlider({ grid }: { grid: GridSettings }) {
-  const t = useT();
-  const [index, setIndex] = useState(() => nearestSizeIndex(grid.sizes, grid.cellSize));
-  const size = grid.sizes[index] ?? grid.cellSize;
-
-  const onSlide = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const i = Number(e.target.value);
-    setIndex(i);
-    const next = grid.sizes[i];
-    if (next !== undefined) saveCellSize(next);
-  };
-
-  return (
-    <div className="config-option-group">
-      <label className="config-option-label" htmlFor="grid-size">
-        {t('config.gridSize')}: {size} × {size}
-      </label>
-      <input
-        id="grid-size"
-        type="range"
-        min={0}
-        max={grid.sizes.length - 1}
-        step={1}
-        value={index}
-        onChange={onSlide}
-        className="grid-size-slider"
-        list="grid-size-ticks"
-      />
-      <datalist id="grid-size-ticks">
-        {grid.sizes.map((s, i) => <option key={s} value={i} />)}
-      </datalist>
-    </div>
-  );
-}
-
-function GridSection() {
-  const { user } = useAuth();
-  const settings = useSettings();
-  if (user?.role !== 'admin') return null;
-  const stored = settings.grid ?? FALLBACK_GRID;
-  const sizes = stored.sizes.length > 0 ? stored.sizes : FALLBACK_GRID.sizes;
-  const grid: GridSettings = { sizes, cellSize: stored.cellSize, gap: stored.gap };
-  // Remount (and re-seed) whenever the persisted grid changes.
-  const seedKey = `${grid.cellSize}:${sizes.join(',')}`;
-  return <GridSizeSlider key={seedKey} grid={grid} />;
 }
 
 // ── Options tab ───────────────────────────────────────────────────────────────
@@ -258,7 +179,6 @@ export function OptionsTab() {
         )}
       </div>
 
-      <GridSection />
     </div>
   );
 }

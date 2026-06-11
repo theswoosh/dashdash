@@ -294,15 +294,6 @@
   color: var(--text-muted);
 }
 
-/* ── Grid size slider ────────────────────────────────────────────────────── */
-
-.grid-size-slider {
-  width: 100%;
-  margin: 2px 0;
-  accent-color: var(--accent);
-  cursor: pointer;
-}
-
 /* ── Indented sub-options ────────────────────────────────────────────────── */
 
 .config-option-indent {

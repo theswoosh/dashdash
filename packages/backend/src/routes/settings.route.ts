@@ -1,7 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { SearchEngineSchema, GridUpdateSchema } from '../config/schemas.js';
+import { SearchEngineSchema } from '../config/schemas.js';
 import type { Settings } from '../config/schemas.js';
-import { writeSearchEngines, writeGrid } from '../config/writer.js';
+import { writeSearchEngines } from '../config/writer.js';
 
 export function createSettingsRoutes(getSettings: () => Settings, configDir: string): FastifyPluginAsync {
   return async fastify => {
@@ -14,18 +14,6 @@ export function createSettingsRoutes(getSettings: () => Settings, configDir: str
         searchEngines: settings.searchEngines,
         grid: settings.grid,
       };
-    });
-
-    fastify.put('/settings/grid', async (request, reply) => {
-      if (request.userRole !== 'admin') {
-        return reply.code(403).send({ error: 'Admin access required' });
-      }
-      const parse = GridUpdateSchema.safeParse(request.body);
-      if (!parse.success) {
-        return reply.code(400).send({ error: parse.error.issues[0]?.message ?? 'Invalid input' });
-      }
-      writeGrid(configDir, parse.data);
-      return reply.send({ ok: true });
     });
 
     fastify.post('/settings/search-engines', async (request, reply) => {

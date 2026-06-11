@@ -45,7 +45,7 @@ describe('loadSettings', () => {
     const settings = await loadSettings(emptyDir);
     expect(settings.title).toBe('dashdash');
     expect(settings.theme).toBe('dark');
-    expect(settings.grid.cellSize).toBe(40);
+    expect(settings.grid.cellSize).toBe(10);
     rmSync(emptyDir, { recursive: true });
   });
 
@@ -57,6 +57,6 @@ theme: light
     const settings = await loadSettings(tmpDir);
     expect(settings.title).toBe('My Dashboard');
     expect(settings.theme).toBe('light');
-    expect(settings.grid.cellSize).toBe(40);  // zod default still applies
+    expect(settings.grid.cellSize).toBe(10);  // zod default still applies
   });
 });

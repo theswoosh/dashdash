@@ -27,12 +27,12 @@ mkdirSync(join(runtimeDir, 'data'), { recursive: true });
 writeFileSync(join(runtimeDir, 'config', 'settings.yml'), 'title: e2e\n');
 writeFileSync(join(runtimeDir, 'config', 'services.yml'), `- title: Clock
   widget: clock
-  layout: { x: 0, y: 0, w: 2, h: 2 }
+  layout: { x: 0, y: 0, w: 8, h: 8 }
   options:
     timezone: UTC
 - title: Notes
   widget: notepad
-  layout: { x: 4, y: 0, w: 2, h: 2 }
+  layout: { x: 12, y: 0, w: 8, h: 8 }
 `);
 
 const child = spawn(process.execPath, [backendDist], {

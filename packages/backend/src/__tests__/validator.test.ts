@@ -51,15 +51,38 @@ describe('validateConfig', () => {
     }
   });
 
-  it('reports error when grid cellSize/sizes violate the 1–100 range', () => {
+  it('reports error when grid cellSize violates the 1–100 range', () => {
     const dir = mkdtempSync(join(tmpdir(), 'dashdash-validator-grid-'));
     try {
-      writeYml(dir, 'settings.yml', 'grid:\n  cellSize: 200\n  sizes: [10, 0, 40]\n');
+      writeYml(dir, 'settings.yml', 'grid:\n  cellSize: 200\n');
       const issues = validateConfig(dir);
       const cellIssue = issues.find(i => i.file === 'settings.yml' && i.field === 'grid.cellSize' && i.level === 'error');
-      const sizeIssue = issues.find(i => i.file === 'settings.yml' && i.field === 'grid.sizes[1]' && i.level === 'error');
       expect(cellIssue).toBeDefined();
-      expect(sizeIssue).toBeDefined();
+    } finally {
+      rmSync(dir, { recursive: true });
+    }
+  });
+
+  it('warns when the retired grid.sizes key is still present', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'dashdash-validator-gridsizes-'));
+    try {
+      writeYml(dir, 'settings.yml', 'grid:\n  cellSize: 10\n  sizes: [10, 20, 40]\n');
+      const issues = validateConfig(dir);
+      const sizesIssue = issues.find(i => i.file === 'settings.yml' && i.field === 'grid.sizes');
+      expect(sizesIssue?.level).toBe('warning');
+    } finally {
+      rmSync(dir, { recursive: true });
+    }
+  });
+
+  it('warns when a widget template still declares the retired minSize key', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'dashdash-validator-minsize-'));
+    try {
+      writeYml(dir, 'widgets.yml', '- type: clock\n  defaultSize: { w: 8, h: 8 }\n  minSize: { w: 6, h: 6 }\n');
+      const issues = validateConfig(dir);
+      const minSizeIssue = issues.find(i => i.file === 'widgets.yml' && i.field === '[0].minSize');
+      expect(minSizeIssue?.level).toBe('warning');
+      expect(minSizeIssue?.message).toContain('no longer supported');
     } finally {
       rmSync(dir, { recursive: true });
     }

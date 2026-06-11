@@ -166,18 +166,3 @@ export function writeSearchEngines(configDir: string, engines: SearchEngine[]): 
   writeFileSync(tmpPath, yaml.dump(raw, { indent: 2, lineWidth: -1, schema: yaml.CORE_SCHEMA }));
   renameSync(tmpPath, filePath);
 }
-
-export function writeGrid(configDir: string, grid: { cellSize: number }): void {
-  const filePath = join(configDir, 'settings.yml');
-  const raw = existsSync(filePath)
-    ? ((yaml.load(readFileSync(filePath, 'utf8'), { schema: yaml.CORE_SCHEMA }) as Record<string, unknown>) ?? {})
-    : {};
-  const existing = raw['grid'] && typeof raw['grid'] === 'object' && !Array.isArray(raw['grid'])
-    ? (raw['grid'] as Record<string, unknown>)
-    : {};
-  // Only the active cell size changes; sizes + gap stay file-authored.
-  raw['grid'] = { ...existing, cellSize: grid.cellSize };
-  const tmpPath = `${filePath}.tmp`;
-  writeFileSync(tmpPath, yaml.dump(raw, { indent: 2, lineWidth: -1, schema: yaml.CORE_SCHEMA }));
-  renameSync(tmpPath, filePath);
-}

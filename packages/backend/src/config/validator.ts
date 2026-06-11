@@ -4,6 +4,7 @@ import yaml from 'js-yaml';
 import type { ConfigIssue } from '@dashdash/types';
 import { loadIntegrations } from './integrations.js';
 import { loadWidgetTemplates } from './widgetTemplates.js';
+import { MAX_LAYOUT_SIZE_UNITS, MAX_LAYOUT_POSITION_UNITS } from './schemas.js';
 
 export type { ConfigIssue };
 
@@ -58,7 +59,7 @@ function checkNumber(issues: ConfigIssue[], file: string, field: string, value: 
   }
 }
 
-function validateSettingsYaml(raw: unknown, issues: ConfigIssue[], gridColumns: number): void {
+function validateSettingsYaml(raw: unknown, issues: ConfigIssue[]): void {
   const file = 'settings.yml';
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
     issues.push({ file, field: '(root)', level: 'error', message: 'settings.yml must be a YAML mapping' });
@@ -76,11 +77,7 @@ function validateSettingsYaml(raw: unknown, issues: ConfigIssue[], gridColumns: 
     checkNumber(issues, file, 'grid.cellSize', grid['cellSize'], { integer: true, min: 1, max: 100 });
     checkNumber(issues, file, 'grid.gap', grid['gap'], { integer: true, min: 0, max: 100 });
     if (grid['sizes'] !== undefined) {
-      if (!Array.isArray(grid['sizes'])) {
-        issues.push({ file, field: 'grid.sizes', level: 'error', message: 'Must be a list of numbers (1–100)' });
-      } else {
-        grid['sizes'].forEach((s, i) => checkNumber(issues, file, `grid.sizes[${i}]`, s, { integer: true, min: 1, max: 100 }));
-      }
+      issues.push({ file, field: 'grid.sizes', level: 'warning', message: 'grid.sizes is no longer supported (grid-size slider removed) and is ignored' });
     }
   }
 
@@ -126,18 +123,13 @@ function validateSettingsYaml(raw: unknown, issues: ConfigIssue[], gridColumns: 
       checkString(issues, file, formatPath(base, 'placeholder'), e['placeholder'], { maxLength: 128 });
     }
   }
-
-  // Check for cross-widget layout bounds
-  if (Array.isArray(data['searchEngines']) && typeof gridColumns === 'number') {
-    // gridColumns is validated above; used for service layout cross-checks
-  }
 }
 
 function entryPrefix(index: number, id: string | undefined): string {
   return id ? `Entry #${index + 1} ("${id}")` : `Entry #${index + 1}`;
 }
 
-function validateServicesYaml(raw: unknown, issues: ConfigIssue[], integrationIds: Set<string>, knownWidgetTypes: Set<string>, gridColumns: number): void {
+function validateServicesYaml(raw: unknown, issues: ConfigIssue[], integrationIds: Set<string>, knownWidgetTypes: Set<string>): void {
   const file = 'services.yml';
   if (!Array.isArray(raw)) {
     if (raw != null) {
@@ -184,15 +176,10 @@ function validateServicesYaml(raw: unknown, issues: ConfigIssue[], integrationId
 
     if (svc['layout'] && typeof svc['layout'] === 'object' && !Array.isArray(svc['layout'])) {
       const layout = svc['layout'] as Record<string, unknown>;
-      checkNumber(entryIssues, file, formatPath(base, 'layout.w'), layout['w'], { integer: true, min: 1, max: 48 });
-      checkNumber(entryIssues, file, formatPath(base, 'layout.h'), layout['h'], { integer: true, min: 1, max: 48 });
-      checkNumber(entryIssues, file, formatPath(base, 'layout.x'), layout['x'], { integer: true, min: 0, max: 200 });
-      checkNumber(entryIssues, file, formatPath(base, 'layout.y'), layout['y'], { integer: true, min: 0, max: 200 });
-
-      // Warn if widget is wider than the grid
-      if (typeof layout['w'] === 'number' && layout['w'] > gridColumns) {
-        entryIssues.push({ file, field: formatPath(base, 'layout.w'), level: 'warning', message: `Widget width (${layout['w']}) exceeds grid columns (${gridColumns})` });
-      }
+      checkNumber(entryIssues, file, formatPath(base, 'layout.w'), layout['w'], { integer: true, min: 1, max: MAX_LAYOUT_SIZE_UNITS });
+      checkNumber(entryIssues, file, formatPath(base, 'layout.h'), layout['h'], { integer: true, min: 1, max: MAX_LAYOUT_SIZE_UNITS });
+      checkNumber(entryIssues, file, formatPath(base, 'layout.x'), layout['x'], { integer: true, min: 0, max: MAX_LAYOUT_POSITION_UNITS });
+      checkNumber(entryIssues, file, formatPath(base, 'layout.y'), layout['y'], { integer: true, min: 0, max: MAX_LAYOUT_POSITION_UNITS });
     } else if (svc['layout'] === undefined || svc['layout'] === null) {
       entryIssues.push({ file, field: formatPath(base, 'layout'), level: 'error', message: 'Required field is missing' });
     }
@@ -296,12 +283,14 @@ function validateWidgetsYaml(raw: unknown, issues: ConfigIssue[], knownWidgetTyp
       issues.push({ file, field: formatPath(base, 'type'), level: 'warning', message: `Unknown widget type "${t['type']}"` });
     }
 
-    for (const sizeField of ['defaultSize', 'minSize']) {
-      if (t[sizeField] && typeof t[sizeField] === 'object' && !Array.isArray(t[sizeField])) {
-        const sz = t[sizeField] as Record<string, unknown>;
-        checkNumber(issues, file, formatPath(base, `${sizeField}.w`), sz['w'], { integer: true, min: 1, max: 48 });
-        checkNumber(issues, file, formatPath(base, `${sizeField}.h`), sz['h'], { integer: true, min: 1, max: 48 });
-      }
+    if (t['defaultSize'] && typeof t['defaultSize'] === 'object' && !Array.isArray(t['defaultSize'])) {
+      const sz = t['defaultSize'] as Record<string, unknown>;
+      checkNumber(issues, file, formatPath(base, 'defaultSize.w'), sz['w'], { integer: true, min: 1, max: MAX_LAYOUT_SIZE_UNITS });
+      checkNumber(issues, file, formatPath(base, 'defaultSize.h'), sz['h'], { integer: true, min: 1, max: MAX_LAYOUT_SIZE_UNITS });
+    }
+
+    if (t['minSize'] !== undefined) {
+      issues.push({ file, field: formatPath(base, 'minSize'), level: 'warning', message: 'minSize is no longer supported and is ignored' });
     }
   }
 }
@@ -316,19 +305,15 @@ export function validateConfig(configDir: string): ConfigIssue[] {
   const widgetTemplates = loadWidgetTemplates(configDir);
   const knownWidgetTypes = new Set([...KNOWN_WIDGET_TYPES, ...widgetTemplates.map(t => t.type)]);
 
-  // Column count is derived per-screen (fill-to-width), so there is no fixed
-  // column bound for layout-width checks — a high value disables that warning.
-  const gridColumns = 1000;
-
   // Parse and validate each config file
   const files: Array<{ name: string; validate: (raw: unknown) => void }> = [
     {
       name: 'settings.yml',
-      validate: (raw) => validateSettingsYaml(raw, issues, gridColumns),
+      validate: (raw) => validateSettingsYaml(raw, issues),
     },
     {
       name: 'services.yml',
-      validate: (raw) => validateServicesYaml(raw, issues, integrationIds, knownWidgetTypes, gridColumns),
+      validate: (raw) => validateServicesYaml(raw, issues, integrationIds, knownWidgetTypes),
     },
     {
       name: 'integrations.yml',
