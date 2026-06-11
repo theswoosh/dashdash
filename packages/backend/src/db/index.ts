@@ -86,6 +86,8 @@ export function createDb(dataDir: string): Db {
 
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
+  // Wait instead of failing with SQLITE_BUSY when a checkpoint briefly locks the db.
+  db.pragma('busy_timeout = 5000');
 
   runMigrations(db);
 

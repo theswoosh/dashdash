@@ -156,6 +156,9 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
     if (deleted > 0) log.info({ deleted }, 'Cleaned up expired sessions');
     const oidcDeleted = cleanupExpiredOidcStates(db);
     if (oidcDeleted > 0) log.info({ deleted: oidcDeleted }, 'Cleaned up expired OIDC states');
+    // SQLite's own recommendation for long-running connections: refreshes
+    // query-planner statistics cheaply (no-op when nothing changed).
+    db.pragma('optimize');
   }, SESSION_CLEANUP_INTERVAL_MS);
   // Don't keep process alive just for cleanup.
   cleanupTimer.unref();

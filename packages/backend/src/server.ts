@@ -25,6 +25,13 @@ server.log.info(`Watching config dir: ${CONFIG_DIR}`);
 const shutdown = async (signal: string) => {
   server.log.info(`${signal} received, shutting down`);
   await server.close();
+  // Fold the WAL back into the main db file so the -wal sidecar doesn't
+  // grow unbounded across container restarts.
+  try {
+    db.pragma('wal_checkpoint(TRUNCATE)');
+  } catch (err) {
+    server.log.warn({ err }, 'WAL checkpoint on shutdown failed');
+  }
   db.close();
   process.exit(0);
 };
