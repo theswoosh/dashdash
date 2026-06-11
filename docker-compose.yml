@@ -19,11 +19,31 @@ services:
       # Integration API keys (format: DASHDASH_INTEGRATION_<ID_UPPERCASE>_<FIELD>)
       # DASHDASH_INTEGRATION_SONARR_MAIN_KEY: your-sonarr-api-key
     restart: unless-stopped
+    # Defense-in-depth: immutable root filesystem (data lives in the volumes),
+    # no capabilities beyond what the entrypoint needs (chown volumes, drop to
+    # the dashdash user via su-exec), and no privilege re-escalation.
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+      - DAC_OVERRIDE
+    security_opt:
+      - no-new-privileges:true
+    # Lets the unprivileged app user send ICMP pings (healthcheck widget)
+    # without CAP_NET_RAW. Namespaced sysctl — safe to set per-container.
+    sysctls:
+      net.ipv4.ping_group_range: "0 2147483647"
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/api/health"]
       interval: 30s
       timeout: 5s
       retries: 3
+      start_period: 15s
 
 volumes:
   dashdash-data:

@@ -87,7 +87,7 @@ VOLUME ["/config", "/data"]
 # --spider fails on any non-2xx status (plain -qO- succeeds on some error responses).
 # 127.0.0.1, not localhost: busybox wget resolves localhost to ::1 first and the
 # server binds IPv4 0.0.0.0 — the ::1 connection is refused with no IPv4 fallback.
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 --start-period=15s \
   CMD wget -q --spider http://127.0.0.1:3000/api/health || exit 1
 
 EXPOSE 3000
