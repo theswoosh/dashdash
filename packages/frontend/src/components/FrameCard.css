@@ -24,3 +24,9 @@
   background: rgba(var(--accent-rgb, 96, 165, 250), 0.15);
   border-radius: var(--radius);
 }
+
+/* Invalid drop target inside a frame — see .dash-grid-canvas.grid-drag-invalid */
+.frame-card__body.grid-drag-invalid .react-grid-placeholder {
+  background: var(--danger, #dc2626);
+  opacity: 0.3;
+}

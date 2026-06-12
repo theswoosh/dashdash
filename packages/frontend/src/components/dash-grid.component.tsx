@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import ReactGridLayout, { noCompactor } from 'react-grid-layout';
+import ReactGridLayout from 'react-grid-layout';
 import type { Layout, LayoutItem } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -18,6 +18,13 @@ import type { WidgetTemplate } from '../widgets/catalog';
 import { flattenServices, findServiceWithParent } from '../utils/service-tree';
 import { serviceAsGridItem, persistedHeight, isTinyLayoutService } from '../utils/widget-layout';
 import type { GridConfigLike } from '../utils/widget-layout';
+import {
+  OVERLAP_COMPACTOR,
+  DROPPING_ELEMENT_ID,
+  findOverlappingItems,
+  evaluateRootDragTarget,
+  resolveNonOverlappingPosition,
+} from '../utils/grid-collision';
 import './DashGrid.css';
 
 const CONTAINER_PADDING: [number, number] = [0, 0];
@@ -30,14 +37,6 @@ function servicesAsLayout(services: ServiceConfig[], gridConfig: GridConfigLike)
 
 function isFrameService(service: ServiceConfig): boolean {
   return service.widget === 'frame';
-}
-
-function layoutsOverlap(a: LayoutItem, b: LayoutItem): boolean {
-  const ax2 = a.x + a.w;
-  const ay2 = a.y + a.h;
-  const bx2 = b.x + b.w;
-  const by2 = b.y + b.h;
-  return a.x < bx2 && ax2 > b.x && a.y < by2 && ay2 > b.y;
 }
 
 export function DashGrid() {
@@ -86,6 +85,21 @@ export function DashGrid() {
   // without adding it as a dep (which would re-run effects on toggle).
   const editModeRef = useRef(editMode);
   editModeRef.current = editMode;
+
+  const frameIds = useMemo(
+    () => new Set(rootServices.filter(isFrameService).map(s => s.id)),
+    [rootServices],
+  );
+
+  // Red "invalid drop" tint: toggled as a DOM class on the canvas node so
+  // per-tick drag/resize updates never trigger React re-renders.
+  const canvasElRef = useRef<HTMLDivElement | null>(null);
+  const isGhostInvalidRef = useRef(false);
+  const setGhostInvalid = useCallback((isInvalid: boolean) => {
+    if (isGhostInvalidRef.current === isInvalid) return;
+    isGhostInvalidRef.current = isInvalid;
+    canvasElRef.current?.classList.toggle('grid-drag-invalid', isInvalid);
+  }, []);
 
   const baseLayout = useMemo(
     () => (rootServices.length > 0 ? servicesAsLayout(rootServices, gridConfig) : []),
@@ -137,27 +151,6 @@ export function DashGrid() {
     [layoutById, rootServices]
   );
 
-  const findParentFrameByLayout = useCallback(
-    (item: LayoutItem, layoutItems: Layout): { frameId: string; frameLayout: LayoutItem } | null => {
-      const layoutMap = new Map(layoutItems.map(l => [l.i, l]));
-      for (const svc of rootServices) {
-        if (!isFrameService(svc)) continue;
-        const frameLayout = layoutMap.get(svc.id) ?? {
-          i: svc.id,
-          x: svc.layout.x ?? 0,
-          y: svc.layout.y ?? 0,
-          w: svc.layout.w,
-          h: svc.layout.h,
-        };
-        const withinX = item.x >= frameLayout.x && item.x < frameLayout.x + frameLayout.w;
-        const withinY = item.y >= frameLayout.y && item.y < frameLayout.y + frameLayout.h;
-        if (withinX && withinY) return { frameId: svc.id, frameLayout };
-      }
-      return null;
-    },
-    [rootServices]
-  );
-
   useEffect(() => {
     if (baseLayout.length === 0) {
       setLayout([]);
@@ -178,20 +171,10 @@ export function DashGrid() {
     });
   }, [baseLayout]);
 
-  useEffect(() => {
-    const frameIds = new Set(rootServices.filter(isFrameService).map(s => s.id));
-    const next = new Map<string, LayoutItem>();
-    for (const item of baseLayout) {
-      if (frameIds.has(item.i)) next.set(item.i, item);
-    }
-    lastValidFrameLayoutRef.current = next;
-  }, [baseLayout, rootServices]);
-
   // Tracks the latest drag positions for save-on-close.
   // Updated by handleLayoutChange (never by React state) so it never triggers
   // re-renders that would interfere with RGL's internal drop state.
   const dragLayoutRef = useRef<LayoutItem[]>([]);
-  const lastValidFrameLayoutRef = useRef<Map<string, LayoutItem>>(new Map());
 
   // Save all layouts to YAML when edit mode is closed ("Save" button).
   const prevEditMode = useRef(editMode);
@@ -202,13 +185,13 @@ export function DashGrid() {
     if (!wasEditing && editMode) {
       // Entering edit mode — seed dragLayoutRef with current layout so a
       // save without any dragging still writes the correct positions.
-      dragLayoutRef.current = layout.filter(l => l.i !== '__dropping-elem__');
+      dragLayoutRef.current = layout.filter(l => l.i !== DROPPING_ELEMENT_ID);
     }
 
     if (wasEditing && !editMode) {
       const source = dragLayoutRef.current.length > 0 ? dragLayoutRef.current : layout;
       const items = source
-        .filter(l => l.i !== '__dropping-elem__')
+        .filter(l => l.i !== DROPPING_ELEMENT_ID)
         .map(l => ({ id: l.i, layout: { x: l.x, y: l.y, w: l.w, h: persistedHeight(l, allServicesRef.current) } }));
       void fetch('/api/services/layouts', {
         method: 'PUT',
@@ -233,74 +216,70 @@ export function DashGrid() {
 
   const recordDragPositions = useCallback((newLayout: Layout) => {
     if (!editModeRef.current) return;
-    const withoutGhost = newLayout.filter(l => l.i !== '__dropping-elem__');
+    const withoutGhost = newLayout.filter(l => l.i !== DROPPING_ELEMENT_ID);
     if (withoutGhost.length > 0) dragLayoutRef.current = [...withoutGhost];
   }, []);
 
-  const lockFramesDuringDrag = useCallback((newLayout: Layout, oldItem?: LayoutItem | null) => {
-    if (!editModeRef.current || !oldItem) return;
-    const frameIds = new Set(rootServices.filter(isFrameService).map(s => s.id));
-    if (frameIds.has(oldItem.i)) return;
-    const locked = newLayout.map(item => frameIds.has(item.i) ? { ...item, static: true } : item);
-    dragLayoutRef.current = locked.filter(l => l.i !== '__dropping-elem__');
-    setLayout(locked);
-  }, [rootServices]);
+  // Per-tick drag feedback: ghost turns red over occupied space (DOM class
+  // only — no setState during drag). Also fires for the external drop ghost.
+  const tintGhostDuringDrag = useCallback((newLayout: Layout, _oldItem?: LayoutItem | null, newItem?: LayoutItem | null) => {
+    if (!editModeRef.current || !newItem) return;
+    const target = evaluateRootDragTarget(newItem, newLayout, frameIds);
+    setGhostInvalid(target.kind === 'invalid');
+  }, [frameIds, setGhostInvalid]);
 
-  // onDragStop fires before RGL calls setState({ activeDrag: null }).
-  // Both this setLayout and RGL's setState land in the same React batch, so
-  // getDerivedStateFromProps sees nextProps.layout = finalLayout (with pushed
-  // items at their new positions) instead of the stale original layout —
-  // preventing the snap-back that would otherwise override RGL's pushed state.
-  const syncLayoutAfterDrag = useCallback((newLayout: Layout, _oldItem?: LayoutItem | null, newItem?: LayoutItem | null) => {
+  const commitLayout = useCallback((items: LayoutItem[]) => {
+    dragLayoutRef.current = items;
+    setLayout(items);
+  }, []);
+
+  /** Revert the gestured item to its pre-gesture position; nothing else moved
+   *  (overlap never pushes), so reverting just that item is complete. */
+  const revertGesturedItem = useCallback((items: LayoutItem[], gestured: LayoutItem, before: LayoutItem) => {
+    commitLayout(items.map(it =>
+      it.i === gestured.i ? { ...it, x: before.x, y: before.y, w: before.w, h: before.h } : it,
+    ));
+  }, [commitLayout]);
+
+  // onDragStop fires before RGL calls setState({ activeDrag: null }); this
+  // setLayout and RGL's setState land in the same React batch, so a reverted
+  // layout cleanly overrides RGL's internal drop position.
+  const syncLayoutAfterDrag = useCallback((newLayout: Layout, oldItem?: LayoutItem | null, newItem?: LayoutItem | null) => {
     if (!editModeRef.current) return;
-    const frameIds = new Set(rootServices.filter(isFrameService).map(s => s.id));
-    const items = newLayout.map(item => (frameIds.has(item.i) && item.static) ? { ...item, static: false } : item);
-    const frames = items.filter(l => frameIds.has(l.i));
+    setGhostInvalid(false);
+    const items = [...newLayout];
 
-    let hasOverlap = false;
-    for (let i = 0; i < frames.length; i++) {
-      for (let j = i + 1; j < frames.length; j++) {
-        if (layoutsOverlap(frames[i]!, frames[j]!)) {
-          hasOverlap = true;
-          break;
-        }
+    if (newItem && newItem.i !== DROPPING_ELEMENT_ID) {
+      const target = evaluateRootDragTarget(newItem, items, frameIds);
+
+      if (target.kind === 'invalid' && oldItem) {
+        revertGesturedItem(items, newItem, oldItem);
+        return;
       }
-      if (hasOverlap) break;
-    }
 
-    if (hasOverlap) {
-      const lastValid = lastValidFrameLayoutRef.current;
-      const reverted = items.map(item => lastValid.get(item.i) ?? item);
-      dragLayoutRef.current = reverted;
-      setLayout(reverted);
-      return;
-    }
-
-    for (const frame of frames) {
-      lastValidFrameLayoutRef.current.set(frame.i, frame);
-    }
-
-    if (newItem && newItem.i !== '__dropping-elem__' && !frameIds.has(newItem.i)) {
-      const found = findServiceWithParent(rootServices, newItem.i);
-      if (found) {
-        const target = findParentFrameByLayout(newItem, items);
-        const currentParentId = found.parent?.id ?? null;
-        const nextParentId = target?.frameId ?? null;
-        if (target && nextParentId && nextParentId !== currentParentId) {
+      if (target.kind === 'reparent') {
+        const found = findServiceWithParent(rootServices, newItem.i);
+        const currentParentId = found?.parent?.id ?? null;
+        if (found && target.frameId !== currentParentId) {
+          // Place at the drop spot if free, otherwise the next free spot in
+          // the frame — a reparent must never land on an occupied child.
+          const frameService = rootServices.find(s => s.id === target.frameId);
+          const childItems = (frameService?.children ?? []).map(c => serviceAsGridItem(c, gridConfig));
+          const desired = { ...newItem, x: newItem.x - target.frameLayout.x, y: newItem.y - target.frameLayout.y };
+          const pos = resolveNonOverlappingPosition(desired, childItems, target.frameLayout.w);
           const relLayout = {
-            x: newItem.x - target.frameLayout.x,
-            y: newItem.y - target.frameLayout.y,
+            x: pos.x,
+            y: pos.y,
             w: newItem.w,
             h: isTinyLayoutService(found.service) ? found.service.layout.h : newItem.h,
           };
           const filtered = items.filter(i => i.i !== newItem.i);
-          dragLayoutRef.current = filtered;
-          setLayout(filtered);
+          commitLayout(filtered);
           setReparentingIds(prev => (prev.includes(newItem.i) ? prev : [...prev, newItem.i]));
           void fetch(`/api/services/${newItem.i}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ parentId: nextParentId, layout: relLayout }),
+            body: JSON.stringify({ parentId: target.frameId, layout: relLayout }),
           }).then(async r => {
             if (!r.ok) console.error('Reparent failed:', r.status, await r.text());
             await reloadServices();
@@ -314,12 +293,35 @@ export function DashGrid() {
       }
     }
 
-    dragLayoutRef.current = items;
-    setLayout(items);
-  }, [findParentFrameByLayout, reloadServices, rootServices, setReparentingIds]);
+    commitLayout(items);
+  }, [commitLayout, frameIds, gridConfig, reloadServices, revertGesturedItem, rootServices, setGhostInvalid, setReparentingIds]);
+
+  // Resize never reparents — any overlap (frames included) is invalid.
+  const tintGhostDuringResize = useCallback((newLayout: Layout, _oldItem?: LayoutItem | null, newItem?: LayoutItem | null) => {
+    if (!editModeRef.current || !newItem) return;
+    setGhostInvalid(findOverlappingItems(newItem, newLayout).length > 0);
+  }, [setGhostInvalid]);
+
+  const syncLayoutAfterResize = useCallback((newLayout: Layout, oldItem?: LayoutItem | null, newItem?: LayoutItem | null) => {
+    if (!editModeRef.current) return;
+    setGhostInvalid(false);
+    const items = [...newLayout];
+    if (newItem && oldItem && findOverlappingItems(newItem, items).length > 0) {
+      revertGesturedItem(items, newItem, oldItem);
+      return;
+    }
+    commitLayout(items);
+  }, [commitLayout, revertGesturedItem, setGhostInvalid]);
+
+  // RGL removes the external drop ghost without firing a callback when the
+  // drag leaves the grid — clear the tint here so it can't stick.
+  const clearGhostTintOnDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setGhostInvalid(false);
+  }, [setGhostInvalid]);
 
   const createWidgetFromDrop = useCallback(
     (rglLayout: Layout, item: LayoutItem | undefined, e: Event) => {
+      setGhostInvalid(false);
       // RGL passes a React SyntheticDragEvent; access dataTransfer via nativeEvent
       const dataTransfer = (e as unknown as React.DragEvent).nativeEvent?.dataTransfer
         ?? (e as unknown as DragEvent).dataTransfer;
@@ -350,22 +352,37 @@ export function DashGrid() {
       const parent = findParentFrame(item, e);
       const parentId = parent?.frameId;
 
+      let dropLayout: { x: number; y: number; w: number; h: number };
+      if (parent) {
+        // Dropping into a frame: place at the cursor spot if free, otherwise
+        // the next free spot among the frame's children.
+        const frameService = allServicesRef.current.find(s => s.id === parent.frameId);
+        const childItems = (frameService?.children ?? []).map(c => serviceAsGridItem(c, gridConfig));
+        const desired = { i: id, x: item.x - parent.frameLayout.x, y: item.y - parent.frameLayout.y, w: dropWidth, h: dropHeight };
+        const pos = resolveNonOverlappingPosition(desired, childItems, parent.frameLayout.w);
+        dropLayout = { x: pos.x, y: pos.y, w: dropWidth, h: dropHeight };
+      } else {
+        // Dropping on the root grid: occupied space rejects the drop entirely
+        // (the drag-over ghost was already tinted red).
+        const dropItem: LayoutItem = { i: id, x: item.x, y: item.y, w: dropWidth, h: dropHeight };
+        if (findOverlappingItems(dropItem, rglLayout).length > 0) {
+          setDroppingItem(null);
+          return;
+        }
+        dropLayout = { x: item.x, y: item.y, w: dropWidth, h: dropHeight };
+      }
+
       const newService: ServiceConfig = {
         id,
         title: template.label,
         widget: template.type,
-        layout: parent
-          ? { x: item.x - parent.frameLayout.x, y: item.y - parent.frameLayout.y, w: dropWidth, h: dropHeight }
-          : { x: item.x, y: item.y, w: dropWidth, h: dropHeight },
+        layout: dropLayout,
         options: template.defaultOptions ?? {},
       };
 
       if (!parentId) {
-        // Use rglLayout (RGL's internal state at drop time) as the base — it has the
-        // correct pushed positions for all existing widgets. Using React layout state
-        // here would snap pushed widgets back to their pre-drag YAML positions.
-        const pushedLayout = [...rglLayout.filter(l => l.i !== '__dropping-elem__')];
-        setLayout(() => [...pushedLayout, { i: id, x: item.x, y: item.y, w: dropWidth, h: dropHeight }]);
+        const baseItems = [...rglLayout.filter(l => l.i !== DROPPING_ELEMENT_ID)];
+        setLayout(() => [...baseItems, { i: id, ...dropLayout }]);
         setDropQueue(prev => [...prev, newService]);
       }
       setDroppingItem(null);
@@ -391,13 +408,15 @@ export function DashGrid() {
         }
       });
     },
-    [findParentFrame, reloadServices, setDroppingItem]
+    [findParentFrame, gridConfig, reloadServices, setDroppingItem, setGhostInvalid]
   );
 
   const deleteService = useCallback(
     async (id: string) => {
       await fetch(`/api/services/${id}`, { method: 'DELETE' });
       setLayout(prev => prev.filter((l: LayoutItem) => l.i !== id));
+      // Drop the stale entry so save-on-close never PUTs a deleted id.
+      dragLayoutRef.current = dragLayoutRef.current.filter(l => l.i !== id);
       await reloadServices();
     },
     [reloadServices]
@@ -424,7 +443,7 @@ export function DashGrid() {
   const cols = Math.max(1, Math.floor((availableWidth + gap) / cellPitch));
   const gridWidth = cols * cellPitch - gap;
   const rglDropItem = useMemo<LayoutItem | undefined>(
-    () => editMode ? { i: '__dropping-elem__', x: 0, y: 0, w: droppingItem?.w ?? 2, h: droppingItem?.h ?? 2 } : undefined,
+    () => editMode ? { i: DROPPING_ELEMENT_ID, x: 0, y: 0, w: droppingItem?.w ?? 2, h: droppingItem?.h ?? 2 } : undefined,
     [editMode, droppingItem?.w, droppingItem?.h],
   );
   // Stable RGL config objects — recreating them inline would re-render the whole
@@ -455,7 +474,12 @@ export function DashGrid() {
           {t('dashGrid.configErrorBanner')}
         </div>
       )}
-      <div className="dash-grid-canvas" style={{ width: gridWidth }}>
+      <div
+        className="dash-grid-canvas"
+        style={{ width: gridWidth }}
+        ref={canvasElRef}
+        onDragLeave={clearGhostTintOnDragLeave}
+      >
         {editMode && (
           <div
             className="grid-overlay"
@@ -472,11 +496,13 @@ export function DashGrid() {
           dragConfig={rglDragConfig}
           resizeConfig={rglResizeConfig}
           dropConfig={rglDropConfig}
-          compactor={noCompactor}
+          compactor={OVERLAP_COMPACTOR}
           {...(rglDropItem !== undefined && { droppingItem: rglDropItem })}
           onDrop={createWidgetFromDrop}
-          onDragStart={lockFramesDuringDrag}
+          onDrag={tintGhostDuringDrag}
           onDragStop={syncLayoutAfterDrag}
+          onResize={tintGhostDuringResize}
+          onResizeStop={syncLayoutAfterResize}
           onLayoutChange={recordDragPositions}
         >
         {rootServices.map(s => (

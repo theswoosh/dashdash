@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useCallback, useEffect, memo } from 'react';
-import ReactGridLayout, { noCompactor } from 'react-grid-layout';
+import ReactGridLayout from 'react-grid-layout';
 import type { Layout, LayoutItem } from 'react-grid-layout';
 import { GripVertical, Settings, X } from 'lucide-react';
 import type { ServiceConfig } from '@dashdash/types';
@@ -10,11 +10,11 @@ import { useT } from '../i18n';
 import { WidgetCard } from './widget-card.component';
 import { serviceAsGridItem, persistedHeight } from '../utils/widget-layout';
 import type { GridConfigLike } from '../utils/widget-layout';
+import { OVERLAP_COMPACTOR, DROPPING_ELEMENT_ID, findOverlappingItems } from '../utils/grid-collision';
 import './FrameCard.css';
 
 const CONTAINER_PADDING: [number, number] = [0, 0];
 const FRAME_DROP_CONFIG = { enabled: false };
-const FRAME_COMPACTOR = { ...noCompactor, allowOverlap: true };
 const CHILD_DRAG_HANDLE = '.frame-widget-drag-handle';
 
 function servicesAsLayout(services: ServiceConfig[], gridConfig: GridConfigLike): LayoutItem[] {
@@ -99,13 +99,13 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
     prevEditMode.current = editMode;
 
     if (!wasEditing && editMode) {
-      dragLayoutRef.current = layout.filter(l => l.i !== '__dropping-elem__');
+      dragLayoutRef.current = layout.filter(l => l.i !== DROPPING_ELEMENT_ID);
     }
 
     if (wasEditing && !editMode) {
       const source = dragLayoutRef.current.length > 0 ? dragLayoutRef.current : layout;
       const items = source
-        .filter(l => l.i !== '__dropping-elem__')
+        .filter(l => l.i !== DROPPING_ELEMENT_ID)
         .map(l => ({ id: l.i, layout: { x: l.x, y: l.y, w: l.w, h: persistedHeight(l, children) } }));
       void fetch('/api/services/layouts', {
         method: 'PUT',
@@ -123,25 +123,51 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
 
   const recordDragPositions = useCallback((newLayout: Layout) => {
     if (!editMode) return;
-    const withoutGhost = newLayout.filter(l => l.i !== '__dropping-elem__');
+    const withoutGhost = newLayout.filter(l => l.i !== DROPPING_ELEMENT_ID);
     if (withoutGhost.length > 0) dragLayoutRef.current = [...withoutGhost];
   }, [editMode]);
 
-  const syncLayoutAfterDrag = useCallback((newLayout: Layout) => {
+  // Red "invalid drop" tint on the frame body — DOM class toggle only, no
+  // setState during drag/resize ticks (same pattern as the main grid).
+  const bodyElRef = useRef<HTMLDivElement | null>(null);
+  const isGhostInvalidRef = useRef(false);
+  const setGhostInvalid = useCallback((isInvalid: boolean) => {
+    if (isGhostInvalidRef.current === isInvalid) return;
+    isGhostInvalidRef.current = isInvalid;
+    bodyElRef.current?.classList.toggle('grid-drag-invalid', isInvalid);
+  }, []);
+
+  // No reparent exception inside frames (frames cannot nest) — any overlap
+  // between children is invalid.
+  const tintGhostDuringGesture = useCallback((newLayout: Layout, _oldItem?: LayoutItem | null, newItem?: LayoutItem | null) => {
+    if (!editMode || !newItem) return;
+    setGhostInvalid(findOverlappingItems(newItem, newLayout).length > 0);
+  }, [editMode, setGhostInvalid]);
+
+  const syncLayoutAfterGesture = useCallback((newLayout: Layout, oldItem?: LayoutItem | null, newItem?: LayoutItem | null) => {
     if (!editMode) return;
-    const items = [...newLayout];
+    setGhostInvalid(false);
+    let items = [...newLayout];
+    if (newItem && oldItem && findOverlappingItems(newItem, items).length > 0) {
+      items = items.map(it =>
+        it.i === newItem.i ? { ...it, x: oldItem.x, y: oldItem.y, w: oldItem.w, h: oldItem.h } : it,
+      );
+    }
     dragLayoutRef.current = items;
     setLayout(items);
-  }, [editMode]);
+  }, [editMode, setGhostInvalid]);
 
   const deleteChild = useCallback(async (id: string) => {
     setLayout(prev => prev.filter(l => l.i !== id));
+    // Drop the stale entry so save-on-close never PUTs a deleted id.
+    dragLayoutRef.current = dragLayoutRef.current.filter(l => l.i !== id);
     await onDelete?.(id);
   }, [onDelete]);
 
   const roRef = useRef<ResizeObserver | null>(null);
   const [width, setWidth] = useState(200);
   const bodyRef = useCallback((node: HTMLDivElement | null) => {
+    bodyElRef.current = node;
     if (roRef.current) { roRef.current.disconnect(); roRef.current = null; }
     if (!node) return;
     const ro = new ResizeObserver(([entry]) => {
@@ -200,8 +226,11 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
           dragConfig={dragConfig}
           resizeConfig={resizeConfig}
           dropConfig={FRAME_DROP_CONFIG}
-          compactor={FRAME_COMPACTOR}
-          onDragStop={syncLayoutAfterDrag}
+          compactor={OVERLAP_COMPACTOR}
+          onDrag={tintGhostDuringGesture}
+          onDragStop={syncLayoutAfterGesture}
+          onResize={tintGhostDuringGesture}
+          onResizeStop={syncLayoutAfterGesture}
           onLayoutChange={recordDragPositions}
         >
           {children.map(child => (

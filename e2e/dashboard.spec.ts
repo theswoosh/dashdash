@@ -89,3 +89,98 @@ test('hold-to-delete removes a widget permanently', async ({ page }) => {
   await expect(page.locator('.react-grid-item').filter({ hasText: 'Clock' })).toBeVisible();
   await expect(page.locator('.react-grid-item').filter({ hasText: 'Notes' })).toHaveCount(0);
 });
+
+test('dragging onto an occupied spot shows a red ghost and reverts', async ({ page }) => {
+  await loginViaApi(page);
+  await page.goto('/');
+  const blockA = page.locator('.react-grid-item').filter({ hasText: 'Block A' });
+  const blockB = page.locator('.react-grid-item').filter({ hasText: 'Block B' });
+  await expect(blockA).toBeVisible();
+  const initialTransform = await blockA.evaluate(el => (el as HTMLElement).style.transform);
+
+  await enableEditMode(page);
+  const handle = blockA.locator('.grid-drag-handle');
+  await handle.hover();
+  await page.mouse.down();
+  const targetBox = await blockB.boundingBox();
+  if (!targetBox) throw new Error('Block B has no bounding box');
+  await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2, { steps: 12 });
+
+  // Invalid target: the canvas carries the red-ghost class while hovering.
+  await expect(page.locator('.dash-grid-canvas.grid-drag-invalid')).toHaveCount(1);
+
+  await page.mouse.up();
+
+  // Drop is rejected — Block A snaps back to where it started.
+  await expect.poll(() => blockA.evaluate(el => (el as HTMLElement).style.transform)).toBe(initialTransform);
+  await expect(page.locator('.dash-grid-canvas.grid-drag-invalid')).toHaveCount(0);
+
+  const layoutSave = page.waitForResponse(r => r.url().includes('/api/services/layouts') && r.ok());
+  await page.getByLabel('Save & exit').click();
+  await layoutSave;
+
+  await page.reload();
+  await expect(blockA).toBeVisible();
+  const persistedTransform = await blockA.evaluate(el => (el as HTMLElement).style.transform);
+  expect(persistedTransform).toBe(initialTransform);
+});
+
+test('resizing into a neighbor shows a red ghost and reverts', async ({ page }) => {
+  await loginViaApi(page);
+  await page.goto('/');
+  const blockA = page.locator('.react-grid-item').filter({ hasText: 'Block A' });
+  await expect(blockA).toBeVisible();
+
+  await enableEditMode(page);
+  const initialBox = await blockA.boundingBox();
+  if (!initialBox) throw new Error('Block A has no bounding box');
+
+  await blockA.hover();
+  const resizeHandle = blockA.locator('.react-resizable-handle');
+  await resizeHandle.hover({ force: true });
+  await page.mouse.down();
+  // Stretch right past Block B's left edge (Block B starts 4 grid units away).
+  await page.mouse.move(initialBox.x + initialBox.width + 90, initialBox.y + initialBox.height - 5, { steps: 10 });
+
+  await expect(page.locator('.dash-grid-canvas.grid-drag-invalid')).toHaveCount(1);
+
+  await page.mouse.up();
+
+  // Resize is rejected — Block A returns to its original size.
+  await expect.poll(async () => (await blockA.boundingBox())?.width).toBe(initialBox.width);
+  await expect(page.locator('.dash-grid-canvas.grid-drag-invalid')).toHaveCount(0);
+
+  await page.getByLabel('Save & exit').click();
+});
+
+test('dragging a widget onto a frame reparents it (no red ghost)', async ({ page }) => {
+  await loginViaApi(page);
+  await page.goto('/');
+  const blockA = page.locator('.react-grid-item').filter({ hasText: 'Block A' });
+  const frame = page.locator('.frame-card');
+  await expect(blockA).toBeVisible();
+  await expect(frame).toBeVisible();
+
+  await enableEditMode(page);
+  const handle = blockA.locator('.grid-drag-handle');
+  await handle.hover();
+  await page.mouse.down();
+  const frameBox = await frame.boundingBox();
+  if (!frameBox) throw new Error('Frame has no bounding box');
+  await page.mouse.move(frameBox.x + frameBox.width / 2, frameBox.y + frameBox.height / 2, { steps: 12 });
+
+  // Over a frame the drop is valid — no red ghost.
+  await expect(page.locator('.dash-grid-canvas.grid-drag-invalid')).toHaveCount(0);
+
+  const reparent = page.waitForResponse(r =>
+    r.url().includes('/api/services/') && r.request().method() === 'PATCH' && r.ok());
+  await page.mouse.up();
+  await reparent;
+
+  // Block A now renders inside the frame's inner grid.
+  await expect(frame.locator('.react-grid-item').filter({ hasText: 'Block A' })).toBeVisible();
+
+  await page.getByLabel('Save & exit').click();
+  await page.reload();
+  await expect(page.locator('.frame-card .react-grid-item').filter({ hasText: 'Block A' })).toBeVisible();
+});

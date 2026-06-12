@@ -25,6 +25,9 @@ mkdirSync(join(runtimeDir, 'config'), { recursive: true });
 mkdirSync(join(runtimeDir, 'data'), { recursive: true });
 
 writeFileSync(join(runtimeDir, 'config', 'settings.yml'), 'title: e2e\n');
+// Layout map (fine grid, pitch 14px): Clock is dragged to ~(28,18) by the
+// drag-persist test — Block A/B and the Group frame must stay clear of that
+// area and of each other. Notes is consumed by the hold-to-delete test.
 writeFileSync(join(runtimeDir, 'config', 'services.yml'), `- title: Clock
   widget: clock
   layout: { x: 0, y: 0, w: 8, h: 8 }
@@ -33,6 +36,19 @@ writeFileSync(join(runtimeDir, 'config', 'services.yml'), `- title: Clock
 - title: Notes
   widget: notepad
   layout: { x: 12, y: 0, w: 8, h: 8 }
+- title: Block A
+  widget: clock
+  layout: { x: 0, y: 14, w: 8, h: 8 }
+  options:
+    timezone: UTC
+- title: Block B
+  widget: clock
+  layout: { x: 12, y: 14, w: 8, h: 8 }
+  options:
+    timezone: UTC
+- title: Group
+  widget: frame
+  layout: { x: 44, y: 0, w: 24, h: 18 }
 `);
 
 const child = spawn(process.execPath, [backendDist], {

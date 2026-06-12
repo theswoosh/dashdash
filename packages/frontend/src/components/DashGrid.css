@@ -36,10 +36,10 @@
   min-width: 800px;
 }
 
-/* Edit mode: show grid placeholder */
+/* Edit mode: drag/resize placeholder */
 .react-grid-item.react-grid-placeholder {
   background: var(--accent);
-  opacity: 0.15;
+  opacity: 0.2;
   border-radius: var(--radius);
 }
 
@@ -89,16 +89,21 @@
   transition: none;
 }
 
-/* Drop indicator */
-.react-grid-item.react-grid-placeholder {
-  background: var(--accent);
-  opacity: 0.2;
-  border-radius: var(--radius);
-}
-
 /* Dropping item outline */
 .react-grid-item.dropping {
   border: 2px dashed var(--accent);
   opacity: 0.6;
   background: rgba(var(--accent-rgb, 96, 165, 250), 0.1);
+}
+
+/* Invalid drop target: the dragged/resized ghost over occupied space.
+   The class is toggled imperatively on .dash-grid-canvas during drag ticks. */
+.dash-grid-canvas.grid-drag-invalid .react-grid-item.react-grid-placeholder {
+  background: var(--danger, #dc2626);
+  opacity: 0.3;
+}
+
+.dash-grid-canvas.grid-drag-invalid .react-grid-item.dropping {
+  border-color: var(--danger, #dc2626);
+  background: rgba(220, 38, 38, 0.12);
 }
