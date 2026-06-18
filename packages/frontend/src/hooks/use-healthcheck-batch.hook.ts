@@ -3,7 +3,7 @@ import useSWR from 'swr';
 import { useServices } from './use-services.hook';
 
 interface CheckResult {
-  status: 'up' | 'down';
+  status: 'up' | 'down' | 'unknown';
   latencyMs: number;
   error?: string;
 }

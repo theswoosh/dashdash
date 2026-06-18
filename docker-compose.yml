@@ -21,7 +21,7 @@ services:
     restart: unless-stopped
     # Defense-in-depth: immutable root filesystem (data lives in the volumes),
     # no capabilities beyond what the entrypoint needs (chown volumes, drop to
-    # the dashdash user via su-exec), and no privilege re-escalation.
+    # the dashdash user via setpriv), and no privilege re-escalation.
     read_only: true
     tmpfs:
       - /tmp
@@ -32,12 +32,15 @@ services:
       - SETUID
       - SETGID
       - DAC_OVERRIDE
+      # NET_RAW: lets the healthcheck widget send ICMP pings (host liveness).
+      # The entrypoint hands it to the non-root app user as an ambient capability,
+      # so it works even with no-new-privileges. Unlike the old ping_group_range
+      # sysctl, this also works in unprivileged LXC (e.g. Proxmox, which grants
+      # NET_RAW by default). Remove this line to disable ICMP — bare-host checks
+      # then report "unknown" (grey dot); port/URL (TCP) checks keep working.
+      - NET_RAW
     security_opt:
       - no-new-privileges:true
-    # Lets the unprivileged app user send ICMP pings (healthcheck widget)
-    # without CAP_NET_RAW. Namespaced sysctl — safe to set per-container.
-    sysctls:
-      net.ipv4.ping_group_range: "0 2147483647"
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/api/health"]
       interval: 30s

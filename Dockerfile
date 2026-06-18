@@ -50,8 +50,10 @@ RUN pnpm --filter @dashdash/backend --prod deploy --legacy /deploy
 # ── Stage 3: Runtime image ────────────────────────────────────────────────────
 FROM node:22-alpine@sha256:968df39aedcea65eeb078fb336ed7191baf48f972b4479711397108be0966920 AS runtime
 
-# su-exec: lightweight privilege-drop utility (replaces gosu for alpine)
-RUN apk add --no-cache su-exec
+# setpriv (util-linux): drops privileges to the dashdash user while passing
+# CAP_NET_RAW as an ambient capability, so the healthcheck widget can send ICMP
+# pings as non-root — even under no-new-privileges, and without a sysctl.
+RUN apk add --no-cache setpriv
 
 # Create non-root user — entrypoint fixes /data and /config ownership at runtime
 # so upgrades from root-owned volumes work without manual intervention.
@@ -92,5 +94,5 @@ HEALTHCHECK --interval=30s --timeout=5s --retries=3 --start-period=15s \
 
 EXPOSE 3000
 
-# Entrypoint runs as root; fixes volume ownership then drops to dashdash via su-exec.
+# Entrypoint runs as root; fixes volume ownership then drops to dashdash via setpriv.
 ENTRYPOINT ["/app/entrypoint.sh"]

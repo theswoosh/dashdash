@@ -38,9 +38,24 @@ function extractHost(input: string): string {
 }
 
 export interface CheckResult {
-  status: 'up' | 'down';
+  // 'unknown' = the check could not be performed (e.g. ICMP not permitted in
+  // this container), distinct from 'down' (target actively unreachable).
+  status: 'up' | 'down' | 'unknown';
   latencyMs: number;
   error?: string | undefined;
+}
+
+/**
+ * Distinguish "ICMP isn't available to us" (no permission / no `ping` binary)
+ * from a genuine "host is unreachable". In unprivileged LXC the container can't
+ * set net.ipv4.ping_group_range and lacks CAP_NET_RAW, so `ping` fails to open
+ * its socket — that must not be reported as the host being down.
+ */
+function isIcmpUnavailable(err: { code?: string | number | null }, stderr: string): boolean {
+  // Spawn failures (binary missing / not executable) surface as a string code
+  // (e.g. 'ENOENT'); a process that ran and exited has a numeric exit code.
+  if (typeof err.code === 'string') return true;
+  return /operation not permitted|permission denied|are you root|socket:|raw socket|not permitted/i.test(stderr);
 }
 
 /** In-process TTL cache: avoids duplicate DNS + subprocess calls within a 25s window. */
@@ -63,11 +78,19 @@ function pingHost(host: string, timeoutMs: number): Promise<CheckResult> {
   return new Promise(resolve => {
     const start = Date.now();
     const timeoutSec = Math.max(MIN_PING_TIMEOUT_SEC, Math.ceil(timeoutMs / 1000));
-    execFile('ping', ['-c', '1', '-W', String(timeoutSec), host], err => {
+    execFile('ping', ['-c', '1', '-W', String(timeoutSec), host], (err, _stdout, stderr) => {
       const latencyMs = Date.now() - start;
-      resolve(err
-        ? { status: 'down', error: 'unreachable', latencyMs }
-        : { status: 'up', latencyMs });
+      if (!err) {
+        resolve({ status: 'up', latencyMs });
+        return;
+      }
+      if (isIcmpUnavailable(err, String(stderr ?? ''))) {
+        // Can't ping from this container — report unknown, not down. Use a
+        // port/URL (TCP check) for a definitive result in restricted setups.
+        resolve({ status: 'unknown', error: 'ICMP unavailable', latencyMs });
+        return;
+      }
+      resolve({ status: 'down', error: 'unreachable', latencyMs });
     });
   });
 }
@@ -91,16 +114,22 @@ function tcpCheck(host: string, port: number, timeoutMs: number): Promise<CheckR
   });
 }
 
-/** Resolve the effective port from URL scheme/explicit port, before DNS. */
+/**
+ * Resolve the effective port for a TCP check, before DNS. Returns undefined to
+ * mean "no port → use ICMP ping":
+ *   - explicit `port` field, or `host:port`, or a port in the URL → that port
+ *   - an `http(s)://` URL with no port → 80 / 443
+ *   - a bare host/IP (no scheme, no port), or a non-HTTP scheme → undefined (ICMP)
+ */
 function resolveEffectivePort(trimmed: string, port: number | undefined): number | undefined {
   if (port !== undefined) return port;
+  const hasScheme = trimmed.includes('://');
   try {
-    const normalized = trimmed.includes('://') ? trimmed : `http://${trimmed}`;
-    const parsed = new URL(normalized);
+    const parsed = new URL(hasScheme ? trimmed : `http://${trimmed}`);
     if (parsed.port) return parseInt(parsed.port, 10);
-    if (parsed.protocol === 'https:') return 443;
-    if (parsed.protocol === 'http:') return 80;
-  } catch { /* fall back to ping */ }
+    if (hasScheme && parsed.protocol === 'https:') return 443;
+    if (hasScheme && parsed.protocol === 'http:') return 80;
+  } catch { /* fall back to ICMP ping */ }
   return undefined;
 }
 

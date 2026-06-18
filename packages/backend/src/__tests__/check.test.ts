@@ -203,3 +203,76 @@ describe('runHealthcheck — valid host, TCP path', () => {
     expect(result.error).toBe('unreachable');
   });
 });
+
+// ---------------------------------------------------------------------------
+// 6b. Port-resolution routing — bare host → ICMP, explicit port → TCP
+// ---------------------------------------------------------------------------
+describe('runHealthcheck — port resolution routing', () => {
+  it('bare host with no port uses ICMP ping (not TCP)', async () => {
+    mockResolve4.mockResolvedValue(['93.184.216.34']);
+    mockExecFile.mockImplementation((_f: string, _a: string[], cb: (e: unknown, o: string, s: string) => void) => cb(null, '', ''));
+    const result = await runHealthcheck({ url: 'example.com' });
+    expect(result.status).toBe('up');
+    expect(mockExecFile).toHaveBeenCalled();
+    expect(mockSocket.connect).not.toHaveBeenCalled();
+  });
+
+  it('explicit host:port uses a TCP check (not ICMP)', async () => {
+    mockResolve4.mockResolvedValue(['93.184.216.34']);
+    mockSocket.connect.mockImplementation((port: number, _host: string, cb: () => void) => {
+      expect(port).toBe(3000);
+      cb();
+    });
+    const result = await runHealthcheck({ url: 'example.com:3000' });
+    expect(result.status).toBe('up');
+    expect(mockExecFile).not.toHaveBeenCalled();
+  });
+
+  it('explicit port field uses a TCP check (not ICMP)', async () => {
+    mockResolve4.mockResolvedValue(['93.184.216.34']);
+    mockSocket.connect.mockImplementation((port: number, _host: string, cb: () => void) => {
+      expect(port).toBe(8080);
+      cb();
+    });
+    const result = await runHealthcheck({ url: 'example.com', port: 8080 });
+    expect(result.status).toBe('up');
+    expect(mockExecFile).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 6. ICMP ping path (non-http scheme → no inferred port → ping)
+// ---------------------------------------------------------------------------
+describe('runHealthcheck — ICMP ping path', () => {
+  // Use a public IP with a non-http(s) scheme so resolveEffectivePort yields no
+  // port and the check falls through to ICMP ping.
+  const PING_URL = 'redis://8.8.8.8';
+
+  it('returns up when ping succeeds', async () => {
+    mockExecFile.mockImplementation((_f: string, _a: string[], cb: (e: unknown, o: string, s: string) => void) => cb(null, '', ''));
+    const result = await runHealthcheck({ url: PING_URL });
+    expect(result.status).toBe('up');
+    expect(mockExecFile).toHaveBeenCalled();
+  });
+
+  it('returns down/unreachable when ping exits non-zero (host down)', async () => {
+    mockExecFile.mockImplementation((_f: string, _a: string[], cb: (e: unknown, o: string, s: string) => void) =>
+      cb(Object.assign(new Error('exit 1'), { code: 1 }), '', ''));
+    const result = await runHealthcheck({ url: PING_URL });
+    expect(result).toMatchObject({ status: 'down', error: 'unreachable' });
+  });
+
+  it('returns unknown/ICMP unavailable when ping lacks permission', async () => {
+    mockExecFile.mockImplementation((_f: string, _a: string[], cb: (e: unknown, o: string, s: string) => void) =>
+      cb(Object.assign(new Error('exit 1'), { code: 1 }), '', 'ping: permission denied (are you root?)'));
+    const result = await runHealthcheck({ url: PING_URL });
+    expect(result).toMatchObject({ status: 'unknown', error: 'ICMP unavailable' });
+  });
+
+  it('returns unknown when the ping binary is missing (ENOENT)', async () => {
+    mockExecFile.mockImplementation((_f: string, _a: string[], cb: (e: unknown, o: string, s: string) => void) =>
+      cb(Object.assign(new Error('spawn ping ENOENT'), { code: 'ENOENT' }), '', ''));
+    const result = await runHealthcheck({ url: PING_URL });
+    expect(result.status).toBe('unknown');
+  });
+});

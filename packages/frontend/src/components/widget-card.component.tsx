@@ -99,15 +99,15 @@ interface Props {
 }
 
 interface PingStatus {
-  status: 'up' | 'down';
+  status: 'up' | 'down' | 'unknown';
   latencyMs?: number | undefined;
   error?: string | undefined;
 }
 
 function isPingStatus(x: unknown): x is PingStatus {
-  return typeof x === 'object' && x !== null
-    && 'status' in x
-    && ((x as Record<string, unknown>)['status'] === 'up' || (x as Record<string, unknown>)['status'] === 'down');
+  if (typeof x !== 'object' || x === null || !('status' in x)) return false;
+  const status = (x as Record<string, unknown>)['status'];
+  return status === 'up' || status === 'down' || status === 'unknown';
 }
 
 function buildPingTooltip(ping: PingStatus): string {
