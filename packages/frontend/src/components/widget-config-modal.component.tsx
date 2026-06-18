@@ -7,31 +7,10 @@ import { useSettings, type SearchEngine } from '../hooks/use-settings.hook';
 import { getTemplate } from '../widgets/catalog';
 import type { ConfigField } from '../widgets/catalog';
 import { ServiceIconPicker } from './service-icon-picker.component';
-import { BgColorPicker } from './bg-color-picker.component';
+import { BgColorPicker, parseRgba, buildRgba, DEFAULT_BG_HEX, DEFAULT_BG_ALPHA } from './bg-color-picker.component';
 import { WidgetTitleField } from './widget-title-field.component';
 import { useT } from '../i18n';
 import './WidgetConfigModal.css';
-
-const DEFAULT_BG_HEX = '#4488ff';
-const DEFAULT_BG_ALPHA = 0.2;
-
-function parseRgba(rgba: string): { hex: string; alpha: number } | null {
-  const m = rgba.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+))?\s*\)/);
-  if (!m) return null;
-  const r = parseInt(m[1]!, 10);
-  const g = parseInt(m[2]!, 10);
-  const b = parseInt(m[3]!, 10);
-  const alpha = m[4] !== undefined ? parseFloat(m[4]) : 1;
-  const hex = '#' + [r, g, b].map(n => n.toString(16).padStart(2, '0')).join('');
-  return { hex, alpha };
-}
-
-function buildRgba(hex: string, alpha: number): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(2)})`;
-}
 
 interface LinkRow {
   label: string;

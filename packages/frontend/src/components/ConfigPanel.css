@@ -118,6 +118,33 @@
   min-width: 0;
 }
 
+.config-panel-item__config {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-faint);
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--transition), background var(--transition), color var(--transition);
+}
+
+.config-panel-item:hover .config-panel-item__config,
+.config-panel-item__config:focus-visible {
+  opacity: 1;
+}
+
+.config-panel-item__config:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
 .config-panel-item__label {
   font-size: 13px;
   font-weight: 500;

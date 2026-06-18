@@ -67,6 +67,14 @@ widgetConfig:
   noOptions: "Dieses Widget hat keine konfigurierbaren Optionen."
   test: "Test"
 
+widgetTemplateConfig:
+  title: "Standardwerte: {{label}}"
+  configureAria: "Standardwerte für {{label}} konfigurieren"
+  defaultSize: "Standardgröße"
+  width: "Breite"
+  height: "Höhe"
+  layoutSize: "Standard-Layoutgröße"
+
 topbar:
   openConfig: "Konfiguration öffnen"
   openConfigAria: "Konfig öffnen"

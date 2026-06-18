@@ -86,6 +86,14 @@ export const EN_FALLBACK: Record<string, unknown> = {
     resetToDefault: 'Reset to default',
     hideHeader: 'Hide header in display mode',
   },
+  widgetTemplateConfig: {
+    title: 'Defaults: {{label}}',
+    configureAria: 'Configure {{label}} defaults',
+    defaultSize: 'Default size',
+    width: 'Width',
+    height: 'Height',
+    layoutSize: 'Default layout size',
+  },
   topbar: {
     openConfig: 'Open configuration',
     openConfigAria: 'Open config',

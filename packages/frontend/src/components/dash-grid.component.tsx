@@ -377,7 +377,7 @@ export function DashGrid() {
         title: template.label,
         widget: template.type,
         layout: dropLayout,
-        options: template.defaultOptions ?? {},
+        options: { ...(template.defaultOptions ?? {}), ...(tmpl?.defaultOptions ?? {}) },
       };
 
       if (!parentId) {

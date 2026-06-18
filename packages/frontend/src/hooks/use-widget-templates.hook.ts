@@ -8,6 +8,9 @@ interface WidgetTemplateSize {
 export interface WidgetTemplateDef {
   type: string;
   defaultSize: WidgetTemplateSize;
+  // Partial per-type option defaults (e.g. bg_color, layoutSize) edited via the
+  // sidebar config popup and merged over catalog defaults when a widget is dropped.
+  defaultOptions?: Record<string, unknown>;
 }
 
 const fetcher = (url: string) => fetch(url).then(res => res.json()) as Promise<WidgetTemplateDef[]>;

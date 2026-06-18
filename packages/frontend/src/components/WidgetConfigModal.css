@@ -143,6 +143,24 @@
   gap: 6px;
 }
 
+/* Width × height inputs (widget template defaults popup) */
+.wtc-size-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wtc-size-row .config-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.wtc-size-x {
+  color: var(--text-faint);
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
 .config-field--checkbox {
   flex-direction: row;
   align-items: center;

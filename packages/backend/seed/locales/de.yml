@@ -83,6 +83,14 @@ widgetConfig:
   resetToDefault: "Auf Standard zurücksetzen"
   hideHeader: "Kopfzeile im Anzeigemodus ausblenden"
 
+widgetTemplateConfig:
+  title: "Standardwerte: {{label}}"
+  configureAria: "Standardwerte für {{label}} konfigurieren"
+  defaultSize: "Standardgröße"
+  width: "Breite"
+  height: "Höhe"
+  layoutSize: "Standard-Layoutgröße"
+
 topbar:
   openConfig: "Konfiguration öffnen"
   openConfigAria: "Konfig öffnen"
