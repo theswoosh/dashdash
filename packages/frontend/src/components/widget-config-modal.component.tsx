@@ -9,7 +9,7 @@ import { useSettings, type SearchEngine } from '../hooks/use-settings.hook';
 import { getTemplate } from '../widgets/catalog';
 import type { ConfigField } from '../widgets/catalog';
 import { ServiceIconPicker } from './service-icon-picker.component';
-import { BgColorPicker, parseRgba, buildRgba, DEFAULT_BG_HEX, DEFAULT_BG_ALPHA } from './bg-color-picker.component';
+import { BgColorPicker, parseRgba, buildRgba, DEFAULT_BG_HEX, DEFAULT_BG_ALPHA, DEFAULT_FG_HEX, DEFAULT_FG_ALPHA } from './bg-color-picker.component';
 import { WidgetTitleField } from './widget-title-field.component';
 import { TimezonePicker } from './timezone-picker.component';
 import { useT } from '../i18n';
@@ -259,6 +259,8 @@ export function WidgetConfigModal() {
   const [testDetail, setTestDetail] = useState('');
   const [bgHex, setBgHex] = useState(DEFAULT_BG_HEX);
   const [bgAlpha, setBgAlpha] = useState(DEFAULT_BG_ALPHA);
+  const [fgHex, setFgHex] = useState(DEFAULT_FG_HEX);
+  const [fgAlpha, setFgAlpha] = useState(DEFAULT_FG_ALPHA);
   const modalRef = useRef<HTMLDivElement>(null);
 
   const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -320,6 +322,11 @@ export function WidgetConfigModal() {
         setBgHex(DEFAULT_BG_HEX);
         setBgAlpha(DEFAULT_BG_ALPHA);
       }
+
+      const rawFg = service.options?.['font_color'];
+      const parsedFg = typeof rawFg === 'string' ? parseRgba(rawFg) : null;
+      setFgHex(parsedFg?.hex ?? DEFAULT_FG_HEX);
+      setFgAlpha(parsedFg?.alpha ?? DEFAULT_FG_ALPHA);
     }
     setTestResult('idle');
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -360,15 +367,44 @@ export function WidgetConfigModal() {
     handleOptionChange('bg_color', null);
   }, [handleOptionChange]);
 
+  const updateFontColor = useCallback((hex: string, alpha: number) => {
+    setFgHex(hex);
+    setFgAlpha(alpha);
+    handleOptionChange('font_color', buildRgba(hex, alpha));
+  }, [handleOptionChange]);
+
+  const resetFontColor = useCallback(() => {
+    setFgHex(DEFAULT_FG_HEX);
+    setFgAlpha(DEFAULT_FG_ALPHA);
+    handleOptionChange('font_color', null);
+  }, [handleOptionChange]);
+
   const colorClipboard = useUIStore(s => s.colorClipboard);
   const setColorClipboard = useUIStore(s => s.setColorClipboard);
+  const copyColorsToClipboard = useCallback(() => {
+    setColorClipboard({
+      bg: typeof options['bg_color'] === 'string' ? options['bg_color'] : buildRgba(bgHex, bgAlpha),
+      fg: typeof options['font_color'] === 'string' ? options['font_color'] : null,
+    });
+  }, [setColorClipboard, options, bgHex, bgAlpha]);
   const applyColorClipboard = useCallback(() => {
     if (colorClipboard === null) return;
-    const parsed = parseRgba(colorClipboard);
-    if (!parsed) return;
-    setBgHex(parsed.hex);
-    setBgAlpha(parsed.alpha);
-    handleOptionChange('bg_color', colorClipboard);
+    if (colorClipboard.bg) {
+      const parsed = parseRgba(colorClipboard.bg);
+      if (parsed) {
+        setBgHex(parsed.hex);
+        setBgAlpha(parsed.alpha);
+        handleOptionChange('bg_color', colorClipboard.bg);
+      }
+    }
+    if (colorClipboard.fg) {
+      const parsed = parseRgba(colorClipboard.fg);
+      if (parsed) {
+        setFgHex(parsed.hex);
+        setFgAlpha(parsed.alpha);
+        handleOptionChange('font_color', colorClipboard.fg);
+      }
+    }
   }, [colorClipboard, handleOptionChange]);
 
   if (!configTarget || !service) return null;
@@ -487,7 +523,7 @@ export function WidgetConfigModal() {
                 <button
                   type="button"
                   className="color-clipboard-btn"
-                  onClick={() => setColorClipboard(buildRgba(bgHex, bgAlpha))}
+                  onClick={copyColorsToClipboard}
                   title={t('widgetConfig.copyColor')}
                   aria-label={t('widgetConfig.copyColor')}
                 >
@@ -512,6 +548,16 @@ export function WidgetConfigModal() {
               hasValue={options['bg_color'] != null}
               onChange={updateBgColor}
               onReset={resetBgColor}
+            />
+          </div>
+          <div className="config-field">
+            <label className="config-label">{t('widgetConfig.fontColor')}</label>
+            <BgColorPicker
+              hex={fgHex}
+              alpha={fgAlpha}
+              hasValue={options['font_color'] != null}
+              onChange={updateFontColor}
+              onReset={resetFontColor}
             />
           </div>
         </div>

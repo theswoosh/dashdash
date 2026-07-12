@@ -1,4 +1,6 @@
 .classic-card {
+  /* Per-widget font color; unset var behaves as inherit */
+  color: var(--card-fg);
   background: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: var(--radius);

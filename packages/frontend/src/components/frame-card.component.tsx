@@ -188,7 +188,13 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
   const resizeConfig = useMemo(() => ({ enabled: editMode }), [editMode]);
   const isHeaderHidden = service.options?.['hideHeader'] === true && !editMode;
   const bgColor = typeof service.options?.['bg_color'] === 'string' ? service.options['bg_color'] : undefined;
-  const cardStyle = bgColor ? { '--card-bg': bgColor } as React.CSSProperties : undefined;
+  const fontColor = typeof service.options?.['font_color'] === 'string' ? service.options['font_color'] : undefined;
+  const cardStyle = bgColor || fontColor
+    ? {
+        ...(bgColor ? { '--card-bg': bgColor } : {}),
+        ...(fontColor ? { '--card-fg': fontColor } : {}),
+      } as React.CSSProperties
+    : undefined;
 
   const cardClassName = ['frame-card', editMode ? 'widget-card--edit' : ''].filter(Boolean).join(' ');
 

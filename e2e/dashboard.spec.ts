@@ -76,7 +76,8 @@ test('hold-to-delete removes a widget permanently', async ({ page }) => {
   await expect(notesItem).toBeVisible();
 
   await enableEditMode(page);
-  const deleteButton = notesItem.getByTitle('Hold to delete');
+  // Scope to the header copy — a hidden narrow-widget flyout duplicate exists.
+  const deleteButton = notesItem.locator('.widget-edit-actions').getByTitle('Hold to delete');
   await deleteButton.hover();
   await page.mouse.down();
   // holdToDeleteMs defaults to 1000 — hold past it.
@@ -197,7 +198,7 @@ test('toggling tiny layout mid-session pins the drag footprint to the bar', asyn
   // reloading. The grid item must shrink with it; a stale full-size entry
   // leaves an oversized drag ghost and phantom collisions (dashtest #4/#19).
   await pinger.hover();
-  await pinger.getByLabel('Configure widget').click();
+  await pinger.locator('.widget-edit-actions').getByLabel('Configure widget').click();
   const layoutField = page.locator('.config-field').filter({ hasText: 'Layout size' });
   await layoutField.locator('select').selectOption('tiny');
   const save = page.waitForResponse(r =>

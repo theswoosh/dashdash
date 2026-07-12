@@ -104,8 +104,8 @@ export function WidgetTemplateConfigModal({ type, onClose }: WidgetTemplateConfi
   const colorClipboard = useUIStore(s => s.colorClipboard);
   const setColorClipboard = useUIStore(s => s.setColorClipboard);
   const applyColorClipboard = () => {
-    if (colorClipboard === null) return;
-    const parsed = parseRgba(colorClipboard);
+    if (colorClipboard?.bg == null) return;
+    const parsed = parseRgba(colorClipboard.bg);
     if (!parsed) return;
     setHasBg(true);
     setBgHex(parsed.hex);
@@ -200,13 +200,13 @@ export function WidgetTemplateConfigModal({ type, onClose }: WidgetTemplateConfi
                 <button
                   type="button"
                   className="color-clipboard-btn"
-                  onClick={() => setColorClipboard(buildRgba(bgHex, bgAlpha))}
+                  onClick={() => setColorClipboard({ bg: buildRgba(bgHex, bgAlpha), fg: null })}
                   title={t('widgetConfig.copyColor')}
                   aria-label={t('widgetConfig.copyColor')}
                 >
                   <Copy size={13} />
                 </button>
-                {colorClipboard !== null && (
+                {colorClipboard?.bg != null && (
                   <button
                     type="button"
                     className="color-clipboard-btn"

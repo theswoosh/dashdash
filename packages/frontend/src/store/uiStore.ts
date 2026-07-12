@@ -6,6 +6,11 @@ interface DroppingItem {
   h: number;
 }
 
+export interface ColorClipboard {
+  bg: string | null;
+  fg: string | null;
+}
+
 interface UIState {
   editMode: boolean;
   activeBoardId: string | null;
@@ -21,9 +26,9 @@ interface UIState {
   setProfileOpen: (open: boolean) => void;
   isInfoOpen: boolean;
   setInfoOpen: (open: boolean) => void;
-  /** Copied widget bg color (rgba string) — session-only, never persisted. */
-  colorClipboard: string | null;
-  setColorClipboard: (color: string | null) => void;
+  /** Copied widget colors (rgba strings) — session-only, never persisted. */
+  colorClipboard: ColorClipboard | null;
+  setColorClipboard: (colors: ColorClipboard | null) => void;
 }
 
 export const useUIStore = create<UIState>(set => ({

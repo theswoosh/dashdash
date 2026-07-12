@@ -12,6 +12,8 @@
  */
 
 .ascii-card {
+  /* Per-widget font color; unset var behaves as inherit */
+  color: var(--card-fg);
   background: var(--card-bg);
   border: none;
   border-radius: 0;

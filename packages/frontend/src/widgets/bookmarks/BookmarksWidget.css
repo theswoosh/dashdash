@@ -23,7 +23,7 @@
   border-radius: var(--radius);
   border: 1px solid var(--border-color);
   font-size: 0.78rem;
-  color: var(--text-primary);
+  color: var(--card-fg, var(--text-primary));
   text-decoration: none;
   transition: background var(--transition), border-color var(--transition);
 }

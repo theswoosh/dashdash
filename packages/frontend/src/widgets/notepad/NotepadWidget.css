@@ -5,7 +5,7 @@
   background: transparent;
   border: none;
   outline: none;
-  color: var(--text-primary);
+  color: var(--card-fg, var(--text-primary));
   font-family: var(--font-mono);
   font-size: 13px;
   line-height: 1.6;
@@ -20,7 +20,7 @@
   font-family: var(--font-mono);
   font-size: 13px;
   line-height: 1.6;
-  color: var(--text-primary);
+  color: var(--card-fg, var(--text-primary));
   white-space: pre-wrap;
   word-break: break-word;
   overflow-y: auto;
@@ -32,7 +32,7 @@
 }
 
 .notepad-placeholder {
-  color: var(--text-faint);
+  color: var(--card-fg, var(--text-faint));
   font-style: italic;
 }
 

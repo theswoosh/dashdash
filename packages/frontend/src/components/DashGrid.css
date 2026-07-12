@@ -107,3 +107,9 @@
   border-color: var(--danger, #dc2626);
   background: rgba(220, 38, 38, 0.12);
 }
+
+/* Widgets are size containers so header chrome can adapt to widget width
+   (narrow-widget edit flyout — see WidgetCard.css). */
+.react-grid-item {
+  container-type: inline-size;
+}

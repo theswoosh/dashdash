@@ -150,10 +150,16 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
     : pingData.status;
   const isHeaderHidden = service.options?.['hideHeader'] === true && !editMode && !isTinyLayout;
   const bgColor = typeof service.options?.['bg_color'] === 'string' ? service.options['bg_color'] : undefined;
+  const fontColor = typeof service.options?.['font_color'] === 'string' ? service.options['font_color'] : undefined;
   const tinyIconValue = isTinyLayout && service.icon && hasServiceIcon(service.icon) ? service.icon : null;
   const tinyInternalUrl = isTinyLayout && typeof service.options?.['internalUrl'] === 'string' ? service.options['internalUrl'] : null;
   const tinyDescription = isTinyLayout && typeof service.options?.['description'] === 'string' ? service.options['description'] : undefined;
-  const cardStyle = bgColor ? { '--card-bg': bgColor } as React.CSSProperties : undefined;
+  const cardStyle = bgColor || fontColor
+    ? {
+        ...(bgColor ? { '--card-bg': bgColor } : {}),
+        ...(fontColor ? { '--card-fg': fontColor } : {}),
+      } as React.CSSProperties
+    : undefined;
 
   // Thresholds are template-level (widgets.yml defaultOptions) and apply to
   // every instance at render time — merged under so per-instance options win.
@@ -199,7 +205,30 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
     isTinyLayout ? 'widget-card--tiny-layout' : '',
   ].filter(Boolean).join(' ');
 
+  // Rendered twice: inline in the header, and in a flyout pill attached above
+  // the card that takes over when the widget is too narrow for header buttons
+  // (container query in WidgetCard.css — live issue #5.1).
+  const editActionButtons = (
+    <>
+      <button
+        className="widget-edit-btn"
+        title={t('widgetCard.configureWidget')}
+        onClick={() => setConfigTarget(service.id)}
+        aria-label={t('widgetCard.configureWidget')}
+      >
+        <Settings size={13} />
+      </button>
+      {onDelete && <HoldDeleteButton id={service.id} holdToDeleteMs={holdToDeleteMs} onDelete={onDelete} />}
+    </>
+  );
+
   return (
+    <>
+    {editMode && !isHeaderHidden && (
+      <div className="widget-edit-flyout">
+        {editActionButtons}
+      </div>
+    )}
     <Card className={cardClassName} style={cardStyle}>
       {!isHeaderHidden && <div className="widget-header">
         {editMode && (
@@ -250,15 +279,7 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
         )}
         {editMode && (
           <div className="widget-edit-actions">
-            <button
-              className="widget-edit-btn"
-              title={t('widgetCard.configureWidget')}
-              onClick={() => setConfigTarget(service.id)}
-              aria-label={t('widgetCard.configureWidget')}
-            >
-              <Settings size={13} />
-            </button>
-            {onDelete && <HoldDeleteButton id={service.id} holdToDeleteMs={holdToDeleteMs} onDelete={onDelete} />}
+            {editActionButtons}
           </div>
         )}
       </div>}
@@ -268,5 +289,6 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
         </div>
       )}
     </Card>
+    </>
   );
 });

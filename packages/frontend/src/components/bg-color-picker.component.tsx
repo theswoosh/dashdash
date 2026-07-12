@@ -6,6 +6,9 @@ const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 // Defaults used to seed the picker when a widget/template has no bg_color yet.
 export const DEFAULT_BG_HEX = '#4488ff';
 export const DEFAULT_BG_ALPHA = 0.2;
+// Defaults for the font-color picker (near-white, fully opaque).
+export const DEFAULT_FG_HEX = '#e8e8ee';
+export const DEFAULT_FG_ALPHA = 1;
 
 function hexAlphaToRgba(hex: string, alpha: number): string {
   const r = parseInt(hex.slice(1, 3), 16);

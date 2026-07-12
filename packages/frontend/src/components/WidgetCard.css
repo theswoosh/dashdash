@@ -19,7 +19,7 @@
 .grid-drag-handle,
 .frame-drag-handle,
 .frame-widget-drag-handle {
-  color: var(--text-muted);
+  color: var(--card-fg, var(--text-muted));
   cursor: grab;
   display: flex;
   align-items: center;
@@ -46,9 +46,13 @@
 .widget-ping-dot--unknown { background: #6b7280; }
 
 .widget-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 12px;
   font-weight: 600;
-  color: var(--text-muted);
+  color: var(--card-fg, var(--text-muted));
   text-transform: uppercase;
   letter-spacing: 0.05em;
   flex: 1;
@@ -78,7 +82,7 @@
   height: 22px;
   border: none;
   background: transparent;
-  color: var(--text-muted);
+  color: var(--card-fg, var(--text-muted));
   cursor: pointer;
   border-radius: 4px;
   padding: 0;
@@ -179,4 +183,31 @@
 .widget-placeholder-text {
   font-size: 11px;
   color: var(--text-faint);
+}
+
+/* Edit flyout — config/delete stay reachable when the widget is too narrow
+   for header buttons. Sits above the card, moves with it (same grid item). */
+.widget-edit-flyout {
+  display: none;
+  position: absolute;
+  top: calc(100% + 2px);
+  right: 0;
+  z-index: 30;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 5px;
+  background: var(--modal-bg, rgba(20, 20, 28, 0.95));
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.4));
+}
+
+@container (max-width: 90px) {
+  .widget-edit-actions {
+    display: none;
+  }
+
+  .widget-edit-flyout {
+    display: flex;
+  }
 }

@@ -83,6 +83,7 @@ widgetConfig:
   invalidHost: "Hostname, IP, host:port oder http(s)://-URL eingeben"
   resetToDefault: "Auf Standard zurücksetzen"
   hideHeader: "Kopfzeile im Anzeigemodus ausblenden"
+  fontColor: "Schriftfarbe"
   copyColor: "Farbeinstellungen kopieren"
   pasteColor: "Farbeinstellungen einfügen"
 

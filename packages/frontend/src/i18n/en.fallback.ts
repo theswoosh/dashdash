@@ -86,6 +86,7 @@ export const EN_FALLBACK: Record<string, unknown> = {
     invalidHost: 'Enter a hostname, IP, host:port, or http(s):// URL',
     resetToDefault: 'Reset to default',
     hideHeader: 'Hide header in display mode',
+    fontColor: 'Font color',
     copyColor: 'Copy color settings',
     pasteColor: 'Paste color settings',
   },

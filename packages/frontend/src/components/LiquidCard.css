@@ -1,4 +1,6 @@
 .liquid-card {
+  /* Per-widget font color; unset var behaves as inherit */
+  color: var(--card-fg);
   position: relative;
   /* Fallback blur for browsers that don't support backdrop-filter: url().
      On Chromium the component injects url(#filterId) blur(4px) as inline style,
