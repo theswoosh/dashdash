@@ -32,4 +32,6 @@
   --topbar-bg: #191970;
   --topbar-border: rgba(136, 153, 255, 0.40);
   --topbar-blur: 0px;
+  /* Foreground dialogs/popups */
+  --modal-bg: #191970;
 }

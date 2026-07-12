@@ -32,19 +32,14 @@ body {
   transition: opacity 400ms ease;
 }
 
-/* Background: dot pattern driven by theme CSS vars */
+/* Background color layer. Dots only exist in edit mode (.grid-overlay,
+   themed via --bg-dot) — display mode stays clean for theme optics. */
 .bg-layer {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
   background-color: var(--bg-base, #000);
-  background-image: radial-gradient(
-    circle,
-    var(--bg-dot, rgba(255, 255, 255, 0.14)) 1px,
-    transparent 1px
-  );
-  background-size: 22px 22px;
   transition: background-color 300ms ease;
 }
 

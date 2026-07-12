@@ -34,7 +34,7 @@
   top: calc(100% + 8px);
   right: 0;
   min-width: 200px;
-  background: var(--card-bg, rgba(20, 20, 28, 0.95));
+  background: var(--modal-bg, rgba(20, 20, 28, 0.95));
   border: 1px solid var(--card-border, rgba(255, 255, 255, 0.12));
   border-radius: 10px;
   padding: 6px;
@@ -111,7 +111,7 @@
 }
 
 .user-modal {
-  background: var(--card-bg, rgba(20, 20, 28, 0.97));
+  background: var(--modal-bg, rgba(20, 20, 28, 0.97));
   border: 1px solid var(--card-border, rgba(255, 255, 255, 0.12));
   border-radius: 12px;
   padding: 28px 32px;

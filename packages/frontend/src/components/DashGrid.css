@@ -73,8 +73,8 @@
   pointer-events: none;
   z-index: 0;
   background-image:
-    radial-gradient(circle at 0 0, rgba(255, 255, 255, 0.08) 1px, transparent 1.6px),
-    radial-gradient(circle at 0 0, rgba(255, 255, 255, 0.08) 1px, transparent 1.6px);
+    radial-gradient(circle at 0 0, var(--bg-dot, rgba(255, 255, 255, 0.08)) 1px, transparent 1.6px),
+    radial-gradient(circle at 0 0, var(--bg-dot, rgba(255, 255, 255, 0.08)) 1px, transparent 1.6px);
 }
 
 /* No shadow while resizing — cascade CSS vars so every theme is covered. */

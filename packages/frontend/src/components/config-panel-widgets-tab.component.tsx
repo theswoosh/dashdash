@@ -1,5 +1,5 @@
 import { memo, useState } from 'react';
-import { Settings2 } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
 import { WIDGET_CATALOG } from '../widgets/catalog';
 import { useWidgetTemplates } from '../hooks/use-widget-templates.hook';
@@ -61,7 +61,7 @@ const SidebarItem = memo(function SidebarItem({
         onMouseDown={e => e.stopPropagation()}
         onClick={e => { e.stopPropagation(); onConfigure(template.type); }}
       >
-        <Settings2 size={14} />
+        <Settings size={14} />
       </button>
     </div>
   );

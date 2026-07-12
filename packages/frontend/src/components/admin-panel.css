@@ -11,7 +11,7 @@
 }
 
 .admin-panel {
-  background: var(--card-bg, rgba(14, 14, 20, 0.97));
+  background: var(--modal-bg, rgba(14, 14, 20, 0.97));
   border: 1px solid var(--card-border, rgba(255, 255, 255, 0.1));
   border-radius: 14px;
   width: 100%;

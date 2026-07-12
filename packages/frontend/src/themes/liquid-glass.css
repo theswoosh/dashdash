@@ -36,4 +36,6 @@
   --topbar-bg: rgba(255, 255, 255, 0.04);
   --topbar-border: rgba(255, 255, 255, 0.08);
   --topbar-blur: 10px;
+  /* Foreground dialogs/popups — opaque enough to read over any board */
+  --modal-bg: rgba(20, 24, 34, 0.92);
 }

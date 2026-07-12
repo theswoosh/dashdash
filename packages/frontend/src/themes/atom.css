@@ -36,4 +36,6 @@
   --phosphor-glow: 0 0 5px rgba(57, 255, 110, 0.62), 0 0 11px rgba(57, 255, 110, 0.22);
   --phosphor-glow-strong: 0 0 8px rgba(57, 255, 110, 0.90), 0 0 20px rgba(57, 255, 110, 0.40);
   --card-glow: 0 0 12px rgba(57, 255, 110, 0.14), inset 0 0 40px rgba(57, 255, 110, 0.03);
+  /* Foreground dialogs/popups */
+  --modal-bg: rgba(2, 8, 2, 0.96);
 }

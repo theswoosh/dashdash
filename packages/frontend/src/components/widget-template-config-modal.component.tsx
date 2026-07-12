@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useSWRConfig } from 'swr';
 import { X } from 'lucide-react';
 import { getTemplate } from '../widgets/catalog';
@@ -87,7 +88,9 @@ export function WidgetTemplateConfigModal({ type, onClose }: WidgetTemplateConfi
     }
   };
 
-  return (
+  // Portal to <body>: the config panel's transform/backdrop-filter creates a
+  // containing block that would re-anchor this fixed-position modal to the panel.
+  return createPortal(
     <div className="modal-backdrop" onClick={onClose}>
       <div
         className="modal modal--sm"
@@ -169,6 +172,7 @@ export function WidgetTemplateConfigModal({ type, onClose }: WidgetTemplateConfi
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
