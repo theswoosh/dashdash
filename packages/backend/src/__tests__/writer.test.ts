@@ -4,6 +4,7 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import yaml from 'js-yaml';
 import { patchService, appendService, removeService } from '../config/writer.js';
+import { assignIds, RawServicesSchema } from '../config/schemas.js';
 
 const BASE_YML = `
 - id: clock-1
@@ -65,14 +66,64 @@ describe('patchService', () => {
   it('removes an option key set to null even when other options remain', () => {
     // First add two options in one patch
     patchService(tmpDir, 'clock-1', { options: { bg_color: 'rgba(255, 0, 0, 0.30)', showSeconds: true } });
-    // After write, id is re-derived from widget name: 'clock'
+    // Ids are persisted on write — 'clock-1' survives the round-trip.
     const servicesAfterAdd = readServices(tmpDir) as { options: Record<string, unknown> }[];
     expect(servicesAfterAdd[0]!.options).toHaveProperty('bg_color');
     // Now remove bg_color via null while keeping showSeconds
-    patchService(tmpDir, 'clock', { options: { bg_color: null } });
+    patchService(tmpDir, 'clock-1', { options: { bg_color: null } });
     const services = readServices(tmpDir) as { options: Record<string, unknown> }[];
     expect(services[0]!.options).not.toHaveProperty('bg_color');
     expect(services[0]!.options).toHaveProperty('showSeconds', true);
+  });
+});
+
+describe('id stability across mutations (dashtest #14)', () => {
+  const readResolved = (dir: string) =>
+    assignIds(RawServicesSchema.parse(yaml.load(readFileSync(join(dir, 'services.yml'), 'utf8'))));
+
+  it('deleting one of several same-widget services never shifts the others’ ids', () => {
+    // Three id-less clocks — runtime ids derive positionally: clock, clock-2, clock-3.
+    writeFileSync(join(tmpDir, 'services.yml'), `- title: Clock 1
+  widget: clock
+  layout: { x: 0, y: 0, w: 8, h: 8 }
+- title: Clock 2
+  widget: clock
+  layout: { x: 10, y: 0, w: 8, h: 8 }
+- title: Clock 3
+  widget: clock
+  layout: { x: 20, y: 0, w: 8, h: 8 }
+`);
+    const before = readResolved(tmpDir);
+    expect(before.map(s => s.id)).toEqual(['clock', 'clock-2', 'clock-3']);
+
+    // Any write persists the resolved ids; delete the first clock.
+    removeService(tmpDir, 'clock');
+
+    // The survivors keep their identity — no positional re-derivation.
+    const after = readResolved(tmpDir);
+    expect(after).toHaveLength(2);
+    expect(after.find(s => s.title === 'Clock 2')!.id).toBe('clock-2');
+    expect(after.find(s => s.title === 'Clock 3')!.id).toBe('clock-3');
+  });
+
+  it('persists generated ids for nested frame children on write', () => {
+    writeFileSync(join(tmpDir, 'services.yml'), `- title: Group
+  widget: frame
+  layout: { x: 0, y: 0, w: 20, h: 20 }
+  children:
+    - title: Inner
+      widget: clock
+      layout: { x: 1, y: 1, w: 8, h: 8 }
+`);
+    const before = readResolved(tmpDir);
+    const frameId = before[0]!.id;
+    const childId = before[0]!.children![0]!.id;
+
+    patchService(tmpDir, frameId, { title: 'Group renamed' });
+
+    const raw = readFileSync(join(tmpDir, 'services.yml'), 'utf8');
+    expect(raw).toContain(`id: ${frameId}`);
+    expect(raw).toContain(`id: ${childId}`);
   });
 });
 

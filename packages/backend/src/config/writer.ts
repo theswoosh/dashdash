@@ -15,15 +15,21 @@ function readServices(configDir: string): Service[] {
 function writeServices(configDir: string, services: Service[]): void {
   const filePath = join(configDir, 'services.yml');
   const tmpPath = `${filePath}.tmp`;
-  const stripIds = (items: Service[]): unknown[] => items.map(({ id: _id, children, ...rest }) => {
-    const result: Record<string, unknown> = { ...rest };
+  const serialize = (items: Service[]): unknown[] => items.map(({ id, children, ...rest }) => {
+    const result: Record<string, unknown> = { id, ...rest };
     if (children && children.length > 0) {
-      result['children'] = stripIds(children);
+      result['children'] = serialize(children);
     }
     return result;
   });
-  // Strip runtime id — it is derived at load time, never stored in YAML.
-  const output = stripIds(services);
+  // Persist ids. They used to be derived at load time only ("never stored in
+  // YAML"), but derived ids are positional per widget type — deleting one
+  // "clock" shifted every later clock's identity on reload, remapping their
+  // layouts (widgets jumping onto each other) and their DB rows (notepad
+  // content keyed by service_id). Writing ids pins identity permanently;
+  // hand-written entries without an id get theirs persisted on the first
+  // UI-triggered write.
+  const output = serialize(services);
   // js-yaml quotes 'y' as a mapping key for YAML 1.1 compat; undo it since
   // 'y' as a key is never ambiguous (only scalar values can be booleans).
   const dumped = yaml.dump(output, { indent: 2, lineWidth: -1, schema: yaml.CORE_SCHEMA })
