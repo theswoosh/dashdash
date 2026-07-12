@@ -20,3 +20,10 @@
   color: var(--text-muted);
   letter-spacing: 0.04em;
 }
+
+.clock-widget__tz {
+  font-size: 11px;
+  color: var(--text-faint);
+  margin-top: 2px;
+  font-family: var(--font-mono);
+}

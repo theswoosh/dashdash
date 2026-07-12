@@ -100,6 +100,7 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
       },
       { key: 'timezone', label: 'Timezone', type: 'timezone-select', placeholder: 'e.g. Europe/Berlin' },
       { key: 'showSeconds', label: 'Show seconds', type: 'boolean', default: true },
+      { key: 'showTimezone', label: 'Show timezone (name + GMT offset)', type: 'boolean', default: false },
     ],
   },
   {
