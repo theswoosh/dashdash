@@ -1,42 +1,29 @@
-# Widget instances. Each service maps to a widget type.
-# layout values are in grid units (1 unit = grid cellSize px, default 10).
+# Widget instances — this file seeds a fresh install's starter board.
+# Layout values are in fine-grid units (1 unit = cellSize + gap = 14 px by
+# default), so e.g. w: 14 ≈ 192 px. Positions/sizes update automatically when
+# you drag or resize widgets in edit mode. `id` is optional in hand-written
+# entries (assigned from the widget type at load) and is persisted on the
+# first UI-triggered write — don't reuse the same id twice.
+#
+# Add more widgets in the UI: Config (top-right) → Add Widgets → drag onto
+# the grid. Available types: clock, healthcheck, stats, bookmarks, search,
+# notepad, iframe, frame.
 
 - title: Clock
   widget: clock
-  layout:
-    w: 8
-    h: 8
-    x: 0
-    y: 0
+  layout: { w: 14, h: 9, x: 0, y: 0 }
   options:
-    timezone: Europe/Berlin
-    format: 24h
+    format: 24h        # 24h | 12h
+    # timezone: Europe/Berlin — defaults to the browser's zone
+    # showTimezone: true — zone name + GMT offset below the clock
 
 - title: Search
   widget: search
-  layout:
-    w: 12
-    h: 4
-    x: 0
-    y: 9
-  options:
-    engine: duckduckgo          # duckduckgo | google | brave | custom
-    # customUrl: https://search.example.com/?q=
+  layout: { w: 16, h: 8, x: 16, y: 0 }
+  # Uses the first engine from settings.yml unless one is picked here.
+  # options:
+  #   engine: duckduckgo
 
-- title: Servers
-  widget: frame
-  layout:
-    w: 24
-    h: 16
-    x: 0
-    y: 14
-  children:
-    - title: Healthcheck
-      widget: healthcheck
-      layout: { w: 4, h: 4, x: 0, y: 0 }
-      options:
-        url: 192.168.1.1
-        ping: true
-    - title: System Stats
-      widget: stats
-      layout: { w: 10, h: 8, x: 5, y: 0 }
+- title: System Stats
+  widget: stats
+  layout: { w: 14, h: 14, x: 0, y: 11 }

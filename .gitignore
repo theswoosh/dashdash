@@ -11,6 +11,7 @@ config/integrations.yml
 config/users.yml
 config/behavior.yml
 config/widgets.yml
+config/locales/
 config/backgrounds/
 data/
 *.db
@@ -20,6 +21,7 @@ data/
 *.log
 config/uploads/
 _dev/
+todo.md
 DEV.md
 docs/
 opt_dashdash.md
