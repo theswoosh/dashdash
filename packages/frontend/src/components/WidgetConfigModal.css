@@ -127,10 +127,8 @@
   font-size: 11px;
   color: var(--text-muted);
   font-family: var(--font-mono);
-  max-width: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .modal-test-spinner {

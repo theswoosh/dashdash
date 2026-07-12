@@ -5,6 +5,7 @@ import { AppIcon, hasServiceIcon, toAbsoluteUrl } from '../shared/app-icon.compo
 import './HealthcheckWidget.css';
 
 type HealthcheckLayoutSize = 'tiny' | 'normal' | 'big';
+type ShowName = 'hidden' | 'above' | 'below';
 
 function isPingData(x: unknown): x is { status: 'up' | 'down' } {
   return typeof x === 'object' && x !== null && 'status' in x;
@@ -23,6 +24,9 @@ export function HealthcheckWidget({ options, data, error, loading }: WidgetProps
   const iconValue     = typeof options['_icon']           === 'string' ? options['_icon']           : '';
   const internalUrl   = typeof options['internalUrl']     === 'string' ? options['internalUrl']     : undefined;
   const pingIndicator = typeof options['pingIndicator']   === 'string' ? options['pingIndicator']   : 'header-bar';
+  const showNameRaw   = options['showName'];
+  const showName: ShowName =
+    showNameRaw === 'hidden' || showNameRaw === 'above' ? showNameRaw : 'below';
   const hasIcon       = hasServiceIcon(iconValue);
   const isPingEnabled = options['ping'] !== false;
   const isDown        = isPingEnabled && isPingData(data) && data.status === 'down';
@@ -56,27 +60,40 @@ export function HealthcheckWidget({ options, data, error, loading }: WidgetProps
     return svg;
   }
 
-  if (layoutSize === 'big') {
-    return (
-      <div className="healthcheck-widget healthcheck-widget--big">
-        <div className={`${iconAreaClass} healthcheck-widget__icon-area--big`}>
-          {iconEl(64)}
-        </div>
-      </div>
-    );
+  // The name is a link to the app whenever internalUrl is set — visually
+  // unchanged (inherits color/decoration), so the app stays reachable even
+  // without an icon (live issue #1.3).
+  function nameEl() {
+    if (showName === 'hidden' || !appName) return null;
+    const cls = `healthcheck-widget__name${pingIndicator === 'name' && isDown ? ' healthcheck-widget__name--down' : ''}`;
+    if (internalUrl) {
+      return (
+        <a
+          href={toAbsoluteUrl(internalUrl)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`${cls} healthcheck-widget__name-link`}
+        >
+          {appName}
+        </a>
+      );
+    }
+    return <span className={cls}>{appName}</span>;
   }
 
-  // normal
+  const modifier = layoutSize === 'big' ? 'healthcheck-widget--big' : 'healthcheck-widget--normal';
+  const iconSize = layoutSize === 'big' ? 64 : 40;
+  const iconArea = (
+    <div className={`${iconAreaClass}${layoutSize === 'big' ? ' healthcheck-widget__icon-area--big' : ''}`}>
+      {iconEl(iconSize)}
+    </div>
+  );
+
   return (
-    <div className="healthcheck-widget healthcheck-widget--normal">
-      <div className={iconAreaClass}>
-        {iconEl(40)}
-      </div>
-      {appName && (
-        <span className={`healthcheck-widget__name${pingIndicator === 'name' && isDown ? ' healthcheck-widget__name--down' : ''}`}>
-          {appName}
-        </span>
-      )}
+    <div className={`healthcheck-widget ${modifier}`}>
+      {showName === 'above' && nameEl()}
+      {iconArea}
+      {showName === 'below' && nameEl()}
     </div>
   );
 }

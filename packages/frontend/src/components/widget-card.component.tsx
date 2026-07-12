@@ -221,7 +221,20 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
               </a>
             : <AppIcon iconValue={tinyIconValue} size={12} title={tinyDescription} />
         )}
-        <span className="widget-title">{service.title}</span>
+        {isTinyLayout && tinyInternalUrl ? (
+          // Tiny mode: the title itself links to the app (visually unchanged) —
+          // without an icon there would otherwise be no way to open it (#1.3).
+          <a
+            href={toAbsoluteUrl(tinyInternalUrl)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="widget-title widget-title--link"
+          >
+            {service.title}
+          </a>
+        ) : (
+          <span className="widget-title">{service.title}</span>
+        )}
         {service.widget === 'notepad' && !editMode && (
           <>
             <button

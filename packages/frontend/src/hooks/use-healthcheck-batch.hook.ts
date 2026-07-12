@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import useSWR from 'swr';
 import { useServices } from './use-services.hook';
+import { flattenServices } from '../utils/service-tree';
 
 interface CheckResult {
   status: 'up' | 'down' | 'unknown';
@@ -26,7 +27,10 @@ export function useHealthcheckBatch(serviceId: string | null) {
   const { services } = useServices();
 
   const idsKey = useMemo(
-    () => services
+    // Flatten first — healthchecks nested inside frame widgets must be part
+    // of the batch request too, or their widgets never receive a result and
+    // sit on "Checking…" forever (live issue #1.1).
+    () => flattenServices(services)
       .filter(s => s.widget === 'healthcheck')
       .map(s => s.id)
       .sort()

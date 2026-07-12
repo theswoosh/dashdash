@@ -54,10 +54,21 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
         type: 'select',
         options: [
           { value: 'tiny', label: 'Tiny — single bar with ping indicator' },
-          { value: 'normal', label: 'Normal — icon with name' },
+          { value: 'normal', label: 'Normal — icon' },
           { value: 'big', label: 'Big — icon fills the card' },
         ],
         default: 'normal',
+      },
+      {
+        key: 'showName',
+        label: 'Show name',
+        type: 'select',
+        options: [
+          { value: 'hidden', label: 'Hidden' },
+          { value: 'above', label: 'Above icon' },
+          { value: 'below', label: 'Below icon' },
+        ],
+        default: 'below',
       },
       {
         key: 'pingIndicator',

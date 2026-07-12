@@ -54,6 +54,15 @@
   flex: 1;
 }
 
+.widget-title--link {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.widget-title--link:hover {
+  text-decoration: underline;
+}
+
 .widget-edit-actions {
   display: flex;
   align-items: center;

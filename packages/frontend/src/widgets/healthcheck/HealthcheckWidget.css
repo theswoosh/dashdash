@@ -89,3 +89,12 @@
   width: 64px;
   height: 64px;
 }
+
+/* Name-as-link keeps the plain-name look — reachability without restyle */
+.healthcheck-widget__name-link {
+  text-decoration: none;
+}
+
+.healthcheck-widget__name-link:hover {
+  text-decoration: underline;
+}
