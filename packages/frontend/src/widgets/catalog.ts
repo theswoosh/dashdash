@@ -141,7 +141,7 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     defaultOptions: {},
     configFields: [
       { key: 'engine', label: 'Engine', type: 'engines-select' },
-      { key: 'placeholder', label: 'Placeholder override', type: 'text', placeholder: 'Overrides the engine placeholder from settings.yml' },
+      { key: 'placeholder', label: 'Placeholder text', type: 'text', placeholder: 'Overrides the engine placeholder from settings.yml' },
     ],
   },
   {

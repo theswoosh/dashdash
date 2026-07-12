@@ -308,6 +308,7 @@ export function ProfilePopup() {
 
           {activeTab === 'danger' && (
             <div className="user-modal-danger user-modal-danger--tab">
+              <h3 className="user-modal-section-title">{t('userMenu.accountDeletionTitle')}</h3>
               {deleteError && <p className="user-modal-error" role="alert">{deleteError}</p>}
               <label className="user-modal-label" htmlFor="profile-delete-email">
                 {t('userMenu.deleteAccountConfirm')}
