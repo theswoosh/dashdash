@@ -35,7 +35,11 @@ export function App() {
 
   const { user, isLoading: isAuthLoading } = useAuth();
   const { preferences } = usePreferences();
-  const theme = preferences?.theme ?? 'liquid-glass';
+  // Unauthenticated views (login/reset) always use the default dark theme —
+  // usePreferences falls back to a localStorage-cached theme, so the login
+  // card would otherwise inherit the previous user's theme (e.g. the light
+  // classic theme, which makes the dark-designed login unreadable).
+  const theme = user ? (preferences?.theme ?? 'liquid-glass') : 'liquid-glass';
   const { backgroundUrl } = useBoard();
   const settings = useSettings();
   const { languages, translations } = useLocales();
