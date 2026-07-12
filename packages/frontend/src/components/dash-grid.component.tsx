@@ -16,7 +16,7 @@ import { useT } from '../i18n';
 import type { ServiceConfig } from '@dashdash/types';
 import type { WidgetTemplate } from '../widgets/catalog';
 import { flattenServices, findServiceWithParent } from '../utils/service-tree';
-import { serviceAsGridItem, persistedHeight, isTinyLayoutService } from '../utils/widget-layout';
+import { serviceAsGridItem, persistedHeight, isTinyLayoutService, mergeEditModeLayout } from '../utils/widget-layout';
 import type { GridConfigLike } from '../utils/widget-layout';
 import {
   OVERLAP_COMPACTOR,
@@ -165,9 +165,11 @@ export function DashGrid() {
 
       // Inside edit mode: preserve local drag positions for items already
       // in the layout; only new items (e.g., just dropped) fall back to
-      // their YAML (i.e., drop) position.
-      const prevMap = new Map(prev.map(l => [l.i, l]));
-      return fromYaml.map(item => prevMap.get(item.i) ?? item);
+      // their YAML (i.e., drop) position. Structural height pinning (tiny
+      // layout toggles) always comes from the rebuilt entries — a stale
+      // full-size height leaves an invisible footprint behind a bar-sized
+      // card (oversized ghost, phantom collisions).
+      return mergeEditModeLayout(prev, fromYaml);
     });
   }, [baseLayout]);
 

@@ -42,3 +42,29 @@ export function persistedHeight(item: LayoutItem, services: ServiceConfig[]): nu
   const service = services.find(s => s.id === item.i);
   return service && isTinyLayoutService(service) ? service.layout.h : item.h;
 }
+
+function isPinnedHeight(item: LayoutItem): boolean {
+  return item.minH !== undefined && item.minH === item.maxH;
+}
+
+/** Merge in-progress edit-mode positions onto a freshly rebuilt YAML layout.
+ *
+ *  Positions and sizes the user changed during the edit session win — except
+ *  the height of items whose tiny-layout pinning changed: toggling layoutSize
+ *  rebuilds the item with (or without) h = minH = maxH, and keeping the stale
+ *  height would leave an invisible full-size footprint behind a bar-sized
+ *  card (oversized drag ghost, phantom collisions) or a bar-sized footprint
+ *  behind a restored card. Structural constraints (minH/maxH) always come
+ *  from the rebuilt item. */
+export function mergeEditModeLayout(
+  prev: readonly LayoutItem[],
+  fromYaml: readonly LayoutItem[],
+): LayoutItem[] {
+  const prevMap = new Map(prev.map(l => [l.i, l]));
+  return fromYaml.map(item => {
+    const prevItem = prevMap.get(item.i);
+    if (!prevItem) return item;
+    const h = isPinnedHeight(item) || isPinnedHeight(prevItem) ? item.h : prevItem.h;
+    return { ...item, x: prevItem.x, y: prevItem.y, w: prevItem.w, h };
+  });
+}

@@ -153,6 +153,48 @@ test('resizing into a neighbor shows a red ghost and reverts', async ({ page }) 
   await page.getByLabel('Save & exit').click();
 });
 
+test('toggling tiny layout mid-session pins the drag footprint to the bar', async ({ page }) => {
+  await loginViaApi(page);
+  await page.goto('/');
+  const pinger = page.locator('.react-grid-item').filter({ hasText: 'Pinger' });
+  await expect(pinger).toBeVisible();
+
+  await enableEditMode(page);
+
+  // Switch the healthcheck to the tiny layout via its config modal — without
+  // reloading. The grid item must shrink with it; a stale full-size entry
+  // leaves an oversized drag ghost and phantom collisions (dashtest #4/#19).
+  await pinger.hover();
+  await pinger.getByLabel('Configure widget').click();
+  const layoutField = page.locator('.config-field').filter({ hasText: 'Layout size' });
+  await layoutField.locator('select').selectOption('tiny');
+  const save = page.waitForResponse(r =>
+    r.url().includes('/api/services/') && r.request().method() === 'PATCH' && r.ok());
+  await page.locator('.modal').getByRole('button', { name: 'Save' }).click();
+  await save;
+
+  // The item itself is now bar-sized.
+  await expect.poll(async () => (await pinger.boundingBox())?.height).toBeLessThan(50);
+
+  const handle = pinger.locator('.grid-drag-handle');
+  await handle.hover();
+  await page.mouse.down();
+  await page.mouse.move(500, 600, { steps: 12 });
+
+  // The drag ghost matches the bar footprint — not the pre-toggle size.
+  const ghost = page.locator('.react-grid-placeholder');
+  await expect(ghost).toBeVisible();
+  const ghostBox = await ghost.boundingBox();
+  if (!ghostBox) throw new Error('ghost has no bounding box');
+  expect(ghostBox.height).toBeLessThan(50);
+
+  // No phantom collision over genuinely empty space.
+  await expect(page.locator('.dash-grid-canvas.grid-drag-invalid')).toHaveCount(0);
+
+  await page.mouse.up();
+  await page.getByLabel('Save & exit').click();
+});
+
 test('dragging a widget onto a frame reparents it (no red ghost)', async ({ page }) => {
   await loginViaApi(page);
   await page.goto('/');

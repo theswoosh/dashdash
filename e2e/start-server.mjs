@@ -49,6 +49,12 @@ writeFileSync(join(runtimeDir, 'config', 'services.yml'), `- title: Clock
 - title: Group
   widget: frame
   layout: { x: 44, y: 0, w: 24, h: 18 }
+- title: Pinger
+  widget: healthcheck
+  layout: { x: 24, y: 0, w: 16, h: 14 }
+  options:
+    url: ''
+    layoutSize: normal
 `);
 
 const child = spawn(process.execPath, [backendDist], {
