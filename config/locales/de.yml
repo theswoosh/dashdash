@@ -8,6 +8,7 @@ common:
   reset: "Zurücksetzen"
   admin: "Admin"
   profile: "Profil"
+  info: "Info"
   logout: "Abmelden"
 
 login:
@@ -35,6 +36,15 @@ login:
   newPassword: "Neues Passwort"
   updating: "Aktualisierung…"
   goToSignIn: "Zur Anmeldung"
+  ssoSignIn: "Mit SSO anmelden"
+  or: "oder"
+  oidcError: "SSO-Anmeldung fehlgeschlagen. Bitte erneut versuchen."
+  oidcEmailNotVerified: "Dein SSO-Anbieter hat deine E-Mail-Adresse nicht bestätigt."
+  oidcDisabled: "SSO ist nicht konfiguriert."
+  oidcAccountInactive: "Dein Konto wurde deaktiviert."
+  accountDisabled: "Dein Konto wurde deaktiviert. Bitte wende dich an einen Administrator."
+  accountCreated: "Konto erstellt — bitte melde dich an."
+  invalidEmail: "Ungültige E-Mail-Adresse"
 
 config:
   tabs:
@@ -46,9 +56,9 @@ config:
   wallpaperChange: "Ändern…"
   wallpaperNone: "Keines — klicken zum Auswählen"
   boardIcon: "Board-Symbol"
-  boardIconHint: "Im Header angezeigtes Emoji"
+  boardIconHint: "Im Header angezeigtes Symbol"
   showBoardName: "Board-Name anzeigen"
-  borderless: "Rahmenlos"
+  borderless: "Transparent"
   borderlessHint: "Entfernt alle Rahmen und Hintergründe der Karten"
   headerBar: "Kopfzeile"
   hideTopbar: "Topbar ausblenden"
@@ -66,6 +76,16 @@ widgetConfig:
   widgetBackground: "Widget-Hintergrund"
   noOptions: "Dieses Widget hat keine konfigurierbaren Optionen."
   test: "Test"
+  noEnginesConfigured: "Keine Suchmaschinen konfiguriert"
+  noEnginesHint: "Fügen Sie eine Suchmaschine unter Admin → Suchmaschinen hinzu."
+  firstAvailableEngine: "Erste verfügbare Suchmaschine"
+  fieldRequired: "Dieses Feld ist erforderlich"
+  urlRequired: "URL ist erforderlich"
+  invalidHost: "Hostname, IP, host:port oder http(s)://-URL eingeben"
+  resetToDefault: "Auf Standard zurücksetzen"
+  hideHeader: "Kopfzeile im Anzeigemodus ausblenden"
+  copyColor: "Farbeinstellungen kopieren"
+  pasteColor: "Farbeinstellungen einfügen"
 
 widgetTemplateConfig:
   title: "Standardwerte: {{label}}"
@@ -74,6 +94,12 @@ widgetTemplateConfig:
   width: "Breite"
   height: "Höhe"
   layoutSize: "Standard-Layoutgröße"
+  thresholds: "Farbschwellwerte (%)"
+  thresholdCpu: "CPU"
+  thresholdMem: "RAM"
+  thresholdWarn: "Warnung"
+  thresholdCrit: "Kritisch"
+  thresholdOrderError: "Warnung muss unter Kritisch liegen"
 
 topbar:
   openConfig: "Konfiguration öffnen"
@@ -111,6 +137,7 @@ admin:
   engineId: "ID"
   engineLabel: "Bezeichnung"
   engineUrl: "URL"
+  engineUrlHint: "Beispiel: https://kagi.com/search?q={query}"
   enginePlaceholder: "Platzhalter (optional)"
   deleteEngine: "Suchmaschine löschen"
   editEngine: "Suchmaschine bearbeiten"
@@ -146,20 +173,26 @@ widgetCard:
 
 dashGrid:
   noServices: "Keine Dienste konfiguriert. Widgets zu config/services.yml hinzufügen oder Konfig öffnen, um Widgets auf das Raster zu ziehen."
+  configErrorBanner: "Einige Widgets konnten aufgrund eines Konfigurationsfehlers nicht geladen werden. Öffnen Sie Admin → Validierung für Details."
 
 userMenu:
   editProfile: "Profil bearbeiten"
   currentPassword: "Aktuelles Passwort"
   cancelPasswordChange: "Passwortänderung abbrechen"
   changePassword: "Passwort ändern"
+  changePasswordSuccess: "Passwort erfolgreich geändert."
   saving: "Speichert…"
   profileUpdated: "Profil aktualisiert."
   updateFailed: "Aktualisierung fehlgeschlagen"
+  passwordMismatch: "Passwörter stimmen nicht überein"
   language: "Sprache"
+  ssoAccount: "Per SSO angemeldet"
   dangerZone: "Gefahrenzone"
+  accountDeletionTitle: "Kontolöschung"
   deleteAccount: "Konto löschen"
-  deleteAccountConfirm: "E-Mail-Adresse zur Bestätigung eingeben"
-  deleteAccountHold: "Halten, um Konto dauerhaft zu löschen"
+  deleteAccountConfirm: "E-Mail eingeben zur Bestätigung"
+  deleteAccountHold: "Halten zum Löschen des Kontos"
+  deleteAccountHint: "Geben Sie Ihre Konto-E-Mail ein, um die Löschung zu ermöglichen."
   lastAdminError: "Das letzte Admin-Konto kann nicht gelöscht werden"
 
 widgets:
@@ -184,6 +217,9 @@ widgets:
   iframe:
     label: "iFrame"
     description: "Beliebige URL in einem Sandbox-Frame einbetten"
+  frame:
+    label: "Rahmen"
+    description: "Widgets in einem visuellen Rahmen gruppieren"
 
 themes:
   liquidGlass:
@@ -202,3 +238,11 @@ themes:
 languages:
   en: "English"
   de: "Deutsch"
+
+info:
+  title: "Über dashdash"
+  version: "Version"
+  developedBy: "Entwickelt von"
+  license: "Lizenz"
+  support: "Projekt unterstützen"
+  kofi: "Kauf mir einen Kaffee"

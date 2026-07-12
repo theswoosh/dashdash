@@ -8,6 +8,7 @@ common:
   reset: "Reset"
   admin: "Admin"
   profile: "Profile"
+  info: "Info"
   logout: "Logout"
 
 login:
@@ -35,6 +36,15 @@ login:
   newPassword: "New password"
   updating: "Updating…"
   goToSignIn: "Go to sign in"
+  ssoSignIn: "Sign in with SSO"
+  or: "or"
+  oidcError: "SSO login failed. Please try again."
+  oidcEmailNotVerified: "Your SSO provider did not verify your email."
+  oidcDisabled: "SSO is not configured."
+  oidcAccountInactive: "Your account has been deactivated."
+  accountDisabled: "Your account has been disabled. Contact an administrator."
+  accountCreated: "Account created — please sign in."
+  invalidEmail: "Invalid email address"
 
 config:
   tabs:
@@ -46,9 +56,9 @@ config:
   wallpaperChange: "Change…"
   wallpaperNone: "None — click to set"
   boardIcon: "Board icon"
-  boardIconHint: "Emoji shown in the header"
+  boardIconHint: "Icon shown in the header"
   showBoardName: "Show board name"
-  borderless: "Borderless"
+  borderless: "Transparent"
   borderlessHint: "Removes all card borders and backgrounds"
   headerBar: "Header bar"
   hideTopbar: "Hide topbar"
@@ -66,6 +76,16 @@ widgetConfig:
   widgetBackground: "Widget background"
   noOptions: "This widget has no configurable options."
   test: "Test"
+  noEnginesConfigured: "No engines configured"
+  noEnginesHint: "Add a search engine in Admin → Search Engines."
+  firstAvailableEngine: "First available engine"
+  fieldRequired: "This field is required"
+  urlRequired: "URL is required"
+  invalidHost: "Enter a hostname, IP, host:port, or http(s):// URL"
+  resetToDefault: "Reset to default"
+  hideHeader: "Hide header in display mode"
+  copyColor: "Copy color settings"
+  pasteColor: "Paste color settings"
 
 widgetTemplateConfig:
   title: "Defaults: {{label}}"
@@ -74,6 +94,12 @@ widgetTemplateConfig:
   width: "Width"
   height: "Height"
   layoutSize: "Default layout size"
+  thresholds: "Colour thresholds (%)"
+  thresholdCpu: "CPU"
+  thresholdMem: "RAM"
+  thresholdWarn: "Warn"
+  thresholdCrit: "Critical"
+  thresholdOrderError: "Warn must be below critical"
 
 topbar:
   openConfig: "Open configuration"
@@ -111,6 +137,7 @@ admin:
   engineId: "ID"
   engineLabel: "Label"
   engineUrl: "URL"
+  engineUrlHint: "Example: https://kagi.com/search?q={query}"
   enginePlaceholder: "Placeholder (optional)"
   deleteEngine: "Delete engine"
   editEngine: "Edit engine"
@@ -146,20 +173,26 @@ widgetCard:
 
 dashGrid:
   noServices: "No services configured. Add widgets to config/services.yml or open Config to drag widgets onto the grid."
+  configErrorBanner: "Some widgets could not be loaded due to a config error. Open Admin → Validation for details."
 
 userMenu:
   editProfile: "Edit profile"
   currentPassword: "Current password"
   cancelPasswordChange: "Cancel password change"
   changePassword: "Change password"
+  changePasswordSuccess: "Password changed successfully."
   saving: "Saving…"
   profileUpdated: "Profile updated."
   updateFailed: "Update failed"
+  passwordMismatch: "Passwords do not match"
   language: "Language"
-  dangerZone: "Danger zone"
-  deleteAccount: "Delete account"
-  deleteAccountConfirm: "Type your email address to confirm"
-  deleteAccountHold: "Hold to permanently delete your account"
+  ssoAccount: "Signed in via SSO"
+  dangerZone: "Danger Zone"
+  accountDeletionTitle: "Account deletion"
+  deleteAccount: "Delete Account"
+  deleteAccountConfirm: "Type your email to confirm"
+  deleteAccountHold: "Hold to delete account"
+  deleteAccountHint: "Enter your account email to enable account deletion."
   lastAdminError: "Cannot delete the last admin account"
 
 widgets:
@@ -184,6 +217,9 @@ widgets:
   iframe:
     label: "iFrame"
     description: "Embed any URL in a sandboxed frame"
+  frame:
+    label: "Frame"
+    description: "Group widgets inside a visual frame"
 
 themes:
   liquidGlass:
@@ -202,3 +238,11 @@ themes:
 languages:
   en: "English"
   de: "Deutsch"
+
+info:
+  title: "About dashdash"
+  version: "Version"
+  developedBy: "Developed by"
+  license: "License"
+  support: "Support the project"
+  kofi: "Buy me a coffee"
