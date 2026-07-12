@@ -236,11 +236,21 @@ export function DashGrid() {
   }, []);
 
   /** Revert the gestured item to its pre-gesture position; nothing else moved
-   *  (overlap never pushes), so reverting just that item is complete. */
+   *  (overlap never pushes), so reverting just that item is complete.
+   *
+   *  The revert is applied on the NEXT tick, not in the gesture-stop batch:
+   *  RGL's getDerivedStateFromProps ignores layout-prop changes while its
+   *  internal activeDrag is still set, and whether activeDrag clears before
+   *  or after our same-batch setLayout is a race. First gestures happened to
+   *  win it; consecutive gestures lost it, so the reverted prop was swallowed
+   *  and the invalid drop stuck (dashtest #23). Deferring one tick guarantees
+   *  RGL has settled and the reverted layout is synchronized. */
   const revertGesturedItem = useCallback((items: LayoutItem[], gestured: LayoutItem, before: LayoutItem) => {
-    commitLayout(items.map(it =>
+    const reverted = items.map(it =>
       it.i === gestured.i ? { ...it, x: before.x, y: before.y, w: before.w, h: before.h } : it,
-    ));
+    );
+    commitLayout(items);
+    window.setTimeout(() => commitLayout(reverted), 0);
   }, [commitLayout]);
 
   // onDragStop fires before RGL calls setState({ activeDrag: null }); this

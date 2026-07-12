@@ -153,6 +153,38 @@ test('resizing into a neighbor shows a red ghost and reverts', async ({ page }) 
   await page.getByLabel('Save & exit').click();
 });
 
+test('consecutive invalid drags all revert (revert must not race RGL state)', async ({ page }) => {
+  await loginViaApi(page);
+  await page.goto('/');
+  const blockA = page.locator('.react-grid-item').filter({ hasText: 'Block A' });
+  const blockB = page.locator('.react-grid-item').filter({ hasText: 'Block B' });
+  await expect(blockA).toBeVisible();
+
+  await enableEditMode(page);
+
+  // The first invalid drag used to win the same-batch revert race and later
+  // ones lost it, leaving the widget parked on the occupied spot (dashtest #23).
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const before = await blockA.boundingBox();
+    if (!before) throw new Error('Block A has no bounding box');
+    const bBox = await blockB.boundingBox();
+    if (!bBox) throw new Error('Block B has no bounding box');
+
+    const handle = blockA.locator('.grid-drag-handle');
+    await handle.hover();
+    await page.mouse.down();
+    await page.mouse.move(bBox.x + bBox.width / 2, bBox.y + bBox.height / 2, { steps: 10 });
+    await expect(page.locator('.dash-grid-canvas.grid-drag-invalid')).toHaveCount(1);
+    await page.mouse.up();
+
+    await expect.poll(async () => JSON.stringify(await blockA.boundingBox()), {
+      message: `invalid drag #${attempt} must revert`,
+    }).toBe(JSON.stringify(before));
+  }
+
+  await page.getByLabel('Save & exit').click();
+});
+
 test('toggling tiny layout mid-session pins the drag footprint to the bar', async ({ page }) => {
   await loginViaApi(page);
   await page.goto('/');
