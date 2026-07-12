@@ -10,6 +10,7 @@ import type { ConfigField } from '../widgets/catalog';
 import { ServiceIconPicker } from './service-icon-picker.component';
 import { BgColorPicker, parseRgba, buildRgba, DEFAULT_BG_HEX, DEFAULT_BG_ALPHA } from './bg-color-picker.component';
 import { WidgetTitleField } from './widget-title-field.component';
+import { TimezonePicker } from './timezone-picker.component';
 import { useT } from '../i18n';
 import './WidgetConfigModal.css';
 
@@ -174,24 +175,14 @@ function FieldInput({
   }
 
   if (field.type === 'timezone-select') {
-    const tzList = (Intl as unknown as { supportedValuesOf: (k: string) => string[] }).supportedValuesOf('timeZone');
-    const datalistId = `tz-list-${field.key}`;
     return (
       <div className="config-field">
         <label className="config-label">{label}</label>
-        <input
-          className="config-input"
-          type="text"
-          list={datalistId}
+        <TimezonePicker
           value={strVal}
-          placeholder={field.placeholder ?? 'e.g. Europe/Berlin'}
-          onChange={e => onChange(field.key, e.target.value)}
+          placeholder={field.placeholder}
+          onChange={tz => onChange(field.key, tz)}
         />
-        <datalist id={datalistId}>
-          {tzList.map(tz => (
-            <option key={tz} value={tz} />
-          ))}
-        </datalist>
       </div>
     );
   }

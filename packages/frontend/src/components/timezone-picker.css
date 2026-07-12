@@ -1,0 +1,41 @@
+/* ── Timezone combobox ────────────────────────────────────────────────────── */
+
+.tz-picker {
+  position: relative;
+}
+
+.tz-picker__list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  max-height: 220px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--bg-dropdown, #111118);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.4));
+}
+
+.tz-picker__option {
+  padding: 6px 8px;
+  font-size: 13px;
+  color: var(--text-primary);
+  border-radius: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tz-picker__option--active {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.tz-picker__option--selected {
+  color: var(--accent);
+}

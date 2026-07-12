@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useT } from '../i18n';
+import { TimezonePicker } from './timezone-picker.component';
 
 export interface ClockConfigPatch {
   headerClockFormat?: string;
@@ -105,13 +106,10 @@ export function ClockConfigModal({ format, showSeconds, timezone, settingsTimezo
                 <span className="config-label__counter">default: {settingsTimezone}</span>
               )}
             </label>
-            <input
-              className="config-input"
-              type="text"
+            <TimezonePicker
               value={localTimezone}
-              onChange={e => setLocalTimezone(e.target.value)}
-              onBlur={e => onSave({ headerClockTimezone: e.target.value })}
               placeholder={settingsTimezone ? `From settings.yaml: ${settingsTimezone}` : 'e.g. America/New_York'}
+              onChange={tz => { setLocalTimezone(tz); onSave({ headerClockTimezone: tz }); }}
             />
           </div>
         </div>
