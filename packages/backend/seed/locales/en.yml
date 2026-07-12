@@ -84,6 +84,8 @@ widgetConfig:
   invalidHost: "Enter a hostname, IP, host:port, or http(s):// URL"
   resetToDefault: "Reset to default"
   hideHeader: "Hide header in display mode"
+  copyColor: "Copy color settings"
+  pasteColor: "Paste color settings"
 
 widgetTemplateConfig:
   title: "Defaults: {{label}}"
@@ -239,6 +241,7 @@ languages:
 
 info:
   title: "About dashdash"
+  version: "Version"
   developedBy: "Developed by"
   license: "License"
   support: "Support the project"

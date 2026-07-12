@@ -21,6 +21,9 @@ interface UIState {
   setProfileOpen: (open: boolean) => void;
   isInfoOpen: boolean;
   setInfoOpen: (open: boolean) => void;
+  /** Copied widget bg color (rgba string) — session-only, never persisted. */
+  colorClipboard: string | null;
+  setColorClipboard: (color: string | null) => void;
 }
 
 export const useUIStore = create<UIState>(set => ({
@@ -38,4 +41,6 @@ export const useUIStore = create<UIState>(set => ({
   setProfileOpen: open => set({ isProfileOpen: open }),
   isInfoOpen: false,
   setInfoOpen: open => set({ isInfoOpen: open }),
+  colorClipboard: null,
+  setColorClipboard: color => set({ colorClipboard: color }),
 }));

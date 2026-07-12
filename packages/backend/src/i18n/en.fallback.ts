@@ -90,6 +90,8 @@ export const EN_FALLBACK: Record<string, unknown> = {
     invalidHost: 'Enter a hostname, IP, host:port, or http(s):// URL',
     resetToDefault: 'Reset to default',
     hideHeader: 'Hide header in display mode',
+    copyColor: 'Copy color settings',
+    pasteColor: 'Paste color settings',
   },
   topbar: {
     openConfig: 'Open configuration',
@@ -206,6 +208,7 @@ export const EN_FALLBACK: Record<string, unknown> = {
     de: 'Deutsch',
   },
   info: {
+    version: 'Version',
     title: 'About dashdash',
     developedBy: 'Developed by',
     license: 'License',

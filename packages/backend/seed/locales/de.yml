@@ -84,6 +84,8 @@ widgetConfig:
   invalidHost: "Hostname, IP, host:port oder http(s)://-URL eingeben"
   resetToDefault: "Auf Standard zurücksetzen"
   hideHeader: "Kopfzeile im Anzeigemodus ausblenden"
+  copyColor: "Farbeinstellungen kopieren"
+  pasteColor: "Farbeinstellungen einfügen"
 
 widgetTemplateConfig:
   title: "Standardwerte: {{label}}"
@@ -239,6 +241,7 @@ languages:
 
 info:
   title: "Über dashdash"
+  version: "Version"
   developedBy: "Entwickelt von"
   license: "Lizenz"
   support: "Projekt unterstützen"

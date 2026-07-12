@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { X, CheckCircle, XCircle, Loader } from 'lucide-react';
+import { X, CheckCircle, XCircle, Loader, Copy, ClipboardPaste } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
 import { useServices } from '../hooks/use-services.hook';
 import { findServiceById } from '../utils/service-tree';
@@ -352,6 +352,17 @@ export function WidgetConfigModal() {
     handleOptionChange('bg_color', null);
   }, [handleOptionChange]);
 
+  const colorClipboard = useUIStore(s => s.colorClipboard);
+  const setColorClipboard = useUIStore(s => s.setColorClipboard);
+  const applyColorClipboard = useCallback(() => {
+    if (colorClipboard === null) return;
+    const parsed = parseRgba(colorClipboard);
+    if (!parsed) return;
+    setBgHex(parsed.hex);
+    setBgAlpha(parsed.alpha);
+    handleOptionChange('bg_color', colorClipboard);
+  }, [colorClipboard, handleOptionChange]);
+
   if (!configTarget || !service) return null;
 
   const saveWidgetConfiguration = async () => {
@@ -443,7 +454,31 @@ export function WidgetConfigModal() {
 
           <hr className="config-separator" />
           <div className="config-field">
-            <label className="config-label">{t('widgetConfig.widgetBackground')}</label>
+            <label className="config-label">
+              {t('widgetConfig.widgetBackground')}
+              <span className="color-clipboard-actions">
+                <button
+                  type="button"
+                  className="color-clipboard-btn"
+                  onClick={() => setColorClipboard(buildRgba(bgHex, bgAlpha))}
+                  title={t('widgetConfig.copyColor')}
+                  aria-label={t('widgetConfig.copyColor')}
+                >
+                  <Copy size={13} />
+                </button>
+                {colorClipboard !== null && (
+                  <button
+                    type="button"
+                    className="color-clipboard-btn"
+                    onClick={applyColorClipboard}
+                    title={t('widgetConfig.pasteColor')}
+                    aria-label={t('widgetConfig.pasteColor')}
+                  >
+                    <ClipboardPaste size={13} />
+                  </button>
+                )}
+              </span>
+            </label>
             <BgColorPicker
               hex={bgHex}
               alpha={bgAlpha}
