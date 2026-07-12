@@ -90,9 +90,28 @@ export function BgColorPicker({ hex, alpha, hasValue, onChange, onReset }: BgCol
         max="100"
         value={Math.round(alpha * 100)}
         onChange={e => onChange(hex, parseInt(e.target.value, 10) / 100)}
+        onWheel={e => {
+          // Mousewheel nudges opacity by 1 % — the slider is short, precise
+          // values are hard to hit by dragging (dashtest #11 decision).
+          const next = Math.min(100, Math.max(0, Math.round(alpha * 100) + (e.deltaY < 0 ? 1 : -1)));
+          onChange(hex, next / 100);
+        }}
         title="Opacity"
       />
-      <span className="config-alpha-value">{Math.round(alpha * 100)}%</span>
+      <input
+        type="number"
+        className="config-alpha-input"
+        min={0}
+        max={100}
+        value={Math.round(alpha * 100)}
+        onChange={e => {
+          const parsed = Number(e.target.value);
+          if (Number.isFinite(parsed)) {
+            onChange(hex, Math.min(100, Math.max(0, Math.round(parsed))) / 100);
+          }
+        }}
+        aria-label="Opacity percent"
+      />
       <div
         className="config-bg-preview"
         style={{ background: hexAlphaToRgba(hex, alpha) }}

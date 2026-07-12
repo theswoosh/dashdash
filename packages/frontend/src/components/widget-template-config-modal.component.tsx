@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useSWRConfig } from 'swr';
 import { X, Copy, ClipboardPaste } from 'lucide-react';
@@ -92,6 +92,14 @@ export function WidgetTemplateConfigModal({ type, onClose }: WidgetTemplateConfi
     setBgHex(hex);
     setBgAlpha(alpha);
   };
+
+  // Escape closes the popup (dashtest #25) — it renders in a portal, so a
+  // document-level listener is the reliable path.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [onClose]);
 
   const colorClipboard = useUIStore(s => s.colorClipboard);
   const setColorClipboard = useUIStore(s => s.setColorClipboard);

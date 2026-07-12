@@ -148,7 +148,9 @@ function FieldInput({
             <option value="" disabled>{t('widgetConfig.noEnginesConfigured')}</option>
           ) : (
             <>
-              <option value="">{t('widgetConfig.firstAvailableEngine')}</option>
+              {/* Empty value = "use the first configured engine" — show that
+                  engine's real name, not a synthetic label (dashtest #17). */}
+              <option value="">{engines[0]!.label}</option>
               {engines.map(e => (
                 <option key={e.id} value={e.id}>{e.label}</option>
               ))}

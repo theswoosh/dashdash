@@ -84,7 +84,6 @@ export const EN_FALLBACK: Record<string, unknown> = {
     test: 'Test',
     noEnginesConfigured: 'No engines configured',
     noEnginesHint: 'Add a search engine in Admin → Search Engines.',
-    firstAvailableEngine: 'First available engine',
     fieldRequired: 'This field is required',
     urlRequired: 'URL is required',
     invalidHost: 'Enter a hostname, IP, host:port, or http(s):// URL',
