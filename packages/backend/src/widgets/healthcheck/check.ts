@@ -43,6 +43,10 @@ export interface CheckResult {
   status: 'up' | 'down' | 'unknown';
   latencyMs: number;
   error?: string | undefined;
+  // The IP the probe actually hit after DNS resolution — surfaced in the UI
+  // so a surprising result (e.g. a router resolving garbage names to itself)
+  // is visible instead of a mysterious green.
+  resolvedIp?: string | undefined;
 }
 
 /**
@@ -156,9 +160,13 @@ export async function runHealthcheck(opts: CheckOptions): Promise<CheckResult> {
     return { status: 'down', error: 'Invalid host', latencyMs: 0 };
   }
 
-  // Compute effective port before DNS so the cache key is stable.
+  // Compute effective port before DNS so the cache key is stable. The key
+  // includes the private-network policy: the widget batch path and the modal
+  // Test path may run with different policies, and a result produced under
+  // one policy must never be served to the other (a blocked "down" would
+  // poison the widget, an allowed "up" would leak past the block).
   const effectivePort = resolveEffectivePort(trimmed, port);
-  const cacheKey = `${host}:${effectivePort ?? 'ping'}`;
+  const cacheKey = `${host}:${effectivePort ?? 'ping'}:${opts.allowPrivateNetworks ? 'priv' : 'pub'}`;
   const cached = checkCache.get(cacheKey);
   if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
     return cached.result;
@@ -182,9 +190,10 @@ export async function runHealthcheck(opts: CheckOptions): Promise<CheckResult> {
     targetIp = allowed[0]!;
   }
 
-  const result = await (effectivePort !== undefined
+  const probeResult = await (effectivePort !== undefined
     ? tcpCheck(targetIp, effectivePort, timeoutMs)
     : pingHost(targetIp, timeoutMs));
+  const result: CheckResult = { ...probeResult, resolvedIp: targetIp };
 
   checkCache.set(cacheKey, { result, ts: Date.now() });
   return result;

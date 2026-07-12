@@ -276,3 +276,27 @@ describe('runHealthcheck — ICMP ping path', () => {
     expect(result.status).toBe('unknown');
   });
 });
+
+// ---------------------------------------------------------------------------
+// Cache isolation between private-network policies (dashtest regression T13/T14)
+// ---------------------------------------------------------------------------
+describe('runHealthcheck — cache never crosses allowPrivateNetworks contexts', () => {
+  it('a privileged "up" is not served to an unprivileged caller (and vice versa)', async () => {
+    mockExecFile.mockImplementation(
+      (_bin: string, _args: string[], cb: (err: Error | null, stdout: string, stderr: string) => void) => {
+        cb(null, 'ok', '');
+      },
+    );
+
+    // Privileged path (widget batch with allowPrivateNetworks: true) pings fine.
+    const privileged = await runHealthcheck({ url: '10.0.0.1', allowPrivateNetworks: true });
+    expect(privileged.status).toBe('up');
+    expect(privileged.resolvedIp).toBe('10.0.0.1');
+
+    // The unprivileged path (e.g. a misconfigured caller) must still be
+    // blocked by policy — NOT served the cached privileged "up".
+    const unprivileged = await runHealthcheck({ url: '10.0.0.1' });
+    expect(unprivileged.status).toBe('down');
+    expect(unprivileged.error).toMatch(/Private or reserved/);
+  });
+});

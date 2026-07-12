@@ -252,6 +252,7 @@ export function WidgetConfigModal() {
   const [options, setOptions] = useState<Record<string, unknown>>({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [testResult, setTestResult] = useState<'idle' | 'loading' | 'ok' | 'fail'>('idle');
+  const [testDetail, setTestDetail] = useState('');
   const [bgHex, setBgHex] = useState(DEFAULT_BG_HEX);
   const [bgAlpha, setBgAlpha] = useState(DEFAULT_BG_ALPHA);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -331,6 +332,9 @@ export function WidgetConfigModal() {
       setIcon(typeof val === 'string' ? val : '');
       return;
     }
+    // Editing the check target invalidates a previous Test outcome — a stale
+    // green checkmark next to a new target reads as a fake success.
+    if (key === 'url' || key === 'port') setTestResult('idle');
     setOptions(prev => ({ ...prev, [key]: val }));
     setFieldErrors(prev => {
       if (!(key in prev)) return prev;
@@ -401,6 +405,7 @@ export function WidgetConfigModal() {
 
   const runHealthcheckTest = async () => {
     setTestResult('loading');
+    setTestDetail('');
     try {
       const res = await fetch('/api/healthcheck/test', {
         method: 'POST',
@@ -410,10 +415,23 @@ export function WidgetConfigModal() {
           port: options['port'],
         }),
       });
-      const healthcheckResult = await res.json() as { status: string };
-      setTestResult(healthcheckResult.status === 'up' ? 'ok' : 'fail');
+      const healthcheckResult = await res.json() as { status: string; latencyMs?: number; error?: string; resolvedIp?: string };
+      if (healthcheckResult.status === 'up') {
+        setTestResult('ok');
+        // Show latency and the resolved IP so a surprising success (e.g. a
+        // router answering DNS for a garbage name) is visible, not hidden.
+        const parts = [
+          typeof healthcheckResult.latencyMs === 'number' ? `${healthcheckResult.latencyMs} ms` : null,
+          healthcheckResult.resolvedIp ?? null,
+        ].filter(Boolean);
+        setTestDetail(parts.join(' · '));
+      } else {
+        setTestResult('fail');
+        setTestDetail(healthcheckResult.error ?? '');
+      }
     } catch {
       setTestResult('fail'); // network error during healthcheck test
+      setTestDetail('');
     }
   };
 
@@ -508,6 +526,9 @@ export function WidgetConfigModal() {
                 <span className="modal-test-result modal-test-result--fail" title={t('widgetCard.down')}>
                   <XCircle size={16} />
                 </span>
+              )}
+              {testResult !== 'idle' && testResult !== 'loading' && testDetail && (
+                <span className="modal-test-detail">{testDetail}</span>
               )}
             </div>
           )}

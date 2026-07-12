@@ -20,7 +20,7 @@ import { createWidgetRoutes } from './routes/widget.route.js';
 import { createNotepadRoutes } from './routes/notepad.route.js';
 import { createPreferencesRoutes } from './routes/preferences.route.js';
 import { createWidgetTemplatesRoutes } from './routes/widget-templates.route.js';
-import { healthcheckTestRoutes } from './routes/healthcheck-test.route.js';
+import { createHealthcheckTestRoutes } from './routes/healthcheck-test.route.js';
 import { createBoardRoutes } from './routes/boards.route.js';
 import { createAuthRoutes } from './routes/auth.route.js';
 import type { OidcConfig } from './config/schemas.js';
@@ -173,7 +173,7 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
   await server.register(createNotepadRoutes(db), { prefix: '/api' });
   await server.register(createPreferencesRoutes(db), { prefix: '/api' });
   await server.register(createWidgetTemplatesRoutes(configDir), { prefix: '/api' });
-  await server.register(healthcheckTestRoutes, { prefix: '/api' });
+  await server.register(createHealthcheckTestRoutes({ getSettings }), { prefix: '/api' });
   await server.register(createBoardRoutes(db, configDir), { prefix: '/api' });
   await server.register(createLocalesRoutes(configDir), { prefix: '/api' });
   await server.register(createConfigValidateRoutes(configDir), { prefix: '/api' });

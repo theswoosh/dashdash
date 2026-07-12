@@ -123,6 +123,16 @@
   color: #ef4444;
 }
 
+.modal-test-detail {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .modal-test-spinner {
   animation: spin 0.8s linear infinite;
 }
