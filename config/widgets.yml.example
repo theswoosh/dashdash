@@ -11,25 +11,25 @@
 # freely down to 1×1 in the UI; defaultSize only applies at drop time.
 
 - type: clock
-  defaultSize: { w: 35, h: 35 }
+  defaultSize: { w: 14, h: 9 }
 
 - type: healthcheck
-  defaultSize: { w: 14, h: 14 }
+  defaultSize: { w: 16, h: 8 }
 
 - type: stats
-  defaultSize: { w: 35, h: 28 }
+  defaultSize: { w: 14, h: 14 }
 
 - type: bookmarks
-  defaultSize: { w: 28, h: 28 }
+  defaultSize: { w: 14, h: 9 }
 
 - type: search
-  defaultSize: { w: 42, h: 14 }
+  defaultSize: { w: 16, h: 8 }
 
 - type: notepad
-  defaultSize: { w: 42, h: 35 }
+  defaultSize: { w: 28, h: 21 }
 
 - type: iframe
-  defaultSize: { w: 56, h: 49 }
+  defaultSize: { w: 21, h: 21 }
 
 - type: frame
-  defaultSize: { w: 84, h: 56 }
+  defaultSize: { w: 28, h: 28 }

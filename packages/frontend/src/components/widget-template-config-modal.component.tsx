@@ -109,25 +109,29 @@ export function WidgetTemplateConfigModal({ type, onClose }: WidgetTemplateConfi
           <div className="config-field">
             <label className="config-label">{t('widgetTemplateConfig.defaultSize')}</label>
             <div className="wtc-size-row">
-              <input
-                className="config-input"
-                type="number"
-                min={1}
-                max={MAX_TEMPLATE_SIZE_UNITS}
-                value={width}
-                aria-label={t('widgetTemplateConfig.width')}
-                onChange={e => setWidth(Number(e.target.value))}
-              />
+              <label className="wtc-size-field">
+                <span className="wtc-size-label">{t('widgetTemplateConfig.width')}</span>
+                <input
+                  className="config-input"
+                  type="number"
+                  min={1}
+                  max={MAX_TEMPLATE_SIZE_UNITS}
+                  value={width}
+                  onChange={e => setWidth(Number(e.target.value))}
+                />
+              </label>
               <span className="wtc-size-x">×</span>
-              <input
-                className="config-input"
-                type="number"
-                min={1}
-                max={MAX_TEMPLATE_SIZE_UNITS}
-                value={height}
-                aria-label={t('widgetTemplateConfig.height')}
-                onChange={e => setHeight(Number(e.target.value))}
-              />
+              <label className="wtc-size-field">
+                <span className="wtc-size-label">{t('widgetTemplateConfig.height')}</span>
+                <input
+                  className="config-input"
+                  type="number"
+                  min={1}
+                  max={MAX_TEMPLATE_SIZE_UNITS}
+                  value={height}
+                  onChange={e => setHeight(Number(e.target.value))}
+                />
+              </label>
             </div>
           </div>
 

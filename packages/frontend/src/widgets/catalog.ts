@@ -42,7 +42,7 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     icon: Activity,
     description: 'Monitor a host for uptime and latency',
     descriptionKey: 'widgets.healthcheck.description',
-    defaultSize: { w: 14, h: 14 },
+    defaultSize: { w: 16, h: 8 },
     defaultOptions: { url: '', ignoreTls: false, timeoutMs: 5000, ping: true, layoutSize: 'normal', pingIndicator: 'header-bar' },
     configFields: [
       { key: 'icon', label: 'App icon', type: 'icon-picker' },
@@ -85,7 +85,7 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     icon: Clock,
     description: 'Display the current time',
     descriptionKey: 'widgets.clock.description',
-    defaultSize: { w: 35, h: 35 },
+    defaultSize: { w: 14, h: 9 },
     defaultOptions: { format: '24h', showSeconds: true },
     configFields: [
       {
@@ -109,7 +109,7 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     icon: BarChart2,
     description: 'CPU, memory and uptime for the server',
     descriptionKey: 'widgets.stats.description',
-    defaultSize: { w: 35, h: 28 },
+    defaultSize: { w: 14, h: 14 },
     defaultOptions: {},
     configFields: [
       { key: '_thresholds_info', label: 'Colours: green < 65 %, amber 65–84 %, red ≥ 85 %', type: 'info' },
@@ -122,7 +122,7 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     icon: Bookmark,
     description: 'Quick-access links grid',
     descriptionKey: 'widgets.bookmarks.description',
-    defaultSize: { w: 28, h: 28 },
+    defaultSize: { w: 14, h: 9 },
     defaultOptions: {
       links: [{ label: 'Example', url: 'https://example.com' }],
     },
@@ -137,7 +137,7 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     icon: Search,
     description: 'Search bar with configurable engine',
     descriptionKey: 'widgets.search.description',
-    defaultSize: { w: 42, h: 14 },
+    defaultSize: { w: 16, h: 8 },
     defaultOptions: {},
     configFields: [
       { key: 'engine', label: 'Engine', type: 'engines-select' },
@@ -151,7 +151,7 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     icon: FileText,
     description: 'Persistent text notes with clickable links',
     descriptionKey: 'widgets.notepad.description',
-    defaultSize: { w: 42, h: 35 },
+    defaultSize: { w: 28, h: 21 },
     defaultOptions: { pollingInterval: 60 },
     configFields: [
       { key: 'pollingInterval', label: 'Auto-refresh interval (seconds, 0 = off)', type: 'number', default: 60 },
@@ -164,7 +164,7 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     icon: Globe,
     description: 'Embed any URL in a sandboxed frame',
     descriptionKey: 'widgets.iframe.description',
-    defaultSize: { w: 56, h: 49 },
+    defaultSize: { w: 21, h: 21 },
     defaultOptions: {},
     configFields: [
       { key: 'url', label: 'URL', type: 'url', placeholder: 'https://example.com', required: true },
@@ -177,7 +177,7 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     icon: Layers,
     description: 'Group widgets inside a visual frame',
     descriptionKey: 'widgets.frame.description',
-    defaultSize: { w: 84, h: 56 },
+    defaultSize: { w: 28, h: 28 },
     defaultOptions: {},
     configFields: [],
   },

@@ -155,10 +155,25 @@
   min-width: 0;
 }
 
+.wtc-size-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.wtc-size-label {
+  color: var(--text-faint);
+  font-size: 11px;
+}
+
 .wtc-size-x {
   color: var(--text-faint);
   font-size: 13px;
   flex-shrink: 0;
+  align-self: flex-end;
+  padding-bottom: 9px;
 }
 
 .config-field--checkbox {
