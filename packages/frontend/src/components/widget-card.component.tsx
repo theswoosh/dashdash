@@ -9,6 +9,7 @@ import { useHealthcheckBatch } from '../hooks/use-healthcheck-batch.hook';
 import { useUIStore } from '../store/uiStore';
 import { AppIcon, hasServiceIcon, toAbsoluteUrl } from '../widgets/shared/app-icon.component';
 import { useBehavior } from '../hooks/use-behavior.hook';
+import { useWidgetTemplates } from '../hooks/use-widget-templates.hook';
 import { useT } from '../i18n';
 import { WidgetSkeleton } from '../widgets/shared/widget-skeleton.component';
 import { WidgetError } from '../widgets/shared/widget-error.component';
@@ -154,9 +155,19 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
   const tinyDescription = isTinyLayout && typeof service.options?.['description'] === 'string' ? service.options['description'] : undefined;
   const cardStyle = bgColor ? { '--card-bg': bgColor } as React.CSSProperties : undefined;
 
+  // Thresholds are template-level (widgets.yml defaultOptions) and apply to
+  // every instance at render time — merged under so per-instance options win.
+  const widgetTemplates = useWidgetTemplates();
+  const templateThresholds = widgetTemplates.find(tmpl => tmpl.type === service.widget)?.defaultOptions?.['thresholds'];
   const widgetOptions = useMemo(
-    () => ({ ...service.options, _widgetId: service.widget, _title: service.title, _icon: service.icon }),
-    [service.options, service.widget, service.title, service.icon],
+    () => ({
+      ...(templateThresholds !== undefined ? { thresholds: templateThresholds } : {}),
+      ...service.options,
+      _widgetId: service.widget,
+      _title: service.title,
+      _icon: service.icon,
+    }),
+    [templateThresholds, service.options, service.widget, service.title, service.icon],
   );
 
   const widgetContent = (

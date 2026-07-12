@@ -176,6 +176,19 @@
   padding-bottom: 9px;
 }
 
+.wtc-threshold-row {
+  margin-bottom: 6px;
+}
+
+.wtc-threshold-metric {
+  color: var(--text-muted);
+  font-size: 12px;
+  width: 44px;
+  flex-shrink: 0;
+  align-self: flex-end;
+  padding-bottom: 9px;
+}
+
 .config-field--checkbox {
   flex-direction: row;
   align-items: center;

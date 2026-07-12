@@ -92,6 +92,12 @@ widgetTemplateConfig:
   width: "Breite"
   height: "Höhe"
   layoutSize: "Standard-Layoutgröße"
+  thresholds: "Farbschwellwerte (%)"
+  thresholdCpu: "CPU"
+  thresholdMem: "RAM"
+  thresholdWarn: "Warnung"
+  thresholdCrit: "Kritisch"
+  thresholdOrderError: "Warnung muss unter Kritisch liegen"
 
 topbar:
   openConfig: "Konfiguration öffnen"

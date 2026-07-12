@@ -95,6 +95,12 @@ export const EN_FALLBACK: Record<string, unknown> = {
     width: 'Width',
     height: 'Height',
     layoutSize: 'Default layout size',
+    thresholds: 'Colour thresholds (%)',
+    thresholdCpu: 'CPU',
+    thresholdMem: 'RAM',
+    thresholdWarn: 'Warn',
+    thresholdCrit: 'Critical',
+    thresholdOrderError: 'Warn must be below critical',
   },
   topbar: {
     openConfig: 'Open configuration',

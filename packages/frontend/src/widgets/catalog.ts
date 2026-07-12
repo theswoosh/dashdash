@@ -110,9 +110,12 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     description: 'CPU, memory and uptime for the server',
     descriptionKey: 'widgets.stats.description',
     defaultSize: { w: 14, h: 14 },
-    defaultOptions: {},
+    defaultOptions: { showCpu: true, showMem: true, showUptime: true },
     configFields: [
-      { key: '_thresholds_info', label: 'Colours: green < 65 %, amber 65–84 %, red ≥ 85 %', type: 'info' },
+      { key: 'showCpu', label: 'Show CPU', type: 'boolean', default: true },
+      { key: 'showMem', label: 'Show memory', type: 'boolean', default: true },
+      { key: 'showUptime', label: 'Show uptime', type: 'boolean', default: true },
+      { key: '_thresholds_info', label: 'Warn/critical colour thresholds apply to all System Stats widgets — set them in the sidebar via the widget\'s gear button (defaults: amber > 65 %, red > 85 %).', type: 'info' },
     ],
   },
   {
