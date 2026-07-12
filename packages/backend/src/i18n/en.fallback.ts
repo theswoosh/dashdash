@@ -63,6 +63,7 @@ export const EN_FALLBACK: Record<string, unknown> = {
     wallpaperNone: 'None — click to set',
     boardIcon: 'Board icon',
     boardIconHint: 'Icon shown in the header',
+    boardIconInputPlaceholder: 'or type / paste any emoji…',
     showBoardName: 'Show board name',
     borderless: 'Transparent',
     borderlessHint: 'Removes all card borders and backgrounds',

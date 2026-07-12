@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, Fragment } from 'react';
 import { createPortal } from 'react-dom';
+import { useT } from '../i18n';
 import './EmojiPicker.css';
 
 // ── Types ─────────────────────────────────────────────────────────────────
@@ -16,6 +17,19 @@ interface EmojiGroup {
 }
 
 // ── Category definitions ──────────────────────────────────────────────────
+
+const BOARD_ICON_MAX_LENGTH = 20;
+
+/** Free-text board icons render as plain text (React escapes them), but the
+ *  value lands in preferences and the topbar — strip control and zero-width
+ *  characters and hard-cap the length as defense-in-depth (live issue #6.1). */
+function sanitizeBoardIcon(raw: string): string {
+  return raw
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\u0000-\u001f\u007f\u200b-\u200f\u2028\u2029\ufeff]/g, '')
+    .trim()
+    .slice(0, BOARD_ICON_MAX_LENGTH);
+}
 
 const RECENT_KEY = 'recent';
 const RECENTS_MAX = 30;
@@ -97,6 +111,7 @@ export function BoardIconPicker({
   readonly value: string;
   readonly onChange: (icon: string) => void;
 }) {
+  const t = useT();
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState(RECENT_KEY);
@@ -239,12 +254,12 @@ export function BoardIconPicker({
             <input
               className="config-option-input"
               type="text"
-              placeholder="or type / paste any emoji…"
-              maxLength={8}
+              placeholder={t('config.boardIconInputPlaceholder')}
+              maxLength={BOARD_ICON_MAX_LENGTH}
               onKeyDown={e => {
                 if (e.key !== 'Enter') return;
                 if (!(e.target instanceof HTMLInputElement)) return;
-                const custom = e.target.value.trim();
+                const custom = sanitizeBoardIcon(e.target.value);
                 if (!custom) return;
                 selectEmoji(custom);
                 e.target.value = '';

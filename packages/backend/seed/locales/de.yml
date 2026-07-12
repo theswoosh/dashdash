@@ -57,6 +57,7 @@ config:
   wallpaperNone: "Keines — klicken zum Auswählen"
   boardIcon: "Board-Symbol"
   boardIconHint: "Im Header angezeigtes Symbol"
+  boardIconInputPlaceholder: "oder ein Emoji eingeben / einfügen…"
   showBoardName: "Board-Name anzeigen"
   borderless: "Transparent"
   borderlessHint: "Entfernt alle Rahmen und Hintergründe der Karten"
