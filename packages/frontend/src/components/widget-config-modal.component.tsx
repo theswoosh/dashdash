@@ -11,6 +11,7 @@ import type { ConfigField } from '../widgets/catalog';
 import { ServiceIconPicker } from './service-icon-picker.component';
 import { BgColorPicker, parseRgba, buildRgba, DEFAULT_BG_HEX, DEFAULT_BG_ALPHA, DEFAULT_FG_HEX, DEFAULT_FG_ALPHA } from './bg-color-picker.component';
 import { WidgetTitleField } from './widget-title-field.component';
+import { toAbsoluteUrl } from '../widgets/shared/app-icon.component';
 import { TimezonePicker } from './timezone-picker.component';
 import { useT } from '../i18n';
 import './WidgetConfigModal.css';
@@ -18,6 +19,8 @@ import './WidgetConfigModal.css';
 interface LinkRow {
   label: string;
   url: string;
+  bg?: string | undefined;
+  fg?: string | undefined;
 }
 
 function isLinkRow(x: unknown): x is LinkRow {
@@ -33,10 +36,12 @@ function LinksEditor({
   readonly value: unknown;
   readonly onChange: (links: LinkRow[]) => void;
 }) {
+  const t = useT();
+  const colorClipboard = useUIStore(s => s.colorClipboard);
   const rows: LinkRow[] = Array.isArray(value) ? value.filter(isLinkRow) : [];
 
-  const updateRow = (i: number, field: keyof LinkRow, val: string) => {
-    onChange(rows.map((r, idx) => idx === i ? { ...r, [field]: val } : r));
+  const updateRow = (i: number, patch: Partial<LinkRow>) => {
+    onChange(rows.map((r, idx) => idx === i ? { ...r, ...patch } : r));
   };
 
   return (
@@ -48,15 +53,49 @@ function LinksEditor({
             type="text"
             placeholder="Label"
             value={row.label}
-            onChange={e => updateRow(i, 'label', e.target.value)}
+            style={{ ...(row.bg ? { background: row.bg } : {}), ...(row.fg ? { color: row.fg } : {}) }}
+            onChange={e => updateRow(i, { label: e.target.value })}
           />
           <input
             className="config-input links-editor__url"
             type="url"
             placeholder="https://example.com"
             value={row.url}
-            onChange={e => updateRow(i, 'url', e.target.value)}
+            onChange={e => updateRow(i, { url: e.target.value })}
+            onBlur={e => {
+              // Fallback to https:// so "domain.com" works (live issue #2.1)
+              const trimmed = e.target.value.trim();
+              const normalized = trimmed === '' ? '' : toAbsoluteUrl(trimmed);
+              if (normalized !== row.url) updateRow(i, { url: normalized });
+            }}
           />
+          {colorClipboard !== null && (
+            <button
+              type="button"
+              className="links-editor__color-btn"
+              onClick={() => updateRow(i, {
+                ...(colorClipboard.bg ? { bg: colorClipboard.bg } : {}),
+                ...(colorClipboard.fg ? { fg: colorClipboard.fg } : {}),
+              })}
+              title={t('widgetConfig.pasteColor')}
+              aria-label={t('widgetConfig.pasteColor')}
+            >
+              <ClipboardPaste size={12} />
+            </button>
+          )}
+          {(row.bg || row.fg) && (
+            <button
+              type="button"
+              className="links-editor__color-btn"
+              onClick={() => onChange(rows.map((r, idx) =>
+                idx === i ? { label: r.label, url: r.url } : r,
+              ))}
+              title={t('common.reset')}
+              aria-label={t('common.reset')}
+            >
+              <X size={12} />
+            </button>
+          )}
           <button
             type="button"
             className="links-editor__remove"

@@ -142,6 +142,16 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
       links: [{ label: 'Example', url: 'https://example.com' }],
     },
     configFields: [
+      {
+        key: 'linksLayout',
+        label: 'Layout',
+        type: 'select',
+        options: [
+          { value: 'flow', label: 'Flow — side by side, wrapping' },
+          { value: 'list', label: 'List — one per line' },
+        ],
+        default: 'flow',
+      },
       { key: 'links', label: 'Bookmarks', type: 'links-editor' },
     ],
   },
