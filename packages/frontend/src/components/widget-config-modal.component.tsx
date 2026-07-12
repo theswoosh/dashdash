@@ -3,6 +3,7 @@ import { X, CheckCircle, XCircle, Loader } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
 import { useServices } from '../hooks/use-services.hook';
 import { findServiceById } from '../utils/service-tree';
+import { isValidHealthcheckTarget, sanitizeHealthcheckTarget } from '../utils/healthcheck-target';
 import { useSettings, type SearchEngine } from '../hooks/use-settings.hook';
 import { getTemplate } from '../widgets/catalog';
 import type { ConfigField } from '../widgets/catalog';
@@ -369,6 +370,14 @@ export function WidgetConfigModal() {
         errors[field.key] = t('widgetConfig.fieldRequired');
       }
     }
+    const cleanedOptions = { ...options };
+    if (isHealthcheck && typeof cleanedOptions['url'] === 'string') {
+      const target = sanitizeHealthcheckTarget(cleanedOptions['url']);
+      cleanedOptions['url'] = target;
+      if (!isValidHealthcheckTarget(target)) {
+        errors['url'] = t('widgetConfig.invalidHost');
+      }
+    }
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       return;
@@ -376,7 +385,7 @@ export function WidgetConfigModal() {
     await fetch(`/api/services/${service.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, icon: icon || undefined, options }),
+      body: JSON.stringify({ title, icon: icon || undefined, options: cleanedOptions }),
     });
     await reloadServices();
     setConfigTarget(null);

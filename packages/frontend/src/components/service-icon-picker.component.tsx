@@ -169,6 +169,13 @@ export function ServiceIconPicker({
   const currentSlug = slugFromValue(value);
   const currentIcon = currentSlug ? icons.find(i => i.slug === currentSlug) : undefined;
 
+  // The icon dataset normally loads on first panel open — but the trigger
+  // preview needs it immediately when a value is already set (reopening the
+  // config modal previously showed a blank placeholder instead of the icon).
+  useEffect(() => {
+    if (currentSlug) load();
+  }, [currentSlug, load]);
+
   // Compute visible icons
   const visibleIcons: ServiceIcon[] = (() => {
     if (search.trim()) {

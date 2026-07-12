@@ -71,7 +71,7 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
         default: 'header-bar',
       },
       { key: '_sep_network', label: '', type: 'separator' },
-      { key: 'url', label: 'Ping URL / hostname', type: 'text', placeholder: '192.168.1.1, example.com, or https://service.internal', required: true },
+      { key: 'url', label: 'Ping URL / hostname', type: 'text', placeholder: '192.168.1.1, example.com, or https://service.internal' },
       { key: 'port', label: 'Port (TCP check — leave empty for ICMP ping)', type: 'number', placeholder: '80' },
       { key: '_ping_info', label: 'No port → ICMP ping (host liveness). Add a port, host:port, or an http(s):// URL for a TCP check instead. ICMP needs the NET_RAW capability (enabled by default); where it is unavailable the check shows "unknown".', type: 'info' },
       { key: 'timeoutMs', label: 'Timeout (ms)', type: 'number', default: 5000 },

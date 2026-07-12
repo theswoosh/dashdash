@@ -81,6 +81,7 @@ widgetConfig:
   firstAvailableEngine: "Erste verfügbare Suchmaschine"
   fieldRequired: "Dieses Feld ist erforderlich"
   urlRequired: "URL ist erforderlich"
+  invalidHost: "Hostname, IP, host:port oder http(s)://-URL eingeben"
   resetToDefault: "Auf Standard zurücksetzen"
   hideHeader: "Kopfzeile im Anzeigemodus ausblenden"
 

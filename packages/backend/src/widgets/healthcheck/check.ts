@@ -144,7 +144,9 @@ export async function runHealthcheck(opts: CheckOptions): Promise<CheckResult> {
   const { url: urlInput, port, timeoutMs = DEFAULT_TIMEOUT_MS } = opts;
 
   if (!urlInput?.trim()) {
-    return { status: 'down', error: 'No URL configured', latencyMs: 0 };
+    // Target is optional — an unconfigured widget is 'unknown' (grey dot),
+    // not 'down': nothing was checked, so nothing is known to be broken.
+    return { status: 'unknown', error: 'No URL configured', latencyMs: 0 };
   }
 
   const trimmed = urlInput.trim();

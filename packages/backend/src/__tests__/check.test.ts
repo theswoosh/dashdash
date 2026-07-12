@@ -63,14 +63,14 @@ beforeEach(() => {
 // 1. Empty / blank URL — immediate return, no network calls
 // ---------------------------------------------------------------------------
 describe('runHealthcheck — empty URL', () => {
-  it('returns down with error for empty string', async () => {
+  it('returns unknown (not down) for empty string — target is optional', async () => {
     const result = await runHealthcheck({ url: '' });
-    expect(result).toEqual({ status: 'down', error: 'No URL configured', latencyMs: 0 });
+    expect(result).toEqual({ status: 'unknown', error: 'No URL configured', latencyMs: 0 });
   });
 
-  it('returns down with error for whitespace-only string', async () => {
+  it('returns unknown (not down) for whitespace-only string', async () => {
     const result = await runHealthcheck({ url: '   ' });
-    expect(result).toEqual({ status: 'down', error: 'No URL configured', latencyMs: 0 });
+    expect(result).toEqual({ status: 'unknown', error: 'No URL configured', latencyMs: 0 });
   });
 });
 
