@@ -7,6 +7,18 @@ function supportedTimezones(): string[] {
   return (Intl as unknown as { supportedValuesOf: (k: string) => string[] }).supportedValuesOf('timeZone');
 }
 
+/** Current DST-aware GMT offset for a zone, e.g. "GMT+2" (dashtest #26 —
+ *  offsets are shown in the picker's list, not on the clock widget). */
+function gmtOffset(zone: string, at: Date): string {
+  try {
+    const raw = new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'longOffset' })
+      .formatToParts(at).find(p => p.type === 'timeZoneName')?.value ?? '';
+    return raw.replace(/^GMT([+-])0?(\d+):00$/, 'GMT$1$2').replace(/^GMT$/, 'GMT+0');
+  } catch {
+    return '';
+  }
+}
+
 interface TimezonePickerProps {
   readonly value: string;
   readonly placeholder?: string | undefined;
@@ -32,6 +44,16 @@ export function TimezonePicker({ value, placeholder, onChange }: TimezonePickerP
     const filtered = q === '' ? zones : zones.filter(z => z.toLowerCase().includes(q));
     return filtered.slice(0, MAX_VISIBLE_RESULTS);
   }, [zones, query]);
+
+  // Offsets computed once, lazily on first open — ~400 Intl constructions
+  // are too heavy for mount or per keystroke. DST granularity of "while the
+  // picker is open" is plenty.
+  const [offsets, setOffsets] = useState<Map<string, string> | null>(null);
+  useEffect(() => {
+    if (!isOpen || offsets) return;
+    const at = new Date();
+    setOffsets(new Map(zones.map(z => [z, gmtOffset(z, at)])));
+  }, [isOpen, offsets, zones]);
 
   const close = useCallback(() => { setIsOpen(false); setActiveIndex(0); }, []);
 
@@ -102,7 +124,8 @@ export function TimezonePicker({ value, placeholder, onChange }: TimezonePickerP
               onMouseDown={e => { e.preventDefault(); pick(tz); }}
               onMouseEnter={() => setActiveIndex(i)}
             >
-              {tz}
+              <span>{tz}</span>
+              <span className="tz-picker__offset">{offsets?.get(tz) ?? ''}</span>
             </li>
           ))}
         </ul>

@@ -26,26 +26,22 @@ auth:
 # If this section is absent or empty, search is disabled everywhere.
 # Engine placeholder text is optional; widget options can override it.
 searchEngines:
+  - id: qwant
+    label: qwant
+    url: https://www.qwant.com/?q={query}
+    placeholder: Search qwant…
   - id: duckduckgo
     label: DuckDuckGo
     url: https://duckduckgo.com/?q={query}
     placeholder: Search DuckDuckGo…
-  - id: google
-    label: Google
-    url: https://www.google.com/search?q={query}
-    placeholder: Search Google…
   - id: brave
     label: Brave
     url: https://search.brave.com/search?q={query}
     placeholder: Search Brave…
-  - id: bing
-    label: Bing
-    url: https://www.bing.com/search?q={query}
-    placeholder: Search Bing…
-  - id: wowhead
-    label: Wowhead
-    url: https://www.wowhead.com/search?q={query}
-    placeholder: Search Wowhead…
+  - id: google
+    label: Google
+    url: https://www.google.com/search?q={query}
+    placeholder: Search Google…
 
 # Allow healthchecks against private/reserved addresses (RFC-1918, loopback,
 # link-local). Off by default as an SSRF guard — turn on for homelab use where

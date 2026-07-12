@@ -39,3 +39,15 @@
 .tz-picker__option--selected {
   color: var(--accent);
 }
+
+.tz-picker__option {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tz-picker__offset {
+  color: var(--text-faint);
+  font-size: 12px;
+  flex-shrink: 0;
+}

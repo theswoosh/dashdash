@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { mutate as swrMutate } from 'swr';
 import { X, CheckCircle, XCircle, Loader, Copy, ClipboardPaste } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
 import { useServices } from '../hooks/use-services.hook';
@@ -140,7 +141,7 @@ function FieldInput({
         <label className="config-label">{label}</label>
         <select
           className="config-input config-select"
-          value={strVal}
+          value={engines.length > 0 && strVal === engines[0]!.id ? '' : strVal}
           onChange={e => onChange(field.key, e.target.value || undefined)}
           disabled={noEngines}
         >
@@ -148,10 +149,11 @@ function FieldInput({
             <option value="" disabled>{t('widgetConfig.noEnginesConfigured')}</option>
           ) : (
             <>
-              {/* Empty value = "use the first configured engine" — show that
-                  engine's real name, not a synthetic label (dashtest #17). */}
+              {/* Empty value = "use the first configured engine" — shows that
+                  engine's real name; the engine is skipped in the explicit
+                  list below so it doesn't appear twice (dashtest #17). */}
               <option value="">{engines[0]!.label}</option>
-              {engines.map(e => (
+              {engines.slice(1).map(e => (
                 <option key={e.id} value={e.id}>{e.label}</option>
               ))}
             </>
@@ -396,6 +398,11 @@ export function WidgetConfigModal() {
       body: JSON.stringify({ title, icon: icon || undefined, options: cleanedOptions }),
     });
     await reloadServices();
+    if (isHealthcheck) {
+      // Revalidate the shared batch result immediately — otherwise the ping
+      // dot shows the pre-save status until the next 30 s poll (dashtest T14).
+      void swrMutate(key => Array.isArray(key) && key[0] === '/api/healthcheck/batch');
+    }
     setConfigTarget(null);
   };
 
