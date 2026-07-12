@@ -6,8 +6,9 @@
 
 ## Screenshots
 
-<!-- TODO: add screenshots -->
-*Screenshots coming soon.*
+| Board (Liquid Glass theme) | Edit mode | Widget config |
+|---|---|---|
+| ![Board](.github/assets/board-liquid-glass.png) | ![Edit mode](.github/assets/edit-mode.png) | ![Widget config](.github/assets/widget-config-modal.png) |
 
 ---
 
@@ -16,7 +17,8 @@
 - **Drag-and-drop grid** — arrange and resize widgets however you like; layout is saved per user
 - **Live YAML config** — add or change anything in a text file and it reloads instantly, no restart needed
 - **Multiple themes** — Liquid Glass, Classic, and ASCII out of the box; add your own with a single CSS file
-- **Service status monitoring** — know at a glance which of your self-hosted apps are online, with a subtle indicator right in the widget header
+- **Service status monitoring** — ICMP or TCP healthchecks with a subtle status dot right in the widget header; unconfigured/unreachable targets show honestly as "unknown" rather than a false pass
+- **First-run starter board** — a curated set of widgets on first install, not an empty grid or arbitrary seed data
 - **Service icons** — put a face to every app from a built-in icon library; recognise your services at a glance
 - **Credentials stay on the server** — API keys are never exposed to the browser; all external calls go through the backend
 - **Multiple boards** — organise widgets across several boards and switch between them in one click
@@ -75,6 +77,10 @@ All configuration lives in the `/config` volume:
 | `integrations.yml` | Named API sources |
 
 Annotated examples are in `config/*.yml.example`.
+
+Healthchecks against private/LAN IP ranges are blocked by default (SSRF
+protection) — set `allowPrivateNetworks: true` in `settings.yml` if you're
+monitoring hosts on your own network.
 
 ### API credentials
 
