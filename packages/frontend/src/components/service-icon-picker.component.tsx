@@ -23,6 +23,7 @@ interface CategoryDef {
   label: string;
 }
 
+const MAX_RENDERED_ICONS = 150;
 const RECENT_KEY = 'recent';
 const ALL_KEY = 'all';
 
@@ -176,23 +177,30 @@ export function ServiceIconPicker({
     if (currentSlug) load();
   }, [currentSlug, load]);
 
-  // Compute visible icons
-  const visibleIcons: ServiceIcon[] = (() => {
+  // Compute visible icons. The dataset holds the FULL Simple Icons set
+  // (~3400) — rendering is capped so the grid never mounts thousands of SVGs;
+  // anything beyond the cap is reachable by refining the search.
+  const { visibleIcons, hiddenCount } = (() => {
+    const cap = (list: ServiceIcon[]) => ({
+      visibleIcons: list.slice(0, MAX_RENDERED_ICONS),
+      hiddenCount: Math.max(0, list.length - MAX_RENDERED_ICONS),
+    });
     if (search.trim()) {
       const q = search.trim();
-      return icons
+      return cap(icons
         .map(i => ({ icon: i, score: scoreIcon(i, q) }))
         .filter(({ score }) => score > 0)
         .sort((a, b) => b.score - a.score || a.icon.title.localeCompare(b.icon.title))
-        .map(({ icon }) => icon);
+        .map(({ icon }) => icon));
     }
     if (activeCategory === RECENT_KEY) {
-      return recentSlugs.map(s => icons.find(i => i.slug === s)).filter(Boolean) as ServiceIcon[];
+      return cap(recentSlugs.map(s => icons.find(i => i.slug === s)).filter(Boolean) as ServiceIcon[]);
     }
     if (activeCategory === ALL_KEY) {
-      return [...icons].sort((a, b) => a.title.localeCompare(b.title));
+      // "All" shows the curated selection — the full set is search-only.
+      return cap(icons.filter(i => i.category !== 'other').sort((a, b) => a.title.localeCompare(b.title)));
     }
-    return icons.filter(i => i.category === activeCategory).sort((a, b) => a.title.localeCompare(b.title));
+    return cap(icons.filter(i => i.category === activeCategory).sort((a, b) => a.title.localeCompare(b.title)));
   })();
 
   return (
@@ -279,6 +287,11 @@ export function ServiceIconPicker({
                   </button>
                 ))}
               </div>
+              {hiddenCount > 0 && (
+                <div className="sip__more-hint">
+                  +{hiddenCount} more — refine your search
+                </div>
+              )}
             </div>
           )}
         </div>

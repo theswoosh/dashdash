@@ -153,3 +153,10 @@
   font-size: 12px;
   font-family: var(--font);
 }
+
+.sip__more-hint {
+  padding: 6px 8px;
+  font-size: 11px;
+  color: var(--text-faint);
+  text-align: center;
+}

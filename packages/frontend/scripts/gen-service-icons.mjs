@@ -121,10 +121,13 @@ function slugToExportName(slug) {
 }
 
 // ── Build entries ──────────────────────────────────────────────────────────
+// The FULL simple-icons set is emitted (live issue #3.1 — the curated-only
+// library was too small). Curated entries keep their category + keywords and
+// sort first; everything else lands in 'other', findable via search only
+// (the picker renders curated + recents by default and caps search results).
 
-const entries = [];
+const curatedBySlug = new Map();
 const notFound = [];
-
 for (const [slug, category, ...keywords] of CURATED) {
   const key = slugToExportName(slug);
   const icon = si[key];
@@ -132,15 +135,29 @@ for (const [slug, category, ...keywords] of CURATED) {
     notFound.push(`${slug} (tried: ${key})`);
     continue;
   }
+  curatedBySlug.set(icon.slug, { category, keywords });
+}
+
+const entries = [];
+for (const icon of Object.values(si)) {
+  if (!icon || typeof icon !== 'object' || !icon.slug || !icon.path) continue;
+  const curated = curatedBySlug.get(icon.slug);
   entries.push({
     slug: icon.slug,
     title: icon.title,
     hex: icon.hex,
     path: icon.path,
-    category,
-    keywords,
+    category: curated?.category ?? 'other',
+    keywords: curated?.keywords ?? [],
   });
 }
+
+// Curated first (they populate the picker's default view), then alphabetical.
+entries.sort((a, b) => {
+  const aCur = curatedBySlug.has(a.slug) ? 0 : 1;
+  const bCur = curatedBySlug.has(b.slug) ? 0 : 1;
+  return aCur - bCur || a.title.localeCompare(b.title);
+});
 
 if (notFound.length > 0) {
   console.warn('⚠ Not found in simple-icons:', notFound.join(', '));
