@@ -189,19 +189,19 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
   const isHeaderHidden = service.options?.['hideHeader'] === true && !editMode;
   const bgColor = typeof service.options?.['bg_color'] === 'string' ? service.options['bg_color'] : undefined;
   const fontColor = typeof service.options?.['font_color'] === 'string' ? service.options['font_color'] : undefined;
-  const cardStyle = bgColor || fontColor
-    ? {
-        ...(bgColor ? { '--card-bg': bgColor } : {}),
-        ...(fontColor ? { '--card-fg': fontColor } : {}),
-      } as React.CSSProperties
-    : undefined;
+  // A frame's colors are a backdrop for ITS OWN chrome only — never published
+  // as the inheritable --card-bg/--card-fg vars, which would bleed into every
+  // child widget that has no color of its own (live issue #4.1). Background
+  // goes on as a direct inline style; font color is scoped to the header.
+  const cardStyle = bgColor ? { background: bgColor } as React.CSSProperties : undefined;
+  const headerStyle = fontColor ? { '--card-fg': fontColor } as React.CSSProperties : undefined;
 
   const cardClassName = ['frame-card', editMode ? 'widget-card--edit' : ''].filter(Boolean).join(' ');
 
   return (
     <Card className={cardClassName} style={cardStyle} data-frame-id={service.id}>
       {!isHeaderHidden && (
-        <div className="widget-header frame-card__header">
+        <div className="widget-header frame-card__header" style={headerStyle}>
           {editMode && (
             <span className="grid-drag-handle" title={t('widgetCard.dragToMove')}>
               <GripVertical size={16} />
