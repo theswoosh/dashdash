@@ -185,12 +185,14 @@ function FieldInput({
   onChange,
   engines = [],
   fieldError,
+  registerBeforeSave,
 }: {
   field: ConfigField;
   value: unknown;
   onChange: (key: string, val: unknown) => void;
   engines?: readonly SearchEngine[] | undefined;
   fieldError?: string | undefined;
+  registerBeforeSave?: ((flush: () => Promise<Record<string, unknown> | null>) => void) | undefined;
 }) {
   const t = useT();
 
@@ -278,6 +280,7 @@ function FieldInput({
         <ChannelsEditor
           value={value}
           onChange={channelIds => onChange(field.key, channelIds)}
+          registerBeforeSave={registerBeforeSave}
         />
       </div>
     );
@@ -378,6 +381,7 @@ export function WidgetConfigModal() {
   const [bgAlpha, setBgAlpha] = useState(DEFAULT_BG_ALPHA);
   const [fgHex, setFgHex] = useState(DEFAULT_FG_HEX);
   const [fgAlpha, setFgAlpha] = useState(DEFAULT_FG_ALPHA);
+  const beforeSaveFlushRef = useRef<(() => Promise<Record<string, unknown> | null>) | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
   const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -427,6 +431,7 @@ export function WidgetConfigModal() {
       setIcon(service.icon ?? '');
       setHideHeader(service.options?.['hideHeader'] === true);
       setOptions({ ...(service.options ?? {}) });
+      beforeSaveFlushRef.current = null; // re-registered by the field when rendered
 
       const rawBg = service.options?.['bg_color'];
       if (typeof rawBg === 'string') {
@@ -545,6 +550,10 @@ export function WidgetConfigModal() {
       setFieldErrors(errors);
       return;
     }
+    // A channels-editor may hold an uncommitted draft (typed channel name,
+    // "+" never clicked) — flush it so Save doesn't silently discard it.
+    const flushed = await beforeSaveFlushRef.current?.();
+    if (flushed) Object.assign(cleanedOptions, flushed);
     await fetch(`/api/services/${service.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -624,6 +633,7 @@ export function WidgetConfigModal() {
                 onChange={handleOptionChange}
                 engines={allEngines}
                 fieldError={fieldErrors[field.key]}
+                registerBeforeSave={fn => { beforeSaveFlushRef.current = fn; }}
               />
             ))
           ) : (

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { ChatChannel } from '@dashdash/types';
 import { useT } from '../i18n';
 import { useAuth } from '../hooks/use-auth.hook';
@@ -14,6 +14,10 @@ function retentionLabelKey(days: number | null): string {
 interface ChannelsEditorProps {
   value: unknown;
   onChange: (channelIds: string[]) => void;
+  /** Lets the config modal flush an uncommitted draft (typed channel name,
+   *  "+" not clicked) when the user hits Save. Returns the option patch to
+   *  merge into the saved options, or null when there is nothing pending. */
+  registerBeforeSave?: ((flush: () => Promise<Record<string, unknown> | null>) => void) | undefined;
 }
 
 function ChannelRow({
@@ -121,7 +125,7 @@ function ChannelRow({
   );
 }
 
-export function ChannelsEditor({ value, onChange }: ChannelsEditorProps) {
+export function ChannelsEditor({ value, onChange, registerBeforeSave }: ChannelsEditorProps) {
   const t = useT();
   const { user } = useAuth();
   const { channels, mutate } = useChatChannels();
@@ -140,9 +144,11 @@ export function ChannelsEditor({ value, onChange }: ChannelsEditorProps) {
       : subscribedIds.filter(id => id !== channelId));
   };
 
-  const createChannel = async () => {
+  /** Creates the drafted channel (or subscribes the existing one on a name
+   *  clash) and returns the updated subscription list; null when no draft. */
+  const createDraftChannel = async (): Promise<string[] | null> => {
     const name = newName.trim();
-    if (!name) return;
+    if (!name) return null;
     const res = await fetch('/api/chat/channels', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -151,18 +157,35 @@ export function ChannelsEditor({ value, onChange }: ChannelsEditorProps) {
         retentionDays: newRetention === '' ? null : Number(newRetention),
       }),
     });
+    let channelId: string;
     if (res.status === 409) {
-      setCreateError(t('widgetConfig.chat.channelExists'));
-      return;
+      const existing = channels.find(c => c.name.toLowerCase() === name.toLowerCase());
+      if (!existing) {
+        setCreateError(t('widgetConfig.chat.channelExists'));
+        return null;
+      }
+      channelId = existing.id;
+    } else if (res.ok) {
+      channelId = ((await res.json()) as { channel: ChatChannel }).channel.id;
+    } else {
+      return null;
     }
-    if (!res.ok) return;
-    const { channel } = (await res.json()) as { channel: ChatChannel };
     setCreateError('');
     setNewName('');
     setNewRetention('');
     await mutate();
-    onChange([...subscribedIds, channel.id]); // auto-subscribe the new channel
+    const next = subscribedIds.includes(channelId) ? subscribedIds : [...subscribedIds, channelId];
+    onChange(next); // auto-subscribe the new channel
+    return next;
   };
+
+  useEffect(() => {
+    registerBeforeSave?.(async () => {
+      const next = await createDraftChannel();
+      return next ? { channelIds: next } : null;
+    });
+    // createDraftChannel closes over the current draft/subscription state.
+  });
 
   const removeStaleSubscriptions = () => {
     void mutate();
@@ -187,7 +210,7 @@ export function ChannelsEditor({ value, onChange }: ChannelsEditorProps) {
           maxLength={64}
           placeholder={t('widgetConfig.chat.newChannelPlaceholder')}
           onChange={e => setNewName(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void createChannel(); } }}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void createDraftChannel(); } }}
         />
         <select
           className="config-input config-select channels-editor__retention"
@@ -204,7 +227,7 @@ export function ChannelsEditor({ value, onChange }: ChannelsEditorProps) {
         <button
           type="button"
           className="channels-editor__btn channels-editor__btn--add"
-          onClick={() => void createChannel()}
+          onClick={() => void createDraftChannel()}
           disabled={newName.trim().length === 0}
           aria-label={t('widgetConfig.chat.createChannel')}
         >
