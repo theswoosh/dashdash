@@ -41,7 +41,7 @@ vi.mock('net', async () => {
 
 import dns from 'dns/promises';
 import { execFile } from 'child_process';
-import { runHealthcheck, clearHealthcheckCache } from '../widgets/healthcheck/check.js';
+import { runHealthcheck, runHealthcheckSwr, clearHealthcheckCache } from '../widgets/healthcheck/check.js';
 
 const mockResolve4 = dns.resolve4 as ReturnType<typeof vi.fn>;
 const mockExecFile = execFile as unknown as ReturnType<typeof vi.fn>;
@@ -274,6 +274,72 @@ describe('runHealthcheck — ICMP ping path', () => {
       cb(Object.assign(new Error('spawn ping ENOENT'), { code: 'ENOENT' }), '', ''));
     const result = await runHealthcheck({ url: PING_URL });
     expect(result.status).toBe('unknown');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 7. runHealthcheckSwr — non-blocking stale-while-revalidate (batch path)
+// ---------------------------------------------------------------------------
+describe('runHealthcheckSwr — stale-while-revalidate', () => {
+  // Public IP + non-http scheme → ICMP path, no DNS, deterministic mock.
+  const PING_URL = 'redis://8.8.8.8';
+  const flushProbe = () => new Promise(resolve => setTimeout(resolve, 0));
+
+  it('cold cache: returns pending immediately, real result on the next call', async () => {
+    mockExecFile.mockImplementation((_f: string, _a: string[], cb: (e: unknown, o: string, s: string) => void) => cb(null, '', ''));
+
+    const first = runHealthcheckSwr({ url: PING_URL });
+    expect(first).toEqual({ status: 'pending', latencyMs: 0 });
+
+    await flushProbe(); // let the background probe finish and populate the cache
+
+    const second = runHealthcheckSwr({ url: PING_URL });
+    expect(second.status).toBe('up');
+    expect(mockExecFile).toHaveBeenCalledTimes(1); // second call is a cache hit
+  });
+
+  it('dedups concurrent pending polls into a single probe', async () => {
+    let release: (() => void) | undefined;
+    mockExecFile.mockImplementation((_f: string, _a: string[], cb: (e: unknown, o: string, s: string) => void) => {
+      release = () => cb(null, '', '');
+    });
+
+    expect(runHealthcheckSwr({ url: PING_URL }).status).toBe('pending');
+    expect(runHealthcheckSwr({ url: PING_URL }).status).toBe('pending');
+    expect(runHealthcheckSwr({ url: PING_URL }).status).toBe('pending');
+    expect(mockExecFile).toHaveBeenCalledTimes(1);
+
+    release!();
+    await flushProbe();
+    expect(runHealthcheckSwr({ url: PING_URL }).status).toBe('up');
+  });
+
+  it('expired entry: serves the stale result and refreshes in the background', async () => {
+    mockExecFile.mockImplementation((_f: string, _a: string[], cb: (e: unknown, o: string, s: string) => void) => cb(null, '', ''));
+
+    runHealthcheckSwr({ url: PING_URL });
+    await flushProbe(); // cache now holds an 'up' result
+
+    // Age the cache past the fresh TTL (35 s) but inside MAX_STALE (5 min).
+    const realNow = Date.now();
+    const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(realNow + 60_000);
+    try {
+      const stale = runHealthcheckSwr({ url: PING_URL });
+      expect(stale.status).toBe('up'); // stale value, not pending
+      expect(mockExecFile).toHaveBeenCalledTimes(2); // background refresh fired
+    } finally {
+      nowSpy.mockRestore();
+    }
+  });
+
+  it('answers no-I/O cases directly, never pending', () => {
+    expect(runHealthcheckSwr({ url: '' }).status).toBe('unknown');
+    expect(runHealthcheckSwr({ url: '; rm -rf /' })).toMatchObject({ status: 'down', error: 'Invalid host' });
+    expect(runHealthcheckSwr({ url: 'http://10.0.0.1/' })).toMatchObject({
+      status: 'down',
+      error: 'Private or reserved addresses are not allowed',
+    });
+    expect(mockExecFile).not.toHaveBeenCalled();
   });
 });
 

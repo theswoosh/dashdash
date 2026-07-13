@@ -4,7 +4,9 @@ import { useServices } from './use-services.hook';
 import { flattenServices } from '../utils/service-tree';
 
 interface CheckResult {
-  status: 'up' | 'down' | 'unknown';
+  // 'pending' = the backend is still probing this target in the background
+  // (cold cache); the hook re-polls quickly until a real result lands.
+  status: 'up' | 'down' | 'unknown' | 'pending';
   latencyMs: number;
   error?: string;
 }
@@ -41,7 +43,14 @@ export function useHealthcheckBatch(serviceId: string | null) {
   const { data, error, isLoading } = useSWR<BatchResponse>(
     serviceId !== null && idsKey ? ['/api/healthcheck/batch', idsKey] : null,
     fetcher,
-    { refreshInterval: 30_000, revalidateOnFocus: false },
+    {
+      // The batch endpoint answers instantly and returns 'pending' for targets
+      // it is still probing (cold cache) — poll fast until none are pending,
+      // then fall back to the regular 30 s interval.
+      refreshInterval: latest =>
+        latest && Object.values(latest.results).some(r => r.status === 'pending') ? 2_000 : 30_000,
+      revalidateOnFocus: false,
+    },
   );
 
   const result = serviceId !== null && data ? (data.results[serviceId] ?? null) : null;

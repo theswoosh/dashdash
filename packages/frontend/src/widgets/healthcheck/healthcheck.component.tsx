@@ -1,5 +1,4 @@
 import type { WidgetProps } from '@dashdash/types';
-import { WidgetSkeleton } from '../shared/widget-skeleton.component';
 import { WidgetError } from '../shared/widget-error.component';
 import { AppIcon, hasServiceIcon, toAbsoluteUrl } from '../shared/app-icon.component';
 import './HealthcheckWidget.css';
@@ -7,12 +6,13 @@ import './HealthcheckWidget.css';
 type HealthcheckLayoutSize = 'tiny' | 'normal' | 'big';
 type ShowName = 'hidden' | 'above' | 'below';
 
-function isPingData(x: unknown): x is { status: 'up' | 'down' } {
+function isPingData(x: unknown): x is { status: 'up' | 'down' | 'unknown' | 'pending' } {
   return typeof x === 'object' && x !== null && 'status' in x;
 }
 
 export function HealthcheckWidget({ options, data, error, loading }: WidgetProps) {
-  if (loading) return <WidgetSkeleton />;
+  // No loading gate: icon/name/description are static config and paint
+  // immediately — only the ping status arrives async ('pending' shadow state).
   if (error) return <WidgetError message={error} />;
 
   const layoutSizeRaw = options['layoutSize'];
@@ -30,6 +30,7 @@ export function HealthcheckWidget({ options, data, error, loading }: WidgetProps
   const hasIcon       = hasServiceIcon(iconValue);
   const isPingEnabled = options['ping'] !== false;
   const isDown        = isPingEnabled && isPingData(data) && data.status === 'down';
+  const isPending     = isPingEnabled && (loading || (isPingData(data) && data.status === 'pending'));
 
   // Tiny layout: icon is rendered in the widget-card header (see widget-card.component.tsx).
   if (layoutSize === 'tiny') {
@@ -39,6 +40,7 @@ export function HealthcheckWidget({ options, data, error, loading }: WidgetProps
   const iconAreaClass = [
     'healthcheck-widget__icon-area',
     pingIndicator === 'icon-glow' && isDown ? 'healthcheck-widget__icon-area--down' : '',
+    isPending ? 'healthcheck-widget__icon-area--pending' : '',
   ].filter(Boolean).join(' ');
 
   function iconEl(size: number) {

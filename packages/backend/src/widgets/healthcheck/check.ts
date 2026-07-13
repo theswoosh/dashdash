@@ -5,7 +5,12 @@ import dns from 'dns/promises';
 const MAX_HOSTNAME_LENGTH = 253;
 const MIN_PING_TIMEOUT_SEC = 1;
 const DEFAULT_TIMEOUT_MS = 5000;
-const CACHE_TTL_MS = 25_000;
+// Must exceed the client's 30 s poll interval so warm polls are cache hits
+// instead of consistently just missing the window and re-running live probes.
+const CACHE_TTL_MS = 35_000;
+// Stale-while-revalidate window for the batch path: an expired result younger
+// than this is served immediately while a background probe refreshes it.
+const MAX_STALE_MS = 5 * 60_000;
 
 /** Strict host validation — prevents any shell/command injection. */
 const SAFE_HOST_RE = /^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?$/;
@@ -40,7 +45,9 @@ function extractHost(input: string): string {
 export interface CheckResult {
   // 'unknown' = the check could not be performed (e.g. ICMP not permitted in
   // this container), distinct from 'down' (target actively unreachable).
-  status: 'up' | 'down' | 'unknown';
+  // 'pending' = a probe is running in the background and no (stale) result
+  // exists yet — only the non-blocking batch path (runHealthcheckSwr) emits it.
+  status: 'up' | 'down' | 'unknown' | 'pending';
   latencyMs: number;
   error?: string | undefined;
   // The IP the probe actually hit after DNS resolution — surfaced in the UI
@@ -62,12 +69,16 @@ function isIcmpUnavailable(err: { code?: string | number | null }, stderr: strin
   return /operation not permitted|permission denied|are you root|socket:|raw socket|not permitted/i.test(stderr);
 }
 
-/** In-process TTL cache: avoids duplicate DNS + subprocess calls within a 25s window. */
+/** In-process TTL cache: avoids duplicate DNS + subprocess calls within the fresh window. */
 const checkCache = new Map<string, { result: CheckResult; ts: number }>();
+
+/** One probe per target at a time — repeated pending polls must not stack probes. */
+const inFlightProbes = new Map<string, Promise<CheckResult>>();
 
 /** Exposed for tests — clears the TTL cache between test cases. */
 export function clearHealthcheckCache(): void {
   checkCache.clear();
+  inFlightProbes.clear();
 }
 
 interface CheckOptions {
@@ -137,14 +148,20 @@ function resolveEffectivePort(trimmed: string, port: number | undefined): number
   return undefined;
 }
 
+interface ProbeTarget {
+  host: string;
+  effectivePort: number | undefined;
+  timeoutMs: number;
+  allowPrivateNetworks: boolean | undefined;
+  cacheKey: string;
+}
+
 /**
- * No port → ICMP ping (is the host reachable?).
- * Port specified → TCP connect (is the service listening?).
- *
- * Results are cached for 25 s keyed by host+port so duplicate widgets
- * pointing at the same target only fire one DNS lookup + subprocess per interval.
+ * Sync validation + cache-key derivation. Returns a CheckResult directly for
+ * inputs that can be answered without any I/O (empty / invalid / policy-blocked
+ * targets), otherwise the target descriptor for the probe.
  */
-export async function runHealthcheck(opts: CheckOptions): Promise<CheckResult> {
+function prepareTarget(opts: CheckOptions): CheckResult | ProbeTarget {
   const { url: urlInput, port, timeoutMs = DEFAULT_TIMEOUT_MS } = opts;
 
   if (!urlInput?.trim()) {
@@ -159,6 +176,9 @@ export async function runHealthcheck(opts: CheckOptions): Promise<CheckResult> {
   if (!isIP(host) && (!SAFE_HOST_RE.test(host) || host.length > MAX_HOSTNAME_LENGTH)) {
     return { status: 'down', error: 'Invalid host', latencyMs: 0 };
   }
+  if (isIP(host) && !opts.allowPrivateNetworks && isPrivateIp(host)) {
+    return { status: 'down', error: 'Private or reserved addresses are not allowed', latencyMs: 0 };
+  }
 
   // Compute effective port before DNS so the cache key is stable. The key
   // includes the private-network policy: the widget batch path and the modal
@@ -167,23 +187,20 @@ export async function runHealthcheck(opts: CheckOptions): Promise<CheckResult> {
   // poison the widget, an allowed "up" would leak past the block).
   const effectivePort = resolveEffectivePort(trimmed, port);
   const cacheKey = `${host}:${effectivePort ?? 'ping'}:${opts.allowPrivateNetworks ? 'priv' : 'pub'}`;
-  const cached = checkCache.get(cacheKey);
-  if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
-    return cached.result;
-  }
+  return { host, effectivePort, timeoutMs, allowPrivateNetworks: opts.allowPrivateNetworks, cacheKey };
+}
 
-  let targetIp: string | null = null;
+/** DNS resolution + policy filter + actual probe. */
+async function probeTarget({ host, effectivePort, timeoutMs, allowPrivateNetworks }: ProbeTarget): Promise<CheckResult> {
+  let targetIp: string;
   if (isIP(host)) {
-    if (!opts.allowPrivateNetworks && isPrivateIp(host)) {
-      return { status: 'down', error: 'Private or reserved addresses are not allowed', latencyMs: 0 };
-    }
     targetIp = host;
   } else {
     const addresses = await dns.resolve4(host).catch(() => [] as string[]);
     if (addresses.length === 0) {
       return { status: 'down', error: 'Invalid host', latencyMs: 0 };
     }
-    const allowed = opts.allowPrivateNetworks ? addresses : addresses.filter(ip => !isPrivateIp(ip));
+    const allowed = allowPrivateNetworks ? addresses : addresses.filter(ip => !isPrivateIp(ip));
     if (allowed.length === 0) {
       return { status: 'down', error: 'Private or reserved addresses are not allowed', latencyMs: 0 };
     }
@@ -193,8 +210,76 @@ export async function runHealthcheck(opts: CheckOptions): Promise<CheckResult> {
   const probeResult = await (effectivePort !== undefined
     ? tcpCheck(targetIp, effectivePort, timeoutMs)
     : pingHost(targetIp, timeoutMs));
-  const result: CheckResult = { ...probeResult, resolvedIp: targetIp };
+  return { ...probeResult, resolvedIp: targetIp };
+}
 
-  checkCache.set(cacheKey, { result, ts: Date.now() });
-  return result;
+/**
+ * Runs the probe with in-flight dedup and always writes a result into the
+ * cache — even on an unexpected throw, so the batch path can never be
+ * stranded on 'pending' (a cached result is what resolves it).
+ */
+function startProbe(target: ProbeTarget): Promise<CheckResult> {
+  const existing = inFlightProbes.get(target.cacheKey);
+  if (existing) return existing;
+
+  const probe = (async () => {
+    let result: CheckResult;
+    try {
+      result = await probeTarget(target);
+    } catch (err) {
+      result = { status: 'unknown', error: err instanceof Error ? err.message : 'check failed', latencyMs: 0 };
+    }
+    checkCache.set(target.cacheKey, { result, ts: Date.now() });
+    return result;
+  })().finally(() => {
+    inFlightProbes.delete(target.cacheKey);
+  });
+
+  inFlightProbes.set(target.cacheKey, probe);
+  return probe;
+}
+
+/**
+ * No port → ICMP ping (is the host reachable?).
+ * Port specified → TCP connect (is the service listening?).
+ *
+ * Blocking variant (used by the config-modal Test button): waits for the live
+ * probe. Results are cached keyed by host+port+policy so duplicate widgets
+ * pointing at the same target only fire one DNS lookup + subprocess per interval.
+ */
+export async function runHealthcheck(opts: CheckOptions): Promise<CheckResult> {
+  const target = prepareTarget(opts);
+  if ('status' in target) return target;
+
+  const cached = checkCache.get(target.cacheKey);
+  if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
+    return cached.result;
+  }
+  return startProbe(target);
+}
+
+/**
+ * Non-blocking stale-while-revalidate variant for the widget batch endpoint —
+ * never waits on a live probe, so one slow/dead host cannot delay the response:
+ *   - fresh cache hit → that result
+ *   - expired but younger than MAX_STALE_MS → stale result, background refresh
+ *   - nothing usable (cold start) → 'pending', background probe; the client
+ *     re-polls and picks the real result up from the cache.
+ */
+export function runHealthcheckSwr(opts: CheckOptions): CheckResult {
+  const target = prepareTarget(opts);
+  if ('status' in target) return target;
+
+  const cached = checkCache.get(target.cacheKey);
+  const age = cached ? Date.now() - cached.ts : Infinity;
+  if (cached && age < CACHE_TTL_MS) {
+    return cached.result;
+  }
+
+  void startProbe(target);
+
+  if (cached && age < MAX_STALE_MS) {
+    return cached.result;
+  }
+  return { status: 'pending', latencyMs: 0 };
 }

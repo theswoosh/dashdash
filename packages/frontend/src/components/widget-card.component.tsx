@@ -100,7 +100,7 @@ interface Props {
 }
 
 interface PingStatus {
-  status: 'up' | 'down' | 'unknown';
+  status: 'up' | 'down' | 'unknown' | 'pending';
   latencyMs?: number | undefined;
   error?: string | undefined;
 }
@@ -108,7 +108,7 @@ interface PingStatus {
 function isPingStatus(x: unknown): x is PingStatus {
   if (typeof x !== 'object' || x === null || !('status' in x)) return false;
   const status = (x as Record<string, unknown>)['status'];
-  return status === 'up' || status === 'down' || status === 'unknown';
+  return status === 'up' || status === 'down' || status === 'unknown' || status === 'pending';
 }
 
 function buildPingTooltip(ping: PingStatus): string {
@@ -121,7 +121,7 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
   const Card = useThemeCard();
   const setConfigTarget = useUIStore(s => s.setConfigTarget);
   const { holdToDeleteMs } = useBehavior();
-  const { Component, clientOnly } = getWidget(service.widget);
+  const { Component, clientOnly, rendersWhileLoading } = getWidget(service.widget);
   const isHealthcheck = service.widget === 'healthcheck';
   // Individual fetch — disabled for healthcheck widgets (those use the batch hook below).
   const { data: singleData, error: singleError, loading: singleLoading } = useWidgetData(
@@ -142,10 +142,14 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
   const pingData = isPingEnabled && !loading && isPingStatus(data) ? data : null;
   const pingIndicator = service.options?.['pingIndicator'] ?? 'header-bar';
   const showHeaderDot = isPingEnabled && (isTinyLayout || pingIndicator === 'header-bar');
-  type PingDotState = 'up' | 'down' | 'unknown';
+  type PingDotState = 'up' | 'down' | 'unknown' | 'pending';
   const pingDotState: PingDotState | null = !showHeaderDot
     ? null
-    : !hasConfiguredUrl || pingData === null
+    : !hasConfiguredUrl
+    ? 'unknown'
+    : loading || (isPingStatus(data) && data.status === 'pending')
+    ? 'pending'
+    : pingData === null
     ? 'unknown'
     : pingData.status;
   const isHeaderHidden = service.options?.['hideHeader'] === true && !editMode && !isTinyLayout;
@@ -195,7 +199,9 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
   );
 
   const body = (() => {
-    if (!clientOnly && loading) return <WidgetSkeleton />;
+    // rendersWhileLoading widgets paint their static shell (icon/name from
+    // config) immediately instead of blanking behind a skeleton.
+    if (!clientOnly && !rendersWhileLoading && loading) return <WidgetSkeleton />;
     if (!clientOnly && error) return <WidgetError message={error} />;
     return widgetContent;
   })();
@@ -239,8 +245,18 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
         {pingDotState !== null && (
           <span
             className={`widget-ping-dot widget-ping-dot--${pingDotState}`}
-            title={pingData ? buildPingTooltip(pingData) : (hasConfiguredUrl ? t('widgetCard.checking') : t('widgetCard.noHostConfigured'))}
-            aria-label={pingDotState === 'up' ? t('widgetCard.up') : pingDotState === 'down' ? t('widgetCard.down') : t('widgetCard.unknown')}
+            title={pingDotState === 'pending'
+              ? t('widgetCard.checking')
+              : pingData
+              ? buildPingTooltip(pingData)
+              : (hasConfiguredUrl ? t('widgetCard.checking') : t('widgetCard.noHostConfigured'))}
+            aria-label={pingDotState === 'up'
+              ? t('widgetCard.up')
+              : pingDotState === 'down'
+              ? t('widgetCard.down')
+              : pingDotState === 'pending'
+              ? t('widgetCard.checking')
+              : t('widgetCard.unknown')}
           />
         )}
         {tinyIconValue && (

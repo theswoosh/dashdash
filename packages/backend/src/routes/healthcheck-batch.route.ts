@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify';
 import type { Service, Settings } from '../config/schemas.js';
-import { runHealthcheck, type CheckResult } from '../widgets/healthcheck/check.js';
+import { runHealthcheckSwr, type CheckResult } from '../widgets/healthcheck/check.js';
 import { flattenServices } from '../config/loader.js';
 
 const MAX_BATCH_SIZE = 100;
@@ -29,30 +29,30 @@ export const createHealthcheckBatchRoutes = (opts: HealthcheckBatchRouteOptions)
         const services = flattenServices(opts.getServices());
         const { allowPrivateNetworks } = opts.getSettings();
 
-        const entries = await Promise.all(
-          requestedIds.map(async (id): Promise<[string, CheckResult]> => {
-            const service = services.find(s => s.id === id);
-            if (!service || service.widget !== 'healthcheck') {
-              return [id, { status: 'down', error: 'not found', latencyMs: 0 }];
-            }
-            if (service.options?.['ping'] === false) {
-              return [id, { status: 'up', latencyMs: 0 }];
-            }
-            try {
-              const result = await runHealthcheck({
-                url: (service.options?.['url'] as string | undefined) ?? '',
-                port: service.options?.['port'] as number | undefined,
-                timeoutMs: service.options?.['timeoutMs'] as number | undefined,
-                allowPrivateNetworks,
-              });
-              return [id, result];
-            } catch (err) {
-              const message = err instanceof Error ? err.message : 'check failed';
-              request.log.error({ err, serviceId: id }, 'Healthcheck batch item failed');
-              return [id, { status: 'down', error: message, latencyMs: 0 }];
-            }
-          })
-        );
+        // Non-blocking: answers from cache (stale allowed) or 'pending' while a
+        // background probe runs — the response never waits on the slowest host.
+        const entries = requestedIds.map((id): [string, CheckResult] => {
+          const service = services.find(s => s.id === id);
+          if (!service || service.widget !== 'healthcheck') {
+            return [id, { status: 'down', error: 'not found', latencyMs: 0 }];
+          }
+          if (service.options?.['ping'] === false) {
+            return [id, { status: 'up', latencyMs: 0 }];
+          }
+          try {
+            const result = runHealthcheckSwr({
+              url: (service.options?.['url'] as string | undefined) ?? '',
+              port: service.options?.['port'] as number | undefined,
+              timeoutMs: service.options?.['timeoutMs'] as number | undefined,
+              allowPrivateNetworks,
+            });
+            return [id, result];
+          } catch (err) {
+            const message = err instanceof Error ? err.message : 'check failed';
+            request.log.error({ err, serviceId: id }, 'Healthcheck batch item failed');
+            return [id, { status: 'down', error: message, latencyMs: 0 }];
+          }
+        });
 
         return { results: Object.fromEntries(entries) };
       }

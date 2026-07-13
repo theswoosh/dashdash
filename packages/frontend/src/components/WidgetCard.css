@@ -44,6 +44,12 @@
 .widget-ping-dot--up      { background: #22c55e; box-shadow: 0 0 4px #22c55e88; }
 .widget-ping-dot--down    { background: #ef4444; box-shadow: 0 0 4px #ef444488; }
 .widget-ping-dot--unknown { background: #6b7280; }
+/* pending = first check still running (cold cache) — pulsing grey */
+.widget-ping-dot--pending { background: #6b7280; animation: widget-ping-dot-pulse 1.4s ease-in-out infinite; }
+
+@keyframes widget-ping-dot-pulse {
+  50% { opacity: 0.35; }
+}
 
 .widget-title {
   min-width: 0;

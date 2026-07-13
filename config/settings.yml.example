@@ -46,7 +46,7 @@ searchEngines:
 # Allow healthchecks against private/reserved addresses (RFC-1918, loopback,
 # link-local). Off by default as an SSRF guard — turn on for homelab use where
 # widgets ping LAN hosts like 192.168.x.x.
-allowPrivateNetworks: false
+allowPrivateNetworks: true
 
 # Optional: custom CSS injected after theme
 css:

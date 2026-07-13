@@ -25,6 +25,16 @@
   box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
 }
 
+/* First check still running (cold cache): dimmed, gently pulsing shadow state */
+.healthcheck-widget__icon-area--pending {
+  animation: healthcheck-pending-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes healthcheck-pending-pulse {
+  0%, 100% { opacity: 0.6; }
+  50%      { opacity: 0.35; }
+}
+
 .app-icon-svg {
   display: block;
   flex-shrink: 0;

@@ -15,6 +15,10 @@ const ChatWidget = lazy(() => import('./chat/chat.component').then(m => ({ defau
 interface FrontendWidget {
   Component: ComponentType<WidgetProps>;
   clientOnly?: boolean | undefined;
+  // Widget renders its static shell (icon/name from config) immediately and
+  // handles the `loading` prop itself — WidgetCard must not blank it with a
+  // skeleton while server data is in flight.
+  rendersWhileLoading?: boolean | undefined;
 }
 
 const WIDGETS = new Map<string, FrontendWidget>([
@@ -22,7 +26,7 @@ const WIDGETS = new Map<string, FrontendWidget>([
   ['bookmarks',   { Component: BookmarksWidget,   clientOnly: true }],
   ['search',      { Component: SearchWidget,      clientOnly: true }],
   ['iframe',      { Component: IframeWidget,      clientOnly: true }],
-  ['healthcheck', { Component: HealthcheckWidget                   }],
+  ['healthcheck', { Component: HealthcheckWidget, rendersWhileLoading: true }],
   ['stats',       { Component: StatsWidget                         }],
   ['notepad',     { Component: NotepadWidget,     clientOnly: true }],
   ['frame',       { Component: FrameWidget,       clientOnly: true }],
