@@ -1,17 +1,13 @@
 import { useState, useEffect } from 'react';
-import { SI_PREFIX, slugFromValue } from '../../components/service-icon-picker.component';
+import { SI_PREFIX, DI_PREFIX, slugFromValue, diNameFromValue, diIconUrl, hasServiceIcon } from '../../utils/icon-values';
 import type { ServiceIcon } from '../../components/service-icons.data';
 
-export { SI_PREFIX };
+export { SI_PREFIX, DI_PREFIX, diIconUrl, diNameFromValue, hasServiceIcon };
 
 /** Ensures a URL has a protocol — bare hostnames become https:// links. */
 export function toAbsoluteUrl(url: string): string {
   if (/^https?:\/\//i.test(url)) return url;
   return `https://${url}`;
-}
-
-export function hasServiceIcon(iconValue: string): boolean {
-  return iconValue.startsWith(SI_PREFIX);
 }
 
 function useServiceIcon(iconValue: string): ServiceIcon | null {
@@ -37,7 +33,26 @@ interface AppIconProps {
 }
 
 export function AppIcon({ iconValue, size, title, className }: AppIconProps) {
-  const icon = useServiceIcon(iconValue);
+  const diName = diNameFromValue(iconValue);
+  const icon = useServiceIcon(diName ? '' : iconValue);
+  if (diName) {
+    return (
+      <img
+        src={diIconUrl(diName)}
+        width={size}
+        height={size}
+        loading="lazy"
+        alt={title ?? ''}
+        title={title}
+        className={['app-icon-img', className].filter(Boolean).join(' ')}
+        // Some dashboard-icons entries are PNG-only — swap once on error.
+        onError={e => {
+          const img = e.currentTarget;
+          if (!img.src.endsWith('.png')) img.src = diIconUrl(diName, 'png');
+        }}
+      />
+    );
+  }
   if (!icon) return null;
   return (
     <svg

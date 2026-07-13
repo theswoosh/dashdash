@@ -85,6 +85,7 @@ widgetConfig:
   resetToDefault: "Auf Standard zurücksetzen"
   hideHeader: "Kopfzeile im Anzeigemodus ausblenden"
   fontColor: "Schriftfarbe"
+  bookmarkColors: "Lesezeichen-Farben"
   copyColor: "Farbeinstellungen kopieren"
   pasteColor: "Farbeinstellungen einfügen"
 

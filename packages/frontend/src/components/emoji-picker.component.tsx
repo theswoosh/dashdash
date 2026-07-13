@@ -25,7 +25,7 @@ const BOARD_ICON_MAX_LENGTH = 20;
  *  characters and hard-cap the length as defense-in-depth (live issue #6.1). */
 function sanitizeBoardIcon(raw: string): string {
   return raw
-    // eslint-disable-next-line no-control-regex
+     
     .replace(/[\u0000-\u001f\u007f\u200b-\u200f\u2028\u2029\ufeff]/g, '')
     .trim()
     .slice(0, BOARD_ICON_MAX_LENGTH);

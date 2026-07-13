@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { LayoutGrid } from 'lucide-react';
+import { DI_PREFIX, diIconUrl } from '../utils/icon-values';
 import './ServiceIconPicker.css';
 import type { ServiceIcon } from './service-icons.data';
 
@@ -8,13 +9,9 @@ import type { ServiceIcon } from './service-icons.data';
 const RECENTS_KEY = 'dashdash:icon-recents';
 const RECENTS_MAX = 12;
 
-/** Value prefix used in YAML: "si:plex" */
-export const SI_PREFIX = 'si:';
-
-export function slugFromValue(value: string): string | null {
-  if (!value.startsWith(SI_PREFIX)) return null;
-  return value.slice(SI_PREFIX.length);
-}
+// Re-exported from utils/icon-values for existing importers.
+export { SI_PREFIX, slugFromValue } from '../utils/icon-values';
+import { SI_PREFIX, slugFromValue } from '../utils/icon-values';
 
 // ── Category definitions ──────────────────────────────────────────────────
 
@@ -26,10 +23,12 @@ interface CategoryDef {
 const MAX_RENDERED_ICONS = 150;
 const RECENT_KEY = 'recent';
 const ALL_KEY = 'all';
+const COLORFUL_KEY = 'colorful';
 
 const FIXED_CATEGORIES: CategoryDef[] = [
-  { key: RECENT_KEY, label: 'Recent' },
-  { key: ALL_KEY,    label: 'All' },
+  { key: RECENT_KEY,   label: 'Recent' },
+  { key: COLORFUL_KEY, label: 'Colorful' },
+  { key: ALL_KEY,      label: 'All' },
 ];
 
 const DATA_CATEGORIES: CategoryDef[] = [
@@ -95,6 +94,65 @@ function useIconData(): IconDataHook {
   return { icons, isLoading, load };
 }
 
+// ── Colorful icons (homarr-labs/dashboard-icons via jsDelivr CDN) ─────────
+
+interface DiIcon {
+  name: string;
+  aliases: string[];
+}
+
+// Module-level cache — one metadata fetch per session regardless of how many
+// pickers mount. Failure leaves the colorful set empty (monochrome still works).
+let diIconsCache: DiIcon[] | null = null;
+let diIconsPromise: Promise<DiIcon[]> | null = null;
+
+function fetchDiIcons(): Promise<DiIcon[]> {
+  if (diIconsCache) return Promise.resolve(diIconsCache);
+  diIconsPromise ??= fetch('https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons@main/metadata.json')
+    .then(res => res.json() as Promise<Record<string, { aliases?: string[] }>>)
+    .then(meta => {
+      diIconsCache = Object.entries(meta)
+        .map(([name, entry]) => ({ name, aliases: entry.aliases ?? [] }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      return diIconsCache;
+    })
+    .catch(() => {
+      diIconsPromise = null; // allow retry on next open
+      return [];
+    });
+  return diIconsPromise;
+}
+
+function useDiIconData(): { diIcons: DiIcon[]; loadDi: () => void } {
+  const [diIcons, setDiIcons] = useState<DiIcon[]>(diIconsCache ?? []);
+  const requested = useRef(false);
+  const loadDi = useCallback(() => {
+    if (requested.current) return;
+    requested.current = true;
+    void fetchDiIcons().then(setDiIcons);
+  }, []);
+  return { diIcons, loadDi };
+}
+
+function scoreDiIcon(icon: DiIcon, query: string): number {
+  const q = query.toLowerCase().replace(/\s+/g, '-');
+  if (icon.name === q) return 4;
+  if (icon.name.startsWith(q)) return 3;
+  if (icon.name.includes(q)) return 2;
+  if (icon.aliases.some(a => a.toLowerCase().includes(q))) return 1;
+  return 0;
+}
+
+/** One grid entry — monochrome (bundled) or colorful (CDN). */
+type PickerEntry =
+  | { kind: 'si'; value: string; title: string; icon: ServiceIcon }
+  | { kind: 'di'; value: string; title: string; name: string };
+
+const siEntry = (icon: ServiceIcon): PickerEntry =>
+  ({ kind: 'si', value: `${SI_PREFIX}${icon.slug}`, title: icon.title, icon });
+const diEntry = (icon: DiIcon): PickerEntry =>
+  ({ kind: 'di', value: `${DI_PREFIX}${icon.name}`, title: icon.name, name: icon.name });
+
 // ── Score-based fuzzy search ──────────────────────────────────────────────
 
 function scoreIcon(icon: ServiceIcon, query: string): number {
@@ -140,6 +198,7 @@ export function ServiceIconPicker({
   const pickerRef = useRef<HTMLDivElement>(null);
   const [recentSlugs, addRecentSlug] = useRecentIconSlugs();
   const { icons, isLoading, load } = useIconData();
+  const { diIcons, loadDi } = useDiIconData();
 
   const closePanel = useCallback(() => { setIsOpen(false); setSearch(''); }, []);
 
@@ -158,11 +217,13 @@ export function ServiceIconPicker({
   const openPanel = () => {
     setIsOpen(o => !o);
     load();
+    loadDi();
   };
 
-  const selectIcon = (icon: ServiceIcon) => {
-    addRecentSlug(icon.slug);
-    onChange(`${SI_PREFIX}${icon.slug}`);
+  const selectEntry = (entry: PickerEntry) => {
+    // Recents store full prefixed values; legacy raw entries are si slugs.
+    addRecentSlug(entry.value);
+    onChange(entry.value);
     closePanel();
   };
 
@@ -177,30 +238,49 @@ export function ServiceIconPicker({
     if (currentSlug) load();
   }, [currentSlug, load]);
 
-  // Compute visible icons. The dataset holds the FULL Simple Icons set
-  // (~3400) — rendering is capped so the grid never mounts thousands of SVGs;
-  // anything beyond the cap is reachable by refining the search.
-  const { visibleIcons, hiddenCount } = (() => {
-    const cap = (list: ServiceIcon[]) => ({
-      visibleIcons: list.slice(0, MAX_RENDERED_ICONS),
+  // Compute visible entries across BOTH sets (bundled Simple Icons + CDN
+  // colorful icons). Rendering is capped so the grid never mounts thousands
+  // of nodes; anything beyond the cap is reachable by refining the search.
+  const { visibleEntries, hiddenCount } = (() => {
+    const cap = (list: PickerEntry[]) => ({
+      visibleEntries: list.slice(0, MAX_RENDERED_ICONS),
       hiddenCount: Math.max(0, list.length - MAX_RENDERED_ICONS),
     });
     if (search.trim()) {
       const q = search.trim();
-      return cap(icons
-        .map(i => ({ icon: i, score: scoreIcon(i, q) }))
-        .filter(({ score }) => score > 0)
-        .sort((a, b) => b.score - a.score || a.icon.title.localeCompare(b.icon.title))
-        .map(({ icon }) => icon));
+      // Colorful results first on equal score — they're what users usually want.
+      const di = diIcons
+        .map(i => ({ entry: diEntry(i), score: scoreDiIcon(i, q) }))
+        .filter(({ score }) => score > 0);
+      const si = icons
+        .map(i => ({ entry: siEntry(i), score: scoreIcon(i, q) }))
+        .filter(({ score }) => score > 0);
+      return cap([...di, ...si]
+        .sort((a, b) => b.score - a.score || a.entry.title.localeCompare(b.entry.title))
+        .map(({ entry }) => entry));
     }
     if (activeCategory === RECENT_KEY) {
-      return cap(recentSlugs.map(s => icons.find(i => i.slug === s)).filter(Boolean) as ServiceIcon[]);
+      return cap(recentSlugs.map(stored => {
+        const value = stored.includes(':') ? stored : `${SI_PREFIX}${stored}`;
+        if (value.startsWith(DI_PREFIX)) {
+          const name = value.slice(DI_PREFIX.length);
+          return { kind: 'di', value, title: name, name } as PickerEntry;
+        }
+        const slug = value.slice(SI_PREFIX.length);
+        const icon = icons.find(i => i.slug === slug);
+        return icon ? siEntry(icon) : null;
+      }).filter((e): e is PickerEntry => e !== null));
+    }
+    if (activeCategory === COLORFUL_KEY) {
+      return cap(diIcons.map(diEntry));
     }
     if (activeCategory === ALL_KEY) {
-      // "All" shows the curated selection — the full set is search-only.
-      return cap(icons.filter(i => i.category !== 'other').sort((a, b) => a.title.localeCompare(b.title)));
+      // "All" shows the curated selection — the full sets are search-only.
+      return cap(icons.filter(i => i.category !== 'other')
+        .sort((a, b) => a.title.localeCompare(b.title)).map(siEntry));
     }
-    return cap(icons.filter(i => i.category === activeCategory).sort((a, b) => a.title.localeCompare(b.title)));
+    return cap(icons.filter(i => i.category === activeCategory)
+      .sort((a, b) => a.title.localeCompare(b.title)).map(siEntry));
   })();
 
   return (
@@ -214,7 +294,10 @@ export function ServiceIconPicker({
           aria-haspopup="dialog"
           title="Pick app icon"
         >
-          {currentIcon
+          {value.startsWith(DI_PREFIX)
+            ? <img src={diIconUrl(value.slice(DI_PREFIX.length))} width={24} height={24} alt="" loading="lazy"
+                onError={e => { const img = e.currentTarget; if (!img.src.endsWith('.png')) img.src = diIconUrl(value.slice(DI_PREFIX.length), 'png'); }} />
+            : currentIcon
             ? <IconSvg icon={currentIcon} size={24} />
             : <LayoutGrid size={18} strokeWidth={1.5} className="sip__trigger-placeholder" />
           }
@@ -267,23 +350,33 @@ export function ServiceIconPicker({
 
           {isLoading ? (
             <div className="sip__loading">Loading…</div>
-          ) : visibleIcons.length === 0 ? (
+          ) : visibleEntries.length === 0 ? (
             <div className="sip__empty">
               {activeCategory === RECENT_KEY && !search ? 'No recently used icons' : 'No results'}
             </div>
           ) : (
             <div className="sip__grid-viewport">
               <div className="sip__grid">
-                {visibleIcons.map(icon => (
+                {visibleEntries.map(entry => (
                   <button
-                    key={icon.slug}
+                    key={entry.value}
                     type="button"
-                    className={`sip__icon-btn${value === `${SI_PREFIX}${icon.slug}` ? ' sip__icon-btn--active' : ''}`}
-                    onClick={() => selectIcon(icon)}
-                    title={icon.title}
-                    aria-pressed={value === `${SI_PREFIX}${icon.slug}`}
+                    className={`sip__icon-btn${value === entry.value ? ' sip__icon-btn--active' : ''}`}
+                    onClick={() => selectEntry(entry)}
+                    title={entry.title}
+                    aria-pressed={value === entry.value}
                   >
-                    <IconSvg icon={icon} size={22} />
+                    {entry.kind === 'si'
+                      ? <IconSvg icon={entry.icon} size={22} />
+                      : <img
+                          src={diIconUrl(entry.name)}
+                          width={22}
+                          height={22}
+                          alt=""
+                          loading="lazy"
+                          onError={e => { const img = e.currentTarget; if (!img.src.endsWith('.png')) img.src = diIconUrl(entry.name, 'png'); }}
+                        />
+                    }
                   </button>
                 ))}
               </div>

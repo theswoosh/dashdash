@@ -91,6 +91,7 @@ export const EN_FALLBACK: Record<string, unknown> = {
     resetToDefault: 'Reset to default',
     hideHeader: 'Hide header in display mode',
     fontColor: 'Font color',
+    bookmarkColors: 'Bookmark colors',
     copyColor: 'Copy color settings',
     pasteColor: 'Paste color settings',
   },

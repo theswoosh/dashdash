@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { mutate as swrMutate } from 'swr';
-import { X, CheckCircle, XCircle, Loader, Copy, ClipboardPaste } from 'lucide-react';
+import { X, CheckCircle, XCircle, Loader, Copy, ClipboardPaste, Settings } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
 import { useServices } from '../hooks/use-services.hook';
 import { findServiceById } from '../utils/service-tree';
@@ -29,6 +29,74 @@ function isLinkRow(x: unknown): x is LinkRow {
     && typeof (x as Record<string, unknown>)['url'] === 'string';
 }
 
+/** Per-bookmark color scheme editor — expands under the row via the gear
+ *  button. Own bg/font pickers + copy/paste against the global clipboard,
+ *  independent of the widget-level colors (live-issues follow-up). */
+function LinkColorPanel({
+  row,
+  onPatch,
+  onClear,
+}: {
+  readonly row: LinkRow;
+  readonly onPatch: (patch: Partial<LinkRow>) => void;
+  readonly onClear: () => void;
+}) {
+  const t = useT();
+  const colorClipboard = useUIStore(s => s.colorClipboard);
+  const setColorClipboard = useUIStore(s => s.setColorClipboard);
+  const bg = row.bg ? parseRgba(row.bg) : null;
+  const fg = row.fg ? parseRgba(row.fg) : null;
+
+  return (
+    <div className="links-editor__color-panel">
+      <div className="links-editor__color-panel-head">
+        <span className="wtc-size-label">{t('widgetConfig.bookmarkColors')}</span>
+        <span className="color-clipboard-actions">
+          <button
+            type="button"
+            className="color-clipboard-btn"
+            onClick={() => setColorClipboard({ bg: row.bg ?? null, fg: row.fg ?? null })}
+            title={t('widgetConfig.copyColor')}
+            aria-label={t('widgetConfig.copyColor')}
+          >
+            <Copy size={13} />
+          </button>
+          {colorClipboard !== null && (
+            <button
+              type="button"
+              className="color-clipboard-btn"
+              onClick={() => onPatch({
+                ...(colorClipboard.bg ? { bg: colorClipboard.bg } : {}),
+                ...(colorClipboard.fg ? { fg: colorClipboard.fg } : {}),
+              })}
+              title={t('widgetConfig.pasteColor')}
+              aria-label={t('widgetConfig.pasteColor')}
+            >
+              <ClipboardPaste size={13} />
+            </button>
+          )}
+        </span>
+      </div>
+      <label className="wtc-size-label">{t('widgetConfig.widgetBackground')}</label>
+      <BgColorPicker
+        hex={bg?.hex ?? DEFAULT_BG_HEX}
+        alpha={bg?.alpha ?? DEFAULT_BG_ALPHA}
+        hasValue={row.bg != null}
+        onChange={(hex, alpha) => onPatch({ bg: buildRgba(hex, alpha) })}
+        onReset={() => onClear()}
+      />
+      <label className="wtc-size-label">{t('widgetConfig.fontColor')}</label>
+      <BgColorPicker
+        hex={fg?.hex ?? DEFAULT_FG_HEX}
+        alpha={fg?.alpha ?? DEFAULT_FG_ALPHA}
+        hasValue={row.fg != null}
+        onChange={(hex, alpha) => onPatch({ fg: buildRgba(hex, alpha) })}
+        onReset={() => onClear()}
+      />
+    </div>
+  );
+}
+
 function LinksEditor({
   value,
   onChange,
@@ -37,7 +105,7 @@ function LinksEditor({
   readonly onChange: (links: LinkRow[]) => void;
 }) {
   const t = useT();
-  const colorClipboard = useUIStore(s => s.colorClipboard);
+  const [colorRowIndex, setColorRowIndex] = useState<number | null>(null);
   const rows: LinkRow[] = Array.isArray(value) ? value.filter(isLinkRow) : [];
 
   const updateRow = (i: number, patch: Partial<LinkRow>) => {
@@ -47,63 +115,60 @@ function LinksEditor({
   return (
     <div className="links-editor">
       {rows.map((row, i) => (
-        <div key={i} className="links-editor__row">
-          <input
-            className="config-input links-editor__label"
-            type="text"
-            placeholder="Label"
-            value={row.label}
-            style={{ ...(row.bg ? { background: row.bg } : {}), ...(row.fg ? { color: row.fg } : {}) }}
-            onChange={e => updateRow(i, { label: e.target.value })}
-          />
-          <input
-            className="config-input links-editor__url"
-            type="url"
-            placeholder="https://example.com"
-            value={row.url}
-            onChange={e => updateRow(i, { url: e.target.value })}
-            onBlur={e => {
-              // Fallback to https:// so "domain.com" works (live issue #2.1)
-              const trimmed = e.target.value.trim();
-              const normalized = trimmed === '' ? '' : toAbsoluteUrl(trimmed);
-              if (normalized !== row.url) updateRow(i, { url: normalized });
-            }}
-          />
-          {colorClipboard !== null && (
+        <div key={i} className="links-editor__entry">
+          <div className="links-editor__row">
+            <input
+              className="config-input links-editor__label"
+              type="text"
+              placeholder="Label"
+              value={row.label}
+              style={{ ...(row.bg ? { background: row.bg } : {}), ...(row.fg ? { color: row.fg } : {}) }}
+              onChange={e => updateRow(i, { label: e.target.value })}
+            />
+            <input
+              className="config-input links-editor__url"
+              type="url"
+              placeholder="https://example.com"
+              value={row.url}
+              onChange={e => updateRow(i, { url: e.target.value })}
+              onBlur={e => {
+                // Fallback to https:// so "domain.com" works (live issue #2.1)
+                const trimmed = e.target.value.trim();
+                const normalized = trimmed === '' ? '' : toAbsoluteUrl(trimmed);
+                if (normalized !== row.url) updateRow(i, { url: normalized });
+              }}
+            />
             <button
               type="button"
-              className="links-editor__color-btn"
-              onClick={() => updateRow(i, {
-                ...(colorClipboard.bg ? { bg: colorClipboard.bg } : {}),
-                ...(colorClipboard.fg ? { fg: colorClipboard.fg } : {}),
-              })}
-              title={t('widgetConfig.pasteColor')}
-              aria-label={t('widgetConfig.pasteColor')}
+              className={`links-editor__color-btn${colorRowIndex === i ? ' links-editor__color-btn--active' : ''}`}
+              onClick={() => setColorRowIndex(colorRowIndex === i ? null : i)}
+              title={t('widgetConfig.bookmarkColors')}
+              aria-label={t('widgetConfig.bookmarkColors')}
+              aria-expanded={colorRowIndex === i}
             >
-              <ClipboardPaste size={12} />
+              <Settings size={12} />
             </button>
-          )}
-          {(row.bg || row.fg) && (
             <button
               type="button"
-              className="links-editor__color-btn"
-              onClick={() => onChange(rows.map((r, idx) =>
+              className="links-editor__remove"
+              onClick={() => {
+                setColorRowIndex(null);
+                onChange(rows.filter((_, idx) => idx !== i));
+              }}
+              aria-label="Remove bookmark"
+            >
+              ×
+            </button>
+          </div>
+          {colorRowIndex === i && (
+            <LinkColorPanel
+              row={row}
+              onPatch={patch => updateRow(i, patch)}
+              onClear={() => onChange(rows.map((r, idx) =>
                 idx === i ? { label: r.label, url: r.url } : r,
               ))}
-              title={t('common.reset')}
-              aria-label={t('common.reset')}
-            >
-              <X size={12} />
-            </button>
+            />
           )}
-          <button
-            type="button"
-            className="links-editor__remove"
-            onClick={() => onChange(rows.filter((_, idx) => idx !== i))}
-            aria-label="Remove bookmark"
-          >
-            ×
-          </button>
         </div>
       ))}
       <button type="button" className="links-editor__add" onClick={() => onChange([...rows, { label: '', url: '' }])}>
