@@ -10,6 +10,7 @@ import { getTemplate } from '../widgets/catalog';
 import type { ConfigField } from '../widgets/catalog';
 import { ServiceIconPicker } from './service-icon-picker.component';
 import { BgColorPicker, parseRgba, buildRgba, DEFAULT_BG_HEX, DEFAULT_BG_ALPHA, DEFAULT_FG_HEX, DEFAULT_FG_ALPHA } from './bg-color-picker.component';
+import { getThemeColorDefaults } from '../utils/theme-color-defaults';
 import { WidgetTitleField } from './widget-title-field.component';
 import { toAbsoluteUrl } from '../widgets/shared/app-icon.component';
 import { TimezonePicker } from './timezone-picker.component';
@@ -433,22 +434,17 @@ export function WidgetConfigModal() {
       setOptions({ ...(service.options ?? {}) });
       beforeSaveFlushRef.current = null; // re-registered by the field when rendered
 
+      const themeDefaults = getThemeColorDefaults();
+
       const rawBg = service.options?.['bg_color'];
-      if (typeof rawBg === 'string') {
-        const parsed = parseRgba(rawBg);
-        if (parsed) {
-          setBgHex(parsed.hex);
-          setBgAlpha(parsed.alpha);
-        }
-      } else {
-        setBgHex(DEFAULT_BG_HEX);
-        setBgAlpha(DEFAULT_BG_ALPHA);
-      }
+      const parsedBg = typeof rawBg === 'string' ? parseRgba(rawBg) : null;
+      setBgHex(parsedBg?.hex ?? themeDefaults.bg.hex);
+      setBgAlpha(parsedBg?.alpha ?? themeDefaults.bg.alpha);
 
       const rawFg = service.options?.['font_color'];
       const parsedFg = typeof rawFg === 'string' ? parseRgba(rawFg) : null;
-      setFgHex(parsedFg?.hex ?? DEFAULT_FG_HEX);
-      setFgAlpha(parsedFg?.alpha ?? DEFAULT_FG_ALPHA);
+      setFgHex(parsedFg?.hex ?? themeDefaults.fg.hex);
+      setFgAlpha(parsedFg?.alpha ?? themeDefaults.fg.alpha);
     }
     setTestResult('idle');
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -484,8 +480,9 @@ export function WidgetConfigModal() {
   }, [handleOptionChange]);
 
   const resetBgColor = useCallback(() => {
-    setBgHex(DEFAULT_BG_HEX);
-    setBgAlpha(DEFAULT_BG_ALPHA);
+    const themeDefaults = getThemeColorDefaults();
+    setBgHex(themeDefaults.bg.hex);
+    setBgAlpha(themeDefaults.bg.alpha);
     handleOptionChange('bg_color', null);
   }, [handleOptionChange]);
 
@@ -496,8 +493,9 @@ export function WidgetConfigModal() {
   }, [handleOptionChange]);
 
   const resetFontColor = useCallback(() => {
-    setFgHex(DEFAULT_FG_HEX);
-    setFgAlpha(DEFAULT_FG_ALPHA);
+    const themeDefaults = getThemeColorDefaults();
+    setFgHex(themeDefaults.fg.hex);
+    setFgAlpha(themeDefaults.fg.alpha);
     handleOptionChange('font_color', null);
   }, [handleOptionChange]);
 
