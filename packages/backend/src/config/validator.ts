@@ -76,6 +76,7 @@ function validateSettingsYaml(raw: unknown, issues: ConfigIssue[]): void {
     const grid = data['grid'] as Record<string, unknown>;
     checkNumber(issues, file, 'grid.cellSize', grid['cellSize'], { integer: true, min: 1, max: 100 });
     checkNumber(issues, file, 'grid.gap', grid['gap'], { integer: true, min: 0, max: 100 });
+    checkNumber(issues, file, 'grid.referenceWidth', grid['referenceWidth'], { integer: true, min: 320, max: 10000 });
     if (grid['sizes'] !== undefined) {
       issues.push({ file, field: 'grid.sizes', level: 'warning', message: 'grid.sizes is no longer supported (grid-size slider removed) and is ignored' });
     }

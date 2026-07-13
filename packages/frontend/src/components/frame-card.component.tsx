@@ -60,13 +60,16 @@ function HoldDeleteButton({ id, holdToDeleteMs, onDelete }: { id: string; holdTo
 interface Props {
   service: ServiceConfig;
   editMode: boolean;
+  /** Reference (unscaled) values — used for grid-UNIT math (child layout, tiny pinning). */
   gridConfig: { rowHeight: number; gap: number };
+  /** Viewport-scaled px values — used for RGL's rendering props (rowHeight/margin). */
+  renderConfig: { rowHeight: number; gap: number };
   frameLayout?: LayoutItem | undefined;
   onDelete?: ((id: string) => void) | undefined;
   reloadServices: () => unknown;
 }
 
-export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig, frameLayout, onDelete, reloadServices }: Props) {
+export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig, renderConfig, frameLayout, onDelete, reloadServices }: Props) {
   const t = useT();
   const Card = useThemeCard();
   const { holdToDeleteMs } = useBehavior();
@@ -177,7 +180,7 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
     roRef.current = ro;
   }, []);
 
-  const { rowHeight, gap } = gridConfig;
+  const { rowHeight, gap } = renderConfig;
   const frameCols = frameLayout?.w ?? service.layout.w;
   const margin = useMemo<[number, number]>(() => [gap, gap], [gap]);
   const innerGridConfig = useMemo(

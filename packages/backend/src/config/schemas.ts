@@ -119,14 +119,17 @@ export const ServiceSchema: z.ZodType<Service> = z.object({
 });
 
 
-// Square-cell grid, fixed fine pitch. `cellSize` is the N×N cell size in px,
-// YAML-only (no UI writes it). Column count is derived to fill the viewport.
+// Square-cell grid, fixed fine pitch. `cellSize`/`gap` are reference values in
+// px valid at `referenceWidth`; the actual cell size is scaled to the viewport
+// while the column count stays constant. YAML-only (no UI writes them).
 const DEFAULT_CELL_SIZE = 10;
 const DEFAULT_GRID_GAP = 4;
+const DEFAULT_REFERENCE_WIDTH = 1920;
 
 const GridSchema = z.object({
   cellSize: z.number().int().min(1).max(100).default(DEFAULT_CELL_SIZE).catch(DEFAULT_CELL_SIZE),
   gap: z.number().int().nonnegative().max(100).default(DEFAULT_GRID_GAP).catch(DEFAULT_GRID_GAP),
+  referenceWidth: z.number().int().min(320).max(10000).default(DEFAULT_REFERENCE_WIDTH).catch(DEFAULT_REFERENCE_WIDTH),
 });
 
 const BackgroundSchema = z.object({
@@ -190,7 +193,7 @@ export const SettingsSchema = z.object({
   theme: z.string().max(64).default('dark').catch('dark'),
   language: z.string().max(16).optional(),
   background: BackgroundSchema.optional(),
-  grid: GridSchema.default({ cellSize: DEFAULT_CELL_SIZE, gap: DEFAULT_GRID_GAP }),
+  grid: GridSchema.default({ cellSize: DEFAULT_CELL_SIZE, gap: DEFAULT_GRID_GAP, referenceWidth: DEFAULT_REFERENCE_WIDTH }),
   auth: AuthConfigSchema,
   mail: MailConfigSchema,
   searchEngines: SearchEnginesSchema.default([]),

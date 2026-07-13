@@ -15,6 +15,7 @@ export interface DashSettings {
   grid?: {
     cellSize: number;
     gap: number;
+    referenceWidth?: number | undefined;
   } | undefined;
 }
 

@@ -18,6 +18,7 @@ import type { WidgetTemplate } from '../widgets/catalog';
 import { flattenServices, findServiceWithParent } from '../utils/service-tree';
 import { serviceAsGridItem, persistedHeight, isTinyLayoutService, mergeEditModeLayout } from '../utils/widget-layout';
 import type { GridConfigLike } from '../utils/widget-layout';
+import { computeGridScale } from '../utils/grid-scale';
 import {
   OVERLAP_COMPACTOR,
   DROPPING_ELEMENT_ID,
@@ -446,14 +447,20 @@ export function DashGrid() {
     roRef.current = ro;
   }, []);
 
-  const { rowHeight, gap } = gridConfig;
+  // Fixed logical column count derived from the REFERENCE cell size (constant
+  // regardless of viewport width, so persisted layouts never get clamped into
+  // fewer columns); cell size/gap/width are scaled to the current viewport.
+  const { cols, rowHeight, gap, gridWidth } = useMemo(
+    () => computeGridScale({
+      cellSize: gridConfig.rowHeight,
+      gap: gridConfig.gap,
+      referenceWidth: gridConfig.referenceWidth,
+      availableWidth,
+    }),
+    [gridConfig, availableWidth],
+  );
   const margin = useMemo<[number, number]>(() => [gap, gap], [gap]);
-  // Fixed-size square cells (cell size = rowHeight). The column COUNT is derived
-  // purely from the cell size so the grid always fills the viewport width — a
-  // wider window yields more columns, never wider cells.
   const cellPitch = rowHeight + gap;
-  const cols = Math.max(1, Math.floor((availableWidth + gap) / cellPitch));
-  const gridWidth = cols * cellPitch - gap;
   const rglDropItem = useMemo<LayoutItem | undefined>(
     () => editMode ? { i: DROPPING_ELEMENT_ID, x: 0, y: 0, w: droppingItem?.w ?? 2, h: droppingItem?.h ?? 2 } : undefined,
     [editMode, droppingItem?.w, droppingItem?.h],
@@ -525,6 +532,7 @@ export function DashGrid() {
                 editMode={editMode}
                 onDelete={deleteService}
                 gridConfig={gridConfig}
+                renderConfig={{ rowHeight, gap }}
                 frameLayout={layoutById.get(s.id)}
                 reloadServices={reloadServices}
               />
