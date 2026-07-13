@@ -76,7 +76,7 @@
 
 .chat-sender {
   font-size: 0.68rem;
-  color: var(--text-muted);
+  color: var(--sender-color, var(--text-muted));
   margin: 6px 8px 1px;
 }
 
@@ -146,6 +146,11 @@
   color: var(--card-fg, var(--text-primary));
   border-radius: 16px;
   border-bottom-left-radius: 4px;
+}
+
+.chat--skin-imessage .chat-row:not(.chat-row--own) .chat-bubble {
+  background: color-mix(in srgb, var(--sender-color) 12%, var(--bg-elevated));
+  border-left: 3px solid var(--sender-color);
 }
 
 .chat--skin-imessage .chat-bubble--own {

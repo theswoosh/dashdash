@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import useSWR from 'swr';
 import type { ChatMessage, ChatMessagesPage } from '@dashdash/types';
 import { useAuth } from '../../../hooks/use-auth.hook';
+import { usePreferences } from '../../../hooks/use-preferences.hook';
 
 const PAGE_SIZE = 50;
 
@@ -18,6 +19,7 @@ const pageFetcher = ([url]: [string, string]): Promise<ChatMessagesPage> =>
  */
 export function useChatMessages(channelId: string | null, pollingIntervalSec: number) {
   const { user } = useAuth();
+  const { preferences } = usePreferences();
 
   // Older pages live outside SWR: they never change and shouldn't be re-fetched on poll.
   const [older, setOlder] = useState<ChatMessage[]>([]);
@@ -71,6 +73,7 @@ export function useChatMessages(channelId: string | null, pollingIntervalSec: nu
         channelId,
         userId: user.id,
         senderName: user.name,
+        senderColor: preferences?.chatColor || null,
         body,
         createdAt: new Date().toISOString(),
       };
@@ -98,7 +101,7 @@ export function useChatMessages(channelId: string | null, pollingIntervalSec: nu
         },
       );
     },
-    [channelId, user, mutate],
+    [channelId, user, preferences?.chatColor, mutate],
   );
 
   const remove = useCallback(

@@ -4,6 +4,7 @@ import { useT } from '../../i18n';
 import { useHoldAction } from '../../hooks/use-hold-action.hook';
 import { renderWithLinks } from '../../utils/linkify';
 import { formatMessageTime, parseMessageDate, messageDayKey } from './chat-time';
+import { resolveSenderColor } from './chat-colors';
 
 const SENDER_GROUP_GAP_MS = 5 * 60 * 1000;
 const HOLD_DELETE_MS = 800;
@@ -46,9 +47,10 @@ function MessageBubble({
 }) {
   const t = useT();
   const { isHolding, startHold, cancelHold } = useHoldAction(() => onDelete(message.id), HOLD_DELETE_MS);
+  const style = isOwn ? undefined : ({ '--sender-color': resolveSenderColor(message) } as React.CSSProperties);
 
   return (
-    <div className={`chat-row${isOwn ? ' chat-row--own' : ''}`}>
+    <div className={`chat-row${isOwn ? ' chat-row--own' : ''}`} style={style}>
       {showSender && <div className="chat-sender">{message.senderName}</div>}
       <div className="chat-bubble-wrap">
         <div className={`chat-bubble${isOwn ? ' chat-bubble--own' : ''}${isHolding ? ' chat-bubble--holding' : ''}`}>

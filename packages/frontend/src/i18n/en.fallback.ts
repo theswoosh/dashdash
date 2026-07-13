@@ -231,6 +231,10 @@ export const EN_FALLBACK: Record<string, unknown> = {
     lastAdminError: 'Cannot delete the last admin account',
     ssoAccount: 'Signed in via SSO',
   },
+  profile: {
+    chatColor: 'Chat color',
+    chatColorAuto: 'Automatic',
+  },
   widgets: {
     clock: { label: 'Clock', description: 'Display the current time' },
     healthcheck: { label: 'Healthcheck', description: 'Monitor a host for uptime and latency' },

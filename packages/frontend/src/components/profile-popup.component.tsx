@@ -3,8 +3,10 @@ import { X, KeyRound, Trash2, ChevronLeft } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
 import { useAuth } from '../hooks/use-auth.hook';
 import { useBehavior } from '../hooks/use-behavior.hook';
+import { usePreferences } from '../hooks/use-preferences.hook';
 import { useT } from '../i18n';
 import { LanguageSelector } from './language-selector.component';
+import { CHAT_COLOR_PRESETS, hashColor } from '../widgets/chat/chat-colors';
 import './profile-popup.css';
 import './user-menu.css';
 
@@ -17,6 +19,7 @@ export function ProfilePopup() {
   const setProfileOpen = useUIStore(s => s.setProfileOpen);
   const { user, updateProfile, deleteAccount } = useAuth();
   const { holdToDeleteMs } = useBehavior();
+  const { preferences, savePreferences } = usePreferences();
 
   const [activeTab, setActiveTab] = useState<ProfileTab>('profile');
   const [profileView, setProfileView] = useState<ProfileView>('edit');
@@ -214,6 +217,30 @@ export function ProfilePopup() {
                   maxLength={100}
                   required
                 />
+
+                <div className="profile-chat-color">
+                  <label className="user-modal-label">{t('profile.chatColor')}</label>
+                  <div className="profile-chat-color__swatches">
+                    <button
+                      type="button"
+                      className={`profile-chat-color__swatch profile-chat-color__swatch--auto${!preferences?.chatColor ? ' profile-chat-color__swatch--selected' : ''}`}
+                      style={{ '--swatch-color': hashColor(user?.id ?? user?.name ?? '') } as React.CSSProperties}
+                      onClick={() => savePreferences({ chatColor: '' })}
+                      title={t('profile.chatColorAuto')}
+                      aria-label={t('profile.chatColorAuto')}
+                    />
+                    {CHAT_COLOR_PRESETS.map(color => (
+                      <button
+                        key={color}
+                        type="button"
+                        className={`profile-chat-color__swatch${preferences?.chatColor === color ? ' profile-chat-color__swatch--selected' : ''}`}
+                        style={{ '--swatch-color': color } as React.CSSProperties}
+                        onClick={() => savePreferences({ chatColor: color })}
+                        aria-label={color}
+                      />
+                    ))}
+                  </div>
+                </div>
 
                 <label className="user-modal-label" htmlFor="profile-email">{t('login.email')}</label>
                 <input

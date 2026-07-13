@@ -71,6 +71,36 @@
   margin-top: 12px;
 }
 
+.profile-chat-color {
+  margin-top: 12px;
+  margin-bottom: 4px;
+}
+
+.profile-chat-color__swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.profile-chat-color__swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: var(--swatch-color);
+  cursor: pointer;
+  padding: 0;
+}
+
+.profile-chat-color__swatch--auto {
+  box-shadow: inset 0 0 0 2px var(--card-bg, rgba(0, 0, 0, 0.2));
+}
+
+.profile-chat-color__swatch--selected {
+  border-color: var(--text-primary, #fff);
+}
+
 .profile-tabs {
   display: flex;
   gap: 0;

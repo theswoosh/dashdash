@@ -227,6 +227,10 @@ userMenu:
   deleteAccountHint: "Geben Sie Ihre Konto-E-Mail ein, um die Löschung zu ermöglichen."
   lastAdminError: "Das letzte Admin-Konto kann nicht gelöscht werden"
 
+profile:
+  chatColor: "Chat-Farbe"
+  chatColorAuto: "Automatisch"
+
 widgets:
   clock:
     label: "Uhr"

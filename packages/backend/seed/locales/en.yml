@@ -227,6 +227,10 @@ userMenu:
   deleteAccountHint: "Enter your account email to enable account deletion."
   lastAdminError: "Cannot delete the last admin account"
 
+profile:
+  chatColor: "Chat color"
+  chatColorAuto: "Automatic"
+
 widgets:
   clock:
     label: "Clock"

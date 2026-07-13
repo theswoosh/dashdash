@@ -16,6 +16,7 @@ interface MessageRow {
   channel_id: string;
   user_id: string | null;
   sender_name: string;
+  sender_color: string | null;
   body: string;
   created_at: string;
 }
@@ -36,6 +37,7 @@ function toMessage(row: MessageRow): ChatMessage {
     channelId: row.channel_id,
     userId: row.user_id,
     senderName: row.sender_name,
+    senderColor: row.sender_color,
     body: row.body,
     createdAt: row.created_at,
   };
@@ -101,17 +103,21 @@ export function listMessagesBefore(
   let rows: MessageRow[];
   if (beforeId) {
     rows = db.prepare(
-      `SELECT * FROM chat_messages
-       WHERE channel_id = ?
-         AND seq < (SELECT seq FROM chat_messages WHERE id = ?)
-       ORDER BY seq DESC
+      `SELECT chat_messages.*, up.value AS sender_color
+       FROM chat_messages
+       LEFT JOIN user_preferences up ON up.user_id = chat_messages.user_id AND up.key = 'chatColor'
+       WHERE chat_messages.channel_id = ?
+         AND chat_messages.seq < (SELECT seq FROM chat_messages WHERE id = ?)
+       ORDER BY chat_messages.seq DESC
        LIMIT ?`,
     ).all(channelId, beforeId, limit + 1) as MessageRow[];
   } else {
     rows = db.prepare(
-      `SELECT * FROM chat_messages
-       WHERE channel_id = ?
-       ORDER BY seq DESC
+      `SELECT chat_messages.*, up.value AS sender_color
+       FROM chat_messages
+       LEFT JOIN user_preferences up ON up.user_id = chat_messages.user_id AND up.key = 'chatColor'
+       WHERE chat_messages.channel_id = ?
+       ORDER BY chat_messages.seq DESC
        LIMIT ?`,
     ).all(channelId, limit + 1) as MessageRow[];
   }
@@ -129,7 +135,12 @@ export function insertMessage(
   db.prepare(
     'INSERT INTO chat_messages (id, channel_id, user_id, sender_name, body) VALUES (?, ?, ?, ?, ?)',
   ).run(id, params.channelId, params.userId, params.senderName, params.body);
-  const row = db.prepare('SELECT * FROM chat_messages WHERE id = ?').get(id) as MessageRow;
+  const row = db.prepare(
+    `SELECT chat_messages.*, up.value AS sender_color
+     FROM chat_messages
+     LEFT JOIN user_preferences up ON up.user_id = chat_messages.user_id AND up.key = 'chatColor'
+     WHERE chat_messages.id = ?`,
+  ).get(id) as MessageRow;
   return toMessage(row);
 }
 
@@ -146,9 +157,11 @@ export function deleteMessage(db: Db, id: string): void {
 export function searchMessages(db: Db, channelId: string, query: string, limit: number): ChatMessage[] {
   const escaped = query.replace(/[\\%_]/g, ch => `\\${ch}`);
   const rows = db.prepare(
-    `SELECT * FROM chat_messages
-     WHERE channel_id = ? AND body LIKE ? ESCAPE '\\'
-     ORDER BY seq DESC
+    `SELECT chat_messages.*, up.value AS sender_color
+     FROM chat_messages
+     LEFT JOIN user_preferences up ON up.user_id = chat_messages.user_id AND up.key = 'chatColor'
+     WHERE chat_messages.channel_id = ? AND chat_messages.body LIKE ? ESCAPE '\\'
+     ORDER BY chat_messages.seq DESC
      LIMIT ?`,
   ).all(channelId, `%${escaped}%`, limit) as MessageRow[];
   return rows.map(toMessage);

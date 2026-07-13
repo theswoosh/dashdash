@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { ChatMessage } from '@dashdash/types';
 import { useT } from '../../i18n';
 import { formatMessageTime, parseMessageDate } from './chat-time';
+import { resolveSenderColor } from './chat-colors';
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -53,7 +54,9 @@ export function ChatSearch({ channelId, onClose }: ChatSearchProps) {
         {query.trim() !== '' && results?.map(message => (
           <div key={message.id} className="chat-search__result">
             <div className="chat-search__result-meta">
-              <span className="chat-sender">{message.senderName}</span>
+              <span className="chat-sender" style={{ '--sender-color': resolveSenderColor(message) } as React.CSSProperties}>
+                {message.senderName}
+              </span>
               <span className="chat-time">
                 {parseMessageDate(message.createdAt).toLocaleDateString()}{' '}
                 {formatMessageTime(message.createdAt)}

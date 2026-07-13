@@ -22,7 +22,10 @@ interface PutBody {
   headerSearchPlaceholder?: string;
   hideTopbar?: boolean;
   language?: string;
+  chatColor?: string;
 }
+
+const CHAT_COLOR_RE = /^#[0-9a-f]{6}$/i;
 
 export function createPreferencesRoutes(db: Db): FastifyPluginAsync {
   return async fastify => {
@@ -48,6 +51,7 @@ export function createPreferencesRoutes(db: Db): FastifyPluginAsync {
         headerSearchPlaceholder: map['headerSearchPlaceholder'] ?? '',
         hideTopbar: map['hideTopbar'] === 'true',
         language: map['language'] ?? '',
+        chatColor: map['chatColor'] ?? '',
       };
     });
 
@@ -75,16 +79,22 @@ export function createPreferencesRoutes(db: Db): FastifyPluginAsync {
               headerSearchPlaceholder: { type: 'string' },
               hideTopbar: { type: 'boolean' },
               language: { type: 'string' },
+              chatColor: { type: 'string' },
             },
           },
         },
       },
       async (req, reply) => {
+        if (req.body.chatColor !== undefined && req.body.chatColor !== '' && !CHAT_COLOR_RE.test(req.body.chatColor)) {
+          return reply.code(400).send({ error: 'chatColor must be empty or a #rrggbb hex color' });
+        }
+
         const upsert = db.prepare(`
           INSERT INTO user_preferences (user_id, key, value, updated_at)
           VALUES (?, ?, ?, datetime('now'))
           ON CONFLICT (user_id, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
         `);
+        const clearChatColor = db.prepare(`DELETE FROM user_preferences WHERE user_id = ? AND key = 'chatColor'`);
 
         const update = db.transaction((prefs: PutBody) => {
           if (prefs.theme !== undefined) upsert.run(req.userId, 'theme', prefs.theme);
@@ -102,6 +112,10 @@ export function createPreferencesRoutes(db: Db): FastifyPluginAsync {
           if (prefs.headerSearchPlaceholder !== undefined) upsert.run(req.userId, 'headerSearchPlaceholder', prefs.headerSearchPlaceholder);
           if (prefs.hideTopbar !== undefined) upsert.run(req.userId, 'hideTopbar', String(prefs.hideTopbar));
           if (prefs.language !== undefined) upsert.run(req.userId, 'language', prefs.language);
+          if (prefs.chatColor !== undefined) {
+            if (prefs.chatColor === '') clearChatColor.run(req.userId);
+            else upsert.run(req.userId, 'chatColor', prefs.chatColor);
+          }
         });
 
         update(req.body);

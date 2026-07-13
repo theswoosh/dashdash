@@ -22,6 +22,7 @@ interface Preferences {
   headerSearchPlaceholder?: string | undefined;
   hideTopbar?: boolean | undefined;
   language?: string | undefined;
+  chatColor?: string | undefined;
 }
 
 const DEFAULT_PREFERENCES: Preferences = { theme: DEFAULT_THEME, darkMode: true, borderless: false };

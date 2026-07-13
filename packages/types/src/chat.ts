@@ -14,6 +14,8 @@ export interface ChatMessage {
   userId: string | null;
   /** Display name snapshotted at send time (survives account deletion/rename). */
   senderName: string;
+  /** Sender's personal chat color (`#rrggbb`); null when unset or the account was deleted. */
+  senderColor: string | null;
   body: string;
   createdAt: string;
 }

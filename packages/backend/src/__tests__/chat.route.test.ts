@@ -265,6 +265,111 @@ describe('chat routes', () => {
     });
   });
 
+  describe('sender color', () => {
+    it('carries senderColor after the sender sets a chat color preference', async () => {
+      const cookie = await loginAsAdmin(server);
+      const channelId = (await createChannel(cookie)).json().channel.id as string;
+      await postMessage(cookie, channelId, 'before color');
+
+      const res = await server.inject({
+        method: 'PUT',
+        url: '/api/preferences',
+        headers: { cookie },
+        payload: { chatColor: '#ff00aa' },
+      });
+      expect(res.statusCode).toBe(200);
+
+      await postMessage(cookie, channelId, 'after color');
+
+      const list = await server.inject({
+        method: 'GET',
+        url: `/api/chat/channels/${channelId}/messages`,
+        headers: { cookie },
+      });
+      const messages = list.json().messages as Array<{ body: string; senderColor: string | null }>;
+      expect(messages.find(m => m.body === 'before color')?.senderColor).toBe('#ff00aa');
+      expect(messages.find(m => m.body === 'after color')?.senderColor).toBe('#ff00aa');
+    });
+
+    it('is null when the sender has not set a chat color', async () => {
+      const cookie = await loginAsAdmin(server);
+      const channelId = (await createChannel(cookie)).json().channel.id as string;
+      await postMessage(cookie, channelId, 'no color');
+
+      const res = await server.inject({
+        method: 'GET',
+        url: `/api/chat/channels/${channelId}/messages`,
+        headers: { cookie },
+      });
+      expect(res.json().messages[0].senderColor).toBeNull();
+    });
+
+    it('rejects invalid hex colors with 400', async () => {
+      const cookie = await loginAsAdmin(server);
+      const res = await server.inject({
+        method: 'PUT',
+        url: '/api/preferences',
+        headers: { cookie },
+        payload: { chatColor: 'red' },
+      });
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('clears back to null with an empty string', async () => {
+      const cookie = await loginAsAdmin(server);
+      await server.inject({
+        method: 'PUT',
+        url: '/api/preferences',
+        headers: { cookie },
+        payload: { chatColor: '#00ff00' },
+      });
+      const clear = await server.inject({
+        method: 'PUT',
+        url: '/api/preferences',
+        headers: { cookie },
+        payload: { chatColor: '' },
+      });
+      expect(clear.statusCode).toBe(200);
+
+      const channelId = (await createChannel(cookie)).json().channel.id as string;
+      await postMessage(cookie, channelId, 'cleared');
+      const res = await server.inject({
+        method: 'GET',
+        url: `/api/chat/channels/${channelId}/messages`,
+        headers: { cookie },
+      });
+      expect(res.json().messages[0].senderColor).toBeNull();
+    });
+
+    it('is null after the sender account is deleted (join on nulled user_id)', async () => {
+      const adminCookie = await loginAsAdmin(server);
+      const userCookie = await loginAsUser();
+      await server.inject({
+        method: 'PUT',
+        url: '/api/preferences',
+        headers: { cookie: userCookie },
+        payload: { chatColor: '#123abc' },
+      });
+      const channelId = (await createChannel(adminCookie)).json().channel.id as string;
+      await postMessage(userCookie, channelId, 'colored then deleted');
+
+      const users = await server.inject({ method: 'GET', url: '/api/users', headers: { cookie: adminCookie } });
+      const user = users.json().find((u: { email: string }) => u.email === 'user@test.local');
+      await server.inject({
+        method: 'DELETE',
+        url: `/api/users/${user.id}`,
+        headers: { cookie: adminCookie },
+      });
+
+      const res = await server.inject({
+        method: 'GET',
+        url: `/api/chat/channels/${channelId}/messages`,
+        headers: { cookie: adminCookie },
+      });
+      expect(res.json().messages[0].senderColor).toBeNull();
+    });
+  });
+
   describe('search', () => {
     it('finds matches and escapes LIKE wildcards', async () => {
       const cookie = await loginAsAdmin(server);
