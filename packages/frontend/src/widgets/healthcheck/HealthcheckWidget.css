@@ -5,6 +5,7 @@
   flex-direction: column;
   height: 100%;
   box-sizing: border-box;
+  container-type: size;
 }
 
 /* ───────────────────────────── Icon area ───────────────────────────── */
@@ -59,7 +60,7 @@
 /* ───────────────────────────── App name ───────────────────────────── */
 
 .healthcheck-widget__name {
-  font-size: clamp(8px, 5cqi, 16px);
+  font-size: calc(clamp(10px, 6.5cqi, 22px) * var(--hc-font-scale, 1));
   font-weight: 600;
   color: var(--card-fg, var(--text-muted));
   text-align: center;
@@ -89,30 +90,27 @@
 }
 
 .healthcheck-widget__icon-area--big {
-  max-width: 80px;
-  max-height: 80px;
+  max-width: 104px;
+  max-height: 104px;
   border-radius: 16px;
 }
 
 .healthcheck-widget__icon-area--big .app-icon-svg,
 .healthcheck-widget__icon-area--big .app-icon-img,
 .healthcheck-widget__icon-area--big .healthcheck-widget__icon-link {
-  width: clamp(45px, 29cqi, 96px);
-  height: clamp(45px, 29cqi, 96px);
+  width: clamp(48px, 32cqmin, 104px);
+  height: clamp(48px, 32cqmin, 104px);
 }
 
 .healthcheck-widget--normal .app-icon-svg,
 .healthcheck-widget--normal .app-icon-img,
 .healthcheck-widget--normal .healthcheck-widget__icon-link {
-  width: clamp(28px, 18cqi, 60px);
-  height: clamp(28px, 18cqi, 60px);
+  width: clamp(30px, 22cqmin, 68px);
+  height: clamp(30px, 22cqmin, 68px);
 }
 
 /* Name-as-link keeps the plain-name look — reachability without restyle */
 .healthcheck-widget__name-link {
   text-decoration: none;
-}
-
-.healthcheck-widget__name-link:hover {
-  text-decoration: underline;
+  cursor: pointer;
 }

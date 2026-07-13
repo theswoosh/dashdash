@@ -72,6 +72,18 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
         default: 'below',
       },
       {
+        key: 'fontSize',
+        label: 'Font size',
+        type: 'select',
+        options: [
+          { value: 'S', label: 'Small' },
+          { value: 'M', label: 'Medium' },
+          { value: 'L', label: 'Large' },
+          { value: 'XL', label: 'Extra large' },
+        ],
+        default: 'M',
+      },
+      {
         key: 'pingIndicator',
         label: 'Ping indicator',
         type: 'select',

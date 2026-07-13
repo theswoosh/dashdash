@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import type { WidgetProps } from '@dashdash/types';
 import { WidgetError } from '../shared/widget-error.component';
 import { AppIcon, hasServiceIcon, toAbsoluteUrl } from '../shared/app-icon.component';
@@ -5,6 +6,14 @@ import './HealthcheckWidget.css';
 
 type HealthcheckLayoutSize = 'tiny' | 'normal' | 'big';
 type ShowName = 'hidden' | 'above' | 'below';
+type HealthcheckFontSize = 'S' | 'M' | 'L' | 'XL';
+
+const FONT_SCALE_BY_SIZE: Record<HealthcheckFontSize, number> = {
+  S: 0.85,
+  M: 1,
+  L: 1.25,
+  XL: 1.55,
+};
 
 function isPingData(x: unknown): x is { status: 'up' | 'down' | 'unknown' | 'pending' } {
   return typeof x === 'object' && x !== null && 'status' in x;
@@ -27,6 +36,9 @@ export function HealthcheckWidget({ options, data, error, loading }: WidgetProps
   const showNameRaw   = options['showName'];
   const showName: ShowName =
     showNameRaw === 'hidden' || showNameRaw === 'above' ? showNameRaw : 'below';
+  const fontSizeRaw   = options['fontSize'];
+  const fontSize: HealthcheckFontSize =
+    fontSizeRaw === 'S' || fontSizeRaw === 'L' || fontSizeRaw === 'XL' ? fontSizeRaw : 'M';
   const hasIcon       = hasServiceIcon(iconValue);
   const isPingEnabled = options['ping'] !== false;
   const isDown        = isPingEnabled && isPingData(data) && data.status === 'down';
@@ -91,8 +103,13 @@ export function HealthcheckWidget({ options, data, error, loading }: WidgetProps
     </div>
   );
 
+  const fontScale = FONT_SCALE_BY_SIZE[fontSize];
+
   return (
-    <div className={`healthcheck-widget ${modifier}`}>
+    <div
+      className={`healthcheck-widget ${modifier}`}
+      style={{ '--hc-font-scale': fontScale } as CSSProperties}
+    >
       {showName === 'above' && nameEl()}
       {iconArea}
       {showName === 'below' && nameEl()}
