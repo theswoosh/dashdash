@@ -22,8 +22,8 @@
 - **Service icons** — put a face to every app from a built-in icon library; recognise your services at a glance
 - **Credentials stay on the server** — API keys are never exposed to the browser; all external calls go through the backend
 - **Multiple boards** — organise widgets across several boards and switch between them in one click
-- **Multi-user with SSO** — local accounts or single sign-on via any OIDC provider (Authentik, Keycloak, …)
-- **Widgets** — service status, bookmarks, notepad, clock, search bar, embedded pages, and more
+- **Multi-user** — local accounts with per-user layouts and preferences
+- **Widgets** — service status, bookmarks, notepad, chat, clock, search bar, embedded pages, and more
 
 ---
 
@@ -36,7 +36,6 @@
 | Backend | Node.js 22, Fastify |
 | Database | SQLite (better-sqlite3) |
 | Config | YAML + Zod 4, live reload via chokidar |
-| Auth | Local + OIDC Authorization Code + PKCE (openid-client) |
 | Packaging | pnpm workspaces, Docker multi-stage build |
 
 ---
@@ -64,7 +63,7 @@ cp config/services.yml.example config/services.yml
 docker compose up -d
 ```
 
-Open `http://localhost:3000`. On first run the default admin account is created — change the password immediately in the admin panel.
+Open `http://localhost:3000` and register — the first account created becomes the admin.
 
 ### Config files
 
@@ -72,7 +71,7 @@ All configuration lives in the `/config` volume:
 
 | File | Purpose |
 |---|---|
-| `settings.yml` | Theme, background, grid defaults, auth |
+| `settings.yml` | Theme, background, grid defaults |
 | `services.yml` | Widget instances |
 | `integrations.yml` | Named API sources |
 
@@ -91,16 +90,6 @@ DASHDASH_INTEGRATION_<ID_UPPERCASE>_KEY=your-api-key
 ```
 
 See `.env.example` for supported variables.
-
-### SSO / OIDC
-
-Set three environment variables and the "Sign in with SSO" button appears automatically:
-
-```env
-DASHDASH_OIDC_ISSUER=https://auth.example.com/application/o/dashdash/
-DASHDASH_OIDC_CLIENT_ID=dashdash
-DASHDASH_OIDC_SECRET=your-client-secret
-```
 
 ---
 
