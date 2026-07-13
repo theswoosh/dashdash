@@ -32,6 +32,8 @@ import { validateConfig } from './config/validator.js';
 import { registerAuthMiddleware } from './middleware/auth.middleware.js';
 import { cleanupExpiredSessions, validateSession } from './db/sessions.db.js';
 import { cleanupExpiredOidcStates } from './db/oidc-state.db.js';
+import { createChatRoutes } from './routes/chat.route.js';
+import { purgeExpiredChatMessages } from './db/chat.db.js';
 
 export interface AppOptions {
   dataDir: string;
@@ -156,6 +158,8 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
     if (deleted > 0) log.info({ deleted }, 'Cleaned up expired sessions');
     const oidcDeleted = cleanupExpiredOidcStates(db);
     if (oidcDeleted > 0) log.info({ deleted: oidcDeleted }, 'Cleaned up expired OIDC states');
+    const chatPurged = purgeExpiredChatMessages(db);
+    if (chatPurged > 0) log.info({ deleted: chatPurged }, 'Purged chat messages past retention');
     // SQLite's own recommendation for long-running connections: refreshes
     // query-planner statistics cheaply (no-op when nothing changed).
     db.pragma('optimize');
@@ -171,6 +175,7 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
   await server.register(createBehaviorRoutes(getBehavior), { prefix: '/api' });
   await server.register(createWidgetRoutes({ getServices, configDir, getSettings }), { prefix: '/api' });
   await server.register(createNotepadRoutes(db), { prefix: '/api' });
+  await server.register(createChatRoutes(db), { prefix: '/api' });
   await server.register(createPreferencesRoutes(db), { prefix: '/api' });
   await server.register(createWidgetTemplatesRoutes(configDir), { prefix: '/api' });
   await server.register(createHealthcheckTestRoutes({ getSettings }), { prefix: '/api' });

@@ -8,7 +8,7 @@ import { MAX_LAYOUT_SIZE_UNITS, MAX_LAYOUT_POSITION_UNITS } from './schemas.js';
 
 export type { ConfigIssue };
 
-const KNOWN_WIDGET_TYPES = ['clock', 'healthcheck', 'stats', 'bookmarks', 'search', 'notepad', 'iframe', 'frame'];
+const KNOWN_WIDGET_TYPES = ['clock', 'healthcheck', 'stats', 'bookmarks', 'search', 'notepad', 'iframe', 'frame', 'chat'];
 
 function readYaml(filePath: string): unknown {
   if (!existsSync(filePath)) return null;

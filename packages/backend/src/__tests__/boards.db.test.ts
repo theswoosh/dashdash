@@ -325,7 +325,7 @@ describe('migration runner', () => {
     const count = (
       db2.prepare('SELECT COUNT(*) AS n FROM schema_migrations').get() as { n: number }
     ).n;
-    expect(count).toBe(7); // migrations 1–7
+    expect(count).toBe(8); // migrations 1–8
     db = db2; // afterEach will close it
   });
 });
