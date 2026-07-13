@@ -8,13 +8,14 @@ import {
   BarChart2,
   Globe,
   Layers,
+  MessageCircle,
 } from 'lucide-react';
 
 export interface ConfigField {
   key: string;
   label: string;
   labelKey?: string | undefined;
-  type: 'text' | 'url' | 'number' | 'boolean' | 'textarea' | 'select' | 'separator' | 'engines-select' | 'info' | 'links-editor' | 'timezone-select' | 'icon-picker';
+  type: 'text' | 'url' | 'number' | 'boolean' | 'textarea' | 'select' | 'separator' | 'engines-select' | 'info' | 'links-editor' | 'timezone-select' | 'icon-picker' | 'channels-editor';
   placeholder?: string | undefined;
   required?: boolean | undefined;
   default?: unknown;
@@ -193,6 +194,32 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     defaultOptions: {},
     configFields: [
       { key: 'url', label: 'URL', type: 'url', placeholder: 'https://example.com', required: true },
+    ],
+  },
+  {
+    type: 'chat',
+    label: 'Chat',
+    labelKey: 'widgets.chat.label',
+    icon: MessageCircle,
+    description: 'Message channels shared between users',
+    descriptionKey: 'widgets.chat.description',
+    defaultSize: { w: 28, h: 28 },
+    defaultOptions: { pollingInterval: 5, chatSkin: 'imessage', showTimestamps: true },
+    configFields: [
+      { key: 'channelIds', label: 'Channels', labelKey: 'widgetConfig.chat.channels', type: 'channels-editor' },
+      { key: '_sep_chat', label: '', type: 'separator' },
+      {
+        key: 'chatSkin',
+        label: 'Skin',
+        labelKey: 'widgetConfig.chat.skin',
+        type: 'select',
+        options: [
+          { value: 'imessage', label: 'iMessage' },
+        ],
+        default: 'imessage',
+      },
+      { key: 'pollingInterval', label: 'Refresh interval (seconds, 0 = off)', labelKey: 'widgetConfig.chat.pollingInterval', type: 'number', default: 5 },
+      { key: 'showTimestamps', label: 'Show timestamps', labelKey: 'widgetConfig.chat.showTimestamps', type: 'boolean', default: true },
     ],
   },
   {

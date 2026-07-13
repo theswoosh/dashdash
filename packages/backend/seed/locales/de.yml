@@ -88,6 +88,36 @@ widgetConfig:
   bookmarkColors: "Lesezeichen-Farben"
   copyColor: "Farbeinstellungen kopieren"
   pasteColor: "Farbeinstellungen einfügen"
+  chat:
+    skin: "Design"
+    pollingInterval: "Aktualisierungsintervall (Sekunden, 0 = aus)"
+    showTimestamps: "Zeitstempel anzeigen"
+    channels: "Kanäle"
+    newChannelPlaceholder: "Name des neuen Kanals"
+    createChannel: "Kanal erstellen"
+    retention: "Nachrichten behalten"
+    retentionForever: "Für immer"
+    retention7d: "1 Woche"
+    retention30d: "1 Monat"
+    retention60d: "2 Monate"
+    retention180d: "6 Monate"
+    retention365d: "1 Jahr"
+    channelExists: "Ein Kanal mit diesem Namen existiert bereits"
+    holdToDeleteChannel: "Halten, um Kanal samt Nachrichten zu löschen"
+
+chat:
+  placeholder: "Nachricht…"
+  send: "Senden"
+  search: "Nachrichten durchsuchen"
+  searchPlaceholder: "Suchen…"
+  noResults: "Keine Treffer"
+  noMessages: "Noch keine Nachrichten"
+  noChannels: "Keine Kanäle konfiguriert — in den Widget-Einstellungen auswählen oder erstellen"
+  loadingOlder: "Ältere Nachrichten werden geladen…"
+  holdToDeleteMessage: "Halten, um Nachricht zu löschen"
+  emoji: "Emoji einfügen"
+  today: "Heute"
+  yesterday: "Gestern"
 
 widgetTemplateConfig:
   title: "Standardwerte: {{label}}"
@@ -222,6 +252,9 @@ widgets:
   frame:
     label: "Rahmen"
     description: "Widgets in einem visuellen Rahmen gruppieren"
+  chat:
+    label: "Chat"
+    description: "Nachrichtenkanäle für alle Benutzer"
 
 themes:
   liquidGlass:

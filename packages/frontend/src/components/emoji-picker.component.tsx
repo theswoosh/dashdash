@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, Fragment } from 'react';
+import { useState, useRef, useCallback, useEffect, Fragment, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useT } from '../i18n';
 import './EmojiPicker.css';
@@ -55,22 +55,27 @@ const CATEGORIES: CategoryDef[] = [
 
 // ── Recent emojis hook ────────────────────────────────────────────────────
 
+function readRecentEmojis(): string[] {
+  try {
+    const raw = localStorage.getItem('dashdash:emoji-recents');
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Prepends an emoji to the persisted recents list (also used for custom text icons). */
+export function addRecentEmojiToStorage(emoji: string, previous: string[] = readRecentEmojis()): string[] {
+  const next = [emoji, ...previous.filter(e => e !== emoji)].slice(0, RECENTS_MAX);
+  try { localStorage.setItem('dashdash:emoji-recents', JSON.stringify(next)); } catch { /* quota */ }
+  return next;
+}
+
 function useRecentEmojis(): [string[], (emoji: string) => void] {
-  const [recents, setRecents] = useState<string[]>(() => {
-    try {
-      const raw = localStorage.getItem('dashdash:emoji-recents');
-      return raw ? (JSON.parse(raw) as string[]) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [recents, setRecents] = useState<string[]>(readRecentEmojis);
 
   const addRecent = useCallback((emoji: string) => {
-    setRecents(prev => {
-      const next = [emoji, ...prev.filter(e => e !== emoji)].slice(0, RECENTS_MAX);
-      try { localStorage.setItem('dashdash:emoji-recents', JSON.stringify(next)); } catch { /* quota */ }
-      return next;
-    });
+    setRecents(prev => addRecentEmojiToStorage(emoji, prev));
   }, []);
 
   return [recents, addRecent];
@@ -102,33 +107,29 @@ function useEmojiData(): EmojiDataHook {
   return { groups, isLoading, load };
 }
 
-// ── Main component ────────────────────────────────────────────────────────
+// ── Reusable emoji popup (portal panel: search, categories, recents) ──────
 
-export function BoardIconPicker({
-  value,
-  onChange,
+export function EmojiPopup({
+  value = '',
+  onSelect,
+  onClose,
+  footer,
 }: {
-  readonly value: string;
-  readonly onChange: (icon: string) => void;
+  readonly value?: string;
+  readonly onSelect: (emoji: string) => void;
+  readonly onClose: () => void;
+  readonly footer?: ReactNode;
 }) {
-  const t = useT();
-  const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState(RECENT_KEY);
   const [recents, addRecent] = useRecentEmojis();
   const { groups, isLoading, load } = useEmojiData();
 
-  const closePanel = useCallback(() => { setIsOpen(false); setSearch(''); }, []);
-
-  const openPanel = () => {
-    setIsOpen(o => !o);
-    load();
-  };
+  useEffect(() => { load(); }, [load]);
 
   const selectEmoji = (emoji: string) => {
     addRecent(emoji);
-    onChange(emoji);
-    closePanel();
+    onSelect(emoji);
   };
 
   // Compute visible emojis
@@ -155,13 +156,106 @@ export function BoardIconPicker({
   // For search results: group by groupName for section labels
   const showSectionLabels = search.trim().length > 0 && groups.length > 0;
 
+  return createPortal(
+    <>
+      <div className="icon-picker__overlay" onClick={onClose} aria-hidden="true" />
+      <div
+        className="icon-picker__panel"
+        role="dialog"
+        aria-label="Emoji picker"
+        aria-modal="true"
+        onKeyDown={e => { if (e.key === 'Escape') onClose(); }}
+      >
+        <input
+          className="config-option-input icon-picker__search"
+          type="text"
+          placeholder="Search emoji…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          autoFocus
+        />
+
+        {!search && (
+          <div className="ep-category-tabs" role="tablist">
+            {CATEGORIES.map(cat => (
+              <button
+                key={cat.key}
+                type="button"
+                role="tab"
+                aria-selected={activeCategory === cat.key}
+                aria-label={cat.label}
+                title={cat.label}
+                className={`ep-category-tab${activeCategory === cat.key ? ' ep-category-tab--active' : ''}`}
+                onClick={() => setActiveCategory(cat.key)}
+              >
+                {cat.icon}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="ep-loading">Loading…</div>
+        ) : (
+          <div className="ep-grid-viewport">
+            {activeCategory === RECENT_KEY && !search && recents.length === 0 ? (
+              <div className="ep-recents-empty">No recently used emoji</div>
+            ) : visibleEmojis.length === 0 ? (
+              <div className="ep-empty">No results</div>
+            ) : showSectionLabels ? (
+              <SearchResults items={visibleEmojis} value={value} onSelect={selectEmoji} />
+            ) : (
+              <div className="ep-grid">
+                {visibleEmojis.map(item => (
+                  <button
+                    key={item.emoji}
+                    type="button"
+                    className={`ep-emoji-btn${value === item.emoji ? ' ep-emoji-btn--active' : ''}`}
+                    onClick={() => selectEmoji(item.emoji)}
+                    title={item.name}
+                    aria-pressed={value === item.emoji}
+                  >
+                    {item.emoji}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {footer}
+      </div>
+    </>,
+    document.body,
+  );
+}
+
+// ── Board icon picker (trigger + EmojiPopup with free-text footer) ────────
+
+export function BoardIconPicker({
+  value,
+  onChange,
+}: {
+  readonly value: string;
+  readonly onChange: (icon: string) => void;
+}) {
+  const t = useT();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const closePanel = useCallback(() => setIsOpen(false), []);
+
+  const selectEmoji = (emoji: string) => {
+    onChange(emoji);
+    closePanel();
+  };
+
   return (
     <div className="icon-picker">
       <div className="icon-picker__row">
         <button
           type="button"
           className="icon-picker__trigger"
-          onClick={openPanel}
+          onClick={() => setIsOpen(o => !o)}
           aria-expanded={isOpen}
           aria-haspopup="dialog"
           title="Board icon"
@@ -183,92 +277,31 @@ export function BoardIconPicker({
         )}
       </div>
 
-      {isOpen && createPortal(
-        <>
-          <div className="icon-picker__overlay" onClick={closePanel} aria-hidden="true" />
-          <div
-            className="icon-picker__panel"
-            role="dialog"
-            aria-label="Emoji picker"
-            aria-modal="true"
-            onKeyDown={e => { if (e.key === 'Escape') closePanel(); }}
-          >
-          <input
-            className="config-option-input icon-picker__search"
-            type="text"
-            placeholder="Search emoji…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            autoFocus
-          />
-
-          {!search && (
-            <div className="ep-category-tabs" role="tablist">
-              {CATEGORIES.map(cat => (
-                <button
-                  key={cat.key}
-                  type="button"
-                  role="tab"
-                  aria-selected={activeCategory === cat.key}
-                  aria-label={cat.label}
-                  title={cat.label}
-                  className={`ep-category-tab${activeCategory === cat.key ? ' ep-category-tab--active' : ''}`}
-                  onClick={() => setActiveCategory(cat.key)}
-                >
-                  {cat.icon}
-                </button>
-              ))}
+      {isOpen && (
+        <EmojiPopup
+          value={value}
+          onSelect={selectEmoji}
+          onClose={closePanel}
+          footer={
+            <div className="icon-picker__custom">
+              <input
+                className="config-option-input"
+                type="text"
+                placeholder={t('config.boardIconInputPlaceholder')}
+                maxLength={BOARD_ICON_MAX_LENGTH}
+                onKeyDown={e => {
+                  if (e.key !== 'Enter') return;
+                  if (!(e.target instanceof HTMLInputElement)) return;
+                  const custom = sanitizeBoardIcon(e.target.value);
+                  if (!custom) return;
+                  addRecentEmojiToStorage(custom);
+                  selectEmoji(custom);
+                  e.target.value = '';
+                }}
+              />
             </div>
-          )}
-
-          {isLoading ? (
-            <div className="ep-loading">Loading…</div>
-          ) : (
-            <div className="ep-grid-viewport">
-              {activeCategory === RECENT_KEY && !search && recents.length === 0 ? (
-                <div className="ep-recents-empty">No recently used emoji</div>
-              ) : visibleEmojis.length === 0 ? (
-                <div className="ep-empty">No results</div>
-              ) : showSectionLabels ? (
-                <SearchResults items={visibleEmojis} value={value} onSelect={selectEmoji} />
-              ) : (
-                <div className="ep-grid">
-                  {visibleEmojis.map(item => (
-                    <button
-                      key={item.emoji}
-                      type="button"
-                      className={`ep-emoji-btn${value === item.emoji ? ' ep-emoji-btn--active' : ''}`}
-                      onClick={() => selectEmoji(item.emoji)}
-                      title={item.name}
-                      aria-pressed={value === item.emoji}
-                    >
-                      {item.emoji}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="icon-picker__custom">
-            <input
-              className="config-option-input"
-              type="text"
-              placeholder={t('config.boardIconInputPlaceholder')}
-              maxLength={BOARD_ICON_MAX_LENGTH}
-              onKeyDown={e => {
-                if (e.key !== 'Enter') return;
-                if (!(e.target instanceof HTMLInputElement)) return;
-                const custom = sanitizeBoardIcon(e.target.value);
-                if (!custom) return;
-                selectEmoji(custom);
-                e.target.value = '';
-              }}
-            />
-          </div>
-        </div>
-        </>,
-        document.body,
+          }
+        />
       )}
     </div>
   );

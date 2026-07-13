@@ -13,6 +13,7 @@ import { BgColorPicker, parseRgba, buildRgba, DEFAULT_BG_HEX, DEFAULT_BG_ALPHA, 
 import { WidgetTitleField } from './widget-title-field.component';
 import { toAbsoluteUrl } from '../widgets/shared/app-icon.component';
 import { TimezonePicker } from './timezone-picker.component';
+import { ChannelsEditor } from './channels-editor.component';
 import { useT } from '../i18n';
 import './WidgetConfigModal.css';
 
@@ -266,6 +267,18 @@ function FieldInput({
         {noEngines && (
           <p className="config-field-info">{t('widgetConfig.noEnginesHint')}</p>
         )}
+      </div>
+    );
+  }
+
+  if (field.type === 'channels-editor') {
+    return (
+      <div className="config-field">
+        <label className="config-label">{label}</label>
+        <ChannelsEditor
+          value={value}
+          onChange={channelIds => onChange(field.key, channelIds)}
+        />
       </div>
     );
   }

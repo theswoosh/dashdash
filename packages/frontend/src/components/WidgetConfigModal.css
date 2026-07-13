@@ -542,3 +542,74 @@
   color: var(--color-text, #fff);
   border-color: var(--color-text, #fff);
 }
+
+/* ── Channels editor (chat widget) ─────────────────────────────────── */
+.channels-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.channels-editor__row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.channels-editor__label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+.channels-editor__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.channels-editor__meta {
+  font-size: 0.7rem;
+  color: var(--color-muted, #888);
+  white-space: nowrap;
+}
+.channels-editor__name-input {
+  flex: 1;
+  min-width: 0;
+}
+.channels-editor__retention {
+  width: auto;
+  flex-shrink: 0;
+}
+.channels-editor__btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-muted, #888);
+  font-size: 0.85rem;
+  padding: 0 0.25rem;
+  flex-shrink: 0;
+}
+.channels-editor__btn:hover:not(:disabled) {
+  color: var(--color-text, #fff);
+}
+.channels-editor__btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.channels-editor__btn--delete:hover,
+.channels-editor__btn--holding {
+  color: var(--color-error, #c0392b);
+}
+.channels-editor__btn--holding {
+  animation: channels-editor-hold-pulse 0.8s linear;
+}
+@keyframes channels-editor-hold-pulse {
+  from { opacity: 1; }
+  50%  { opacity: 0.4; }
+  to   { opacity: 1; }
+}
+.channels-editor__error {
+  font-size: 0.75rem;
+  color: var(--color-error, #c0392b);
+  margin: 0;
+}
