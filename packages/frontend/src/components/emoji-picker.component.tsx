@@ -114,11 +114,14 @@ export function EmojiPopup({
   onSelect,
   onClose,
   footer,
+  inline = false,
 }: {
   readonly value?: string;
   readonly onSelect: (emoji: string) => void;
   readonly onClose: () => void;
   readonly footer?: ReactNode;
+  /** Render in place (anchored by the parent) instead of a centered portal dialog. */
+  readonly inline?: boolean;
 }) {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState(RECENT_KEY);
@@ -156,14 +159,12 @@ export function EmojiPopup({
   // For search results: group by groupName for section labels
   const showSectionLabels = search.trim().length > 0 && groups.length > 0;
 
-  return createPortal(
-    <>
-      <div className="icon-picker__overlay" onClick={onClose} aria-hidden="true" />
+  const panel = (
       <div
-        className="icon-picker__panel"
+        className={`icon-picker__panel${inline ? ' icon-picker__panel--inline' : ''}`}
         role="dialog"
         aria-label="Emoji picker"
-        aria-modal="true"
+        aria-modal={inline ? undefined : 'true'}
         onKeyDown={e => { if (e.key === 'Escape') onClose(); }}
       >
         <input
@@ -172,7 +173,7 @@ export function EmojiPopup({
           placeholder="Search emoji…"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          autoFocus
+          autoFocus={!inline}
         />
 
         {!search && (
@@ -225,6 +226,14 @@ export function EmojiPopup({
 
         {footer}
       </div>
+  );
+
+  if (inline) return panel;
+
+  return createPortal(
+    <>
+      <div className="icon-picker__overlay" onClick={onClose} aria-hidden="true" />
+      {panel}
     </>,
     document.body,
   );

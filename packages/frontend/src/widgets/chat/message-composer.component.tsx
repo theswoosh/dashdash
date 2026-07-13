@@ -23,11 +23,12 @@ export function MessageComposer({ onSend, disabled }: MessageComposerProps) {
     onSend(body).catch(() => setDraft(body)); // restore draft on failure
   }, [draft, onSend]);
 
+  // Panel stays open — the emoji button toggles it, so several emoji can be
+  // picked in a row.
   const insertEmoji = useCallback((emoji: string) => {
     const input = inputRef.current;
     const at = input ? input.selectionStart : draft.length;
     setDraft(prev => prev.slice(0, at) + emoji + prev.slice(at));
-    setIsEmojiOpen(false);
     requestAnimationFrame(() => {
       if (!input) return;
       input.focus();
@@ -49,7 +50,9 @@ export function MessageComposer({ onSend, disabled }: MessageComposerProps) {
         😊
       </button>
       {isEmojiOpen && (
-        <EmojiPopup onSelect={insertEmoji} onClose={() => setIsEmojiOpen(false)} />
+        <div className="chat-emoji-panel">
+          <EmojiPopup inline onSelect={insertEmoji} onClose={() => setIsEmojiOpen(false)} />
+        </div>
       )}
       <textarea
         ref={inputRef}
