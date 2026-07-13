@@ -208,36 +208,6 @@ describe('chat routes', () => {
       expect(res.statusCode).toBe(400);
     });
 
-    it('lets users delete only their own messages; admins delete any', async () => {
-      const adminCookie = await loginAsAdmin(server);
-      const userCookie = await loginAsUser();
-      const channelId = (await createChannel(adminCookie)).json().channel.id as string;
-
-      const adminMsg = (await postMessage(adminCookie, channelId, 'from admin')).json().message;
-      const userMsg = (await postMessage(userCookie, channelId, 'from user')).json().message;
-
-      const forbidden = await server.inject({
-        method: 'DELETE',
-        url: `/api/chat/messages/${adminMsg.id}`,
-        headers: { cookie: userCookie },
-      });
-      expect(forbidden.statusCode).toBe(403);
-
-      const own = await server.inject({
-        method: 'DELETE',
-        url: `/api/chat/messages/${userMsg.id}`,
-        headers: { cookie: userCookie },
-      });
-      expect(own.statusCode).toBe(200);
-
-      const adminDeletes = await server.inject({
-        method: 'DELETE',
-        url: `/api/chat/messages/${adminMsg.id}`,
-        headers: { cookie: adminCookie },
-      });
-      expect(adminDeletes.statusCode).toBe(200);
-    });
-
     it('keeps messages (userId null, senderName intact) after account deletion', async () => {
       const adminCookie = await loginAsAdmin(server);
       const userCookie = await loginAsUser();

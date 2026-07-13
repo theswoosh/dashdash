@@ -46,9 +46,7 @@ export function ChatWidget({ options }: WidgetProps) {
     error,
     loadOlder,
     send,
-    remove,
     currentUserId,
-    isAdmin,
   } = useChatMessages(activeChannel?.id ?? null, pollingInterval);
 
   const skin = resolveChatSkin(options['chatSkin']);
@@ -56,7 +54,6 @@ export function ChatWidget({ options }: WidgetProps) {
   // Stable handlers — MessageList re-attaches its IntersectionObserver when
   // onLoadOlder changes identity, which must not happen on every poll render.
   const loadOlderStable = useCallback(() => { void loadOlder(); }, [loadOlder]);
-  const deleteStable = useCallback((id: string) => { void remove(id); }, [remove]);
 
   if (subscribed.length === 0) {
     return <div className="chat-empty">{t('chat.noChannels')}</div>;
@@ -101,12 +98,10 @@ export function ChatWidget({ options }: WidgetProps) {
             : <MessageList
                 messages={messages}
                 currentUserId={currentUserId}
-                isAdmin={isAdmin}
                 showTimestamps={showTimestamps}
                 hasMore={hasMore}
                 isLoadingOlder={isLoadingOlder}
                 onLoadOlder={loadOlderStable}
-                onDelete={deleteStable}
               />
           )}
           <MessageComposer onSend={send} disabled={activeChannel === null} />

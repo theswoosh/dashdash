@@ -109,26 +109,54 @@ function useEmojiData(): EmojiDataHook {
 
 // ── Reusable emoji popup (portal panel: search, categories, recents) ──────
 
+const ANCHOR_GAP_PX = 4;
+const ANCHOR_VIEWPORT_MARGIN_PX = 8;
+const ANCHOR_MIN_HEIGHT_PX = 120;
+
 export function EmojiPopup({
   value = '',
   onSelect,
   onClose,
   footer,
-  inline = false,
+  anchorRect,
 }: {
   readonly value?: string;
   readonly onSelect: (emoji: string) => void;
   readonly onClose: () => void;
   readonly footer?: ReactNode;
-  /** Render in place (anchored by the parent) instead of a centered portal dialog. */
-  readonly inline?: boolean;
+  /** Anchor the panel below this rect (no overlay backdrop) instead of a centered dialog. */
+  readonly anchorRect?: DOMRect | undefined;
 }) {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState(RECENT_KEY);
   const [recents, addRecent] = useRecentEmojis();
   const { groups, isLoading, load } = useEmojiData();
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const isAnchored = anchorRect !== undefined;
 
   useEffect(() => { load(); }, [load]);
+
+  // Anchored mode has no backdrop: close on outside click and when the anchor
+  // may have moved (window resize, any scroll outside the panel).
+  useEffect(() => {
+    if (!isAnchored) return;
+    const closeOnOutsidePress = (e: PointerEvent) => {
+      if (panelRef.current && e.target instanceof Node && panelRef.current.contains(e.target)) return;
+      onClose();
+    };
+    const closeOnOutsideScroll = (e: Event) => {
+      if (panelRef.current && e.target instanceof Node && panelRef.current.contains(e.target)) return;
+      onClose();
+    };
+    document.addEventListener('pointerdown', closeOnOutsidePress);
+    window.addEventListener('resize', onClose);
+    window.addEventListener('scroll', closeOnOutsideScroll, true);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsidePress);
+      window.removeEventListener('resize', onClose);
+      window.removeEventListener('scroll', closeOnOutsideScroll, true);
+    };
+  }, [isAnchored, onClose]);
 
   const selectEmoji = (emoji: string) => {
     addRecent(emoji);
@@ -159,12 +187,28 @@ export function EmojiPopup({
   // For search results: group by groupName for section labels
   const showSectionLabels = search.trim().length > 0 && groups.length > 0;
 
+  // Below the anchor, clamped into the viewport: when space is short, cap the
+  // panel height instead of flipping above.
+  const anchoredStyle = anchorRect
+    ? {
+        top: anchorRect.bottom + ANCHOR_GAP_PX,
+        left: anchorRect.left,
+        width: anchorRect.width,
+        maxHeight: Math.max(
+          ANCHOR_MIN_HEIGHT_PX,
+          window.innerHeight - (anchorRect.bottom + ANCHOR_GAP_PX) - ANCHOR_VIEWPORT_MARGIN_PX,
+        ),
+      }
+    : undefined;
+
   const panel = (
       <div
-        className={`icon-picker__panel${inline ? ' icon-picker__panel--inline' : ''}`}
+        ref={panelRef}
+        className={`icon-picker__panel${isAnchored ? ' icon-picker__panel--anchored' : ''}`}
+        style={anchoredStyle}
         role="dialog"
         aria-label="Emoji picker"
-        aria-modal={inline ? undefined : 'true'}
+        aria-modal={isAnchored ? undefined : 'true'}
         onKeyDown={e => { if (e.key === 'Escape') onClose(); }}
       >
         <input
@@ -173,7 +217,7 @@ export function EmojiPopup({
           placeholder="Search emoji…"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          autoFocus={!inline}
+          autoFocus={!isAnchored}
         />
 
         {!search && (
@@ -228,7 +272,7 @@ export function EmojiPopup({
       </div>
   );
 
-  if (inline) return panel;
+  if (isAnchored) return createPortal(panel, document.body);
 
   return createPortal(
     <>

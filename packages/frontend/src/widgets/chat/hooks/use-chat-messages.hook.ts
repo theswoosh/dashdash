@@ -104,22 +104,6 @@ export function useChatMessages(channelId: string | null, pollingIntervalSec: nu
     [channelId, user, preferences?.chatColor, mutate],
   );
 
-  const remove = useCallback(
-    async (messageId: string) => {
-      const res = await fetch(`/api/chat/messages/${messageId}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setOlder(prev => prev.filter(m => m.id !== messageId));
-      await mutate(
-        current =>
-          current
-            ? { ...current, messages: current.messages.filter(m => m.id !== messageId) }
-            : current,
-        { revalidate: false },
-      );
-    },
-    [mutate],
-  );
-
   return {
     messages: merged,
     hasMore,
@@ -128,8 +112,6 @@ export function useChatMessages(channelId: string | null, pollingIntervalSec: nu
     error: error instanceof Error ? error.message : undefined,
     loadOlder,
     send,
-    remove,
     currentUserId: user?.id,
-    isAdmin: user?.role === 'admin',
   };
 }

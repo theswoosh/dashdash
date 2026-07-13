@@ -10,7 +10,6 @@ import {
   listMessagesBefore,
   insertMessage,
   findMessageById,
-  deleteMessage,
   searchMessages,
 } from '../db/chat.db.js';
 import { findUserById } from '../db/users.db.js';
@@ -144,18 +143,6 @@ export function createChatRoutes(db: Db): FastifyPluginAsync {
         body: parsed.data.body,
       });
       return reply.code(201).send({ message });
-    });
-
-    // DELETE /api/chat/messages/:id — own message, or any as admin
-    fastify.delete<{ Params: { id: string } }>('/chat/messages/:id', async (request, reply) => {
-      const message = findMessageById(db, request.params.id);
-      if (!message) return reply.code(404).send({ error: 'Message not found' });
-      const isOwn = message.userId !== null && message.userId === request.userId;
-      if (!isOwn && request.userRole !== 'admin') {
-        return reply.code(403).send({ error: 'You can only delete your own messages' });
-      }
-      deleteMessage(db, message.id);
-      return { ok: true };
     });
 
     // GET /api/chat/channels/:id/messages/search?q=

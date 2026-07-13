@@ -13,8 +13,9 @@ interface MessageComposerProps {
 export function MessageComposer({ onSend, disabled }: MessageComposerProps) {
   const t = useT();
   const [draft, setDraft] = useState('');
-  const [isEmojiOpen, setIsEmojiOpen] = useState(false);
+  const [emojiAnchor, setEmojiAnchor] = useState<DOMRect | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const composerRef = useRef<HTMLDivElement | null>(null);
 
   const submitDraft = useCallback(() => {
     const body = draft.trim();
@@ -38,21 +39,26 @@ export function MessageComposer({ onSend, disabled }: MessageComposerProps) {
   }, [draft.length]);
 
   return (
-    <div className="chat-composer">
+    <div className="chat-composer" ref={composerRef}>
       <button
         type="button"
         className="chat-composer__emoji"
-        onClick={() => setIsEmojiOpen(v => !v)}
+        // Keep the popup's outside-press close from firing before the toggle,
+        // which would close and immediately reopen the panel.
+        onPointerDown={e => e.stopPropagation()}
+        onClick={() =>
+          setEmojiAnchor(prev =>
+            prev ? null : composerRef.current?.getBoundingClientRect() ?? null,
+          )
+        }
         disabled={disabled}
         aria-label={t('chat.emoji')}
         title={t('chat.emoji')}
       >
         😊
       </button>
-      {isEmojiOpen && (
-        <div className="chat-emoji-panel">
-          <EmojiPopup inline onSelect={insertEmoji} onClose={() => setIsEmojiOpen(false)} />
-        </div>
+      {emojiAnchor && (
+        <EmojiPopup anchorRect={emojiAnchor} onSelect={insertEmoji} onClose={() => setEmojiAnchor(null)} />
       )}
       <textarea
         ref={inputRef}

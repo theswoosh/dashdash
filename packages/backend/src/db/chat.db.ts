@@ -149,10 +149,6 @@ export function findMessageById(db: Db, id: string): ChatMessage | undefined {
   return row ? toMessage(row) : undefined;
 }
 
-export function deleteMessage(db: Db, id: string): void {
-  db.prepare('DELETE FROM chat_messages WHERE id = ?').run(id);
-}
-
 /** LIKE search within one channel, newest first. `%`, `_` and `\` in the query are escaped. */
 export function searchMessages(db: Db, channelId: string, query: string, limit: number): ChatMessage[] {
   const escaped = query.replace(/[\\%_]/g, ch => `\\${ch}`);

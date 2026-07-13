@@ -217,20 +217,24 @@
   padding-top: 6px;
 }
 
-/* Inline mode — anchored by the parent container instead of centered fixed.
-   Floats over page content without a dimming overlay, so it needs the opaque
-   modal background (card-bg is near-transparent on liquid-glass). */
-.icon-picker__panel--inline {
-  position: static;
+/* Anchored mode — fixed below an anchor rect (top/left/width/max-height come
+   from inline styles). Floats over page content without a dimming overlay, so
+   it needs the opaque modal background (card-bg is near-transparent on
+   liquid-glass). */
+.icon-picker__panel--anchored {
   transform: none;
-  width: 100%;
-  z-index: auto;
   background: var(--modal-bg, rgba(14, 14, 20, 0.97));
 }
 
-.icon-picker__panel--inline .ep-grid-viewport,
-.icon-picker__panel--inline .ep-loading,
-.icon-picker__panel--inline .ep-empty,
-.icon-picker__panel--inline .ep-recents-empty {
+.icon-picker__panel--anchored .ep-grid-viewport,
+.icon-picker__panel--anchored .ep-loading,
+.icon-picker__panel--anchored .ep-empty,
+.icon-picker__panel--anchored .ep-recents-empty {
   height: 150px;
+}
+
+/* Let the grid shrink when the viewport clamp caps the panel height. */
+.icon-picker__panel--anchored .ep-grid-viewport {
+  flex-shrink: 1;
+  min-height: 0;
 }
