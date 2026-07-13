@@ -55,6 +55,10 @@ writeFileSync(join(runtimeDir, 'config', 'services.yml'), `- title: Clock
   options:
     url: ''
     layoutSize: normal
+- id: chat-e2e
+  title: Chatroom
+  widget: chat
+  layout: { x: 0, y: 26, w: 24, h: 22 }
 `);
 
 const child = spawn(process.execPath, [backendDist], {

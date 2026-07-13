@@ -8,11 +8,17 @@ const ADMIN = { email: 'e2e-admin@test.local', password: 'e2e-password-123', nam
 
 async function loginViaApi(page: Page): Promise<void> {
   const request = page.context().request;
-  // First registration wins admin; later calls fail harmlessly (user exists).
-  await request.post('/api/auth/register', { data: ADMIN });
-  const res = await request.post('/api/auth/login', {
+  // Try login first — registration is rate-limited to 3/hour per IP, so only
+  // register when the user doesn't exist yet (first registration wins admin).
+  let res = await request.post('/api/auth/login', {
     data: { email: ADMIN.email, password: ADMIN.password },
   });
+  if (!res.ok()) {
+    await request.post('/api/auth/register', { data: ADMIN });
+    res = await request.post('/api/auth/login', {
+      data: { email: ADMIN.email, password: ADMIN.password },
+    });
+  }
   expect(res.ok()).toBeTruthy();
 }
 
@@ -258,4 +264,74 @@ test('dragging a widget onto a frame reparents it (no red ghost)', async ({ page
   await page.getByLabel('Save & exit').click();
   await page.reload();
   await expect(page.locator('.frame-card .react-grid-item').filter({ hasText: 'Block A' })).toBeVisible();
+});
+
+test('chat: send, receive from another user, search, hold-delete own message', async ({ page, playwright }) => {
+  await loginViaApi(page);
+  const adminApi = page.context().request;
+
+  // Create a channel and subscribe the seeded chat widget to it (1 s polling
+  // keeps the cross-user assertion fast).
+  const channelRes = await adminApi.post('/api/chat/channels', {
+    data: { name: `e2e-room-${Date.now()}` },
+  });
+  expect(channelRes.status()).toBe(201);
+  const { channel } = await channelRes.json() as { channel: { id: string } };
+  const patchRes = await adminApi.patch('/api/services/chat-e2e', {
+    data: { options: { channelIds: [channel.id], pollingInterval: 1 } },
+  });
+  expect(patchRes.ok()).toBeTruthy();
+
+  await page.goto('/');
+  const chatWidget = page.locator('.react-grid-item').filter({ hasText: 'Chatroom' });
+  await expect(chatWidget).toBeVisible();
+
+  // Send through the composer — bubble renders own-aligned.
+  const composer = chatWidget.locator('.chat-composer__input');
+  await composer.fill('hello from admin');
+  await composer.press('Enter');
+  await expect(chatWidget.locator('.chat-bubble--own').filter({ hasText: 'hello from admin' })).toBeVisible();
+
+  // Second user posts via API — message must arrive through polling.
+  const userApi = await playwright.request.newContext({ baseURL: 'http://127.0.0.1:4317' });
+  const registerRes = await userApi.post('/api/auth/register', {
+    data: { email: 'chat-user@test.local', password: 'chat-password-123', name: 'Chatter' },
+  });
+  expect(registerRes.ok()).toBeTruthy();
+  const userLogin = await userApi.post('/api/auth/login', {
+    data: { email: 'chat-user@test.local', password: 'chat-password-123' },
+  });
+  expect(userLogin.ok()).toBeTruthy();
+  const otherMsg = await userApi.post(`/api/chat/channels/${channel.id}/messages`, {
+    data: { body: 'hi from chatter' },
+  });
+  expect(otherMsg.status()).toBe(201);
+
+  const foreignBubble = chatWidget.locator('.chat-bubble:not(.chat-bubble--own)').filter({ hasText: 'hi from chatter' });
+  await expect(foreignBubble).toBeVisible({ timeout: 5000 });
+  await expect(chatWidget.locator('.chat-sender').filter({ hasText: 'Chatter' })).toBeVisible();
+
+  // Search finds the admin message.
+  await chatWidget.getByLabel('Search messages').click();
+  await chatWidget.locator('.chat-search__input').fill('hello');
+  await expect(chatWidget.locator('.chat-search__result').filter({ hasText: 'hello from admin' })).toBeVisible();
+  await chatWidget.locator('.chat-search__close').click();
+
+  // Hold-delete the own message.
+  const ownBubbleWrap = chatWidget.locator('.chat-bubble-wrap').filter({ hasText: 'hello from admin' });
+  await ownBubbleWrap.hover();
+  const deleteButton = ownBubbleWrap.locator('.chat-delete');
+  await deleteButton.hover();
+  await page.mouse.down();
+  await page.waitForTimeout(1300); // hold past the 800 ms gate
+  await page.mouse.up();
+  await expect(chatWidget.locator('.chat-bubble--own').filter({ hasText: 'hello from admin' })).toHaveCount(0);
+
+  // The foreign message survives a reload (persistence, not just optimistic state).
+  await page.reload();
+  await expect(
+    page.locator('.react-grid-item').filter({ hasText: 'Chatroom' })
+      .locator('.chat-bubble').filter({ hasText: 'hi from chatter' }),
+  ).toBeVisible();
+  await userApi.dispose();
 });
