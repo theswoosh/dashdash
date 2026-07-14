@@ -310,24 +310,26 @@ export function DashGrid() {
     commitLayout(items);
   }, [commitLayout, frameIds, gridConfig, reloadServices, revertGesturedItem, rootServices, setGhostInvalid, setReparentingIds]);
 
-  const wouldClipResizedFrame = useCallback((newItem: LayoutItem): boolean => {
+  const wouldClipResizedFrame = useCallback((newItem: LayoutItem, oldItem?: LayoutItem | null): boolean => {
     if (!frameIds.has(newItem.i)) return false;
     const frame = rootServices.find(s => s.id === newItem.i);
-    return wouldClipFrameChildren(frame?.children ?? [], newItem.w, newItem.h);
+    const oldW = oldItem?.w ?? newItem.w;
+    const oldH = oldItem?.h ?? newItem.h;
+    return wouldClipFrameChildren(frame?.children ?? [], newItem.w, newItem.h, oldW, oldH);
   }, [frameIds, rootServices]);
 
   // Resize never reparents — any overlap (frames included) is invalid, as is
   // shrinking a frame below what its own children need.
-  const tintGhostDuringResize = useCallback((newLayout: Layout, _oldItem?: LayoutItem | null, newItem?: LayoutItem | null) => {
+  const tintGhostDuringResize = useCallback((newLayout: Layout, oldItem?: LayoutItem | null, newItem?: LayoutItem | null) => {
     if (!editModeRef.current || !newItem) return;
-    setGhostInvalid(findOverlappingItems(newItem, newLayout).length > 0 || wouldClipResizedFrame(newItem));
+    setGhostInvalid(findOverlappingItems(newItem, newLayout).length > 0 || wouldClipResizedFrame(newItem, oldItem));
   }, [setGhostInvalid, wouldClipResizedFrame]);
 
   const syncLayoutAfterResize = useCallback((newLayout: Layout, oldItem?: LayoutItem | null, newItem?: LayoutItem | null) => {
     if (!editModeRef.current) return;
     setGhostInvalid(false);
     const items = [...newLayout];
-    if (newItem && oldItem && (findOverlappingItems(newItem, items).length > 0 || wouldClipResizedFrame(newItem))) {
+    if (newItem && oldItem && (findOverlappingItems(newItem, items).length > 0 || wouldClipResizedFrame(newItem, oldItem))) {
       revertGesturedItem(items, newItem, oldItem);
       return;
     }

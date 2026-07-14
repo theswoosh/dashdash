@@ -32,16 +32,25 @@ export function findOverlappingItems(
 }
 
 /** True if any child's stored (frame-relative) layout would fall outside a
- *  frame resized to `newW`x`newH` grid units. Boundary is inclusive — a child
- *  ending exactly at the new edge (x + w === newW) still fits, matching the
- *  edge-touching-is-not-overlap convention used by `layoutItemsOverlap`. */
+ *  frame resized from `oldW`x`oldH` to `newW`x`newH` grid units. Boundary is
+ *  inclusive — a child ending exactly at the new edge (x + w === newW) still
+ *  fits, matching the edge-touching-is-not-overlap convention used by
+ *  `layoutItemsOverlap`. Each axis is only checked when it's actually
+ *  shrinking this gesture — a growing or unchanged axis can't newly clip, so
+ *  pre-existing out-of-bounds child data on that axis is never blocked. */
 export function wouldClipFrameChildren(
   children: readonly { layout: { x?: number | undefined; y?: number | undefined; w: number; h: number } }[],
   newW: number,
   newH: number,
+  oldW: number,
+  oldH: number,
 ): boolean {
+  const shrinkingW = newW < oldW;
+  const shrinkingH = newH < oldH;
+  if (!shrinkingW && !shrinkingH) return false;
   return children.some(child =>
-    (child.layout.x ?? 0) + child.layout.w > newW || (child.layout.y ?? 0) + child.layout.h > newH,
+    (shrinkingW && (child.layout.x ?? 0) + child.layout.w > newW)
+    || (shrinkingH && (child.layout.y ?? 0) + child.layout.h > newH),
   );
 }
 

@@ -126,27 +126,52 @@ describe('wouldClipFrameChildren', () => {
   }
 
   it('is false when there are no children', () => {
-    expect(wouldClipFrameChildren([], 4, 4)).toBe(false);
+    expect(wouldClipFrameChildren([], 4, 4, 4, 4)).toBe(false);
   });
 
   it('is false when all children fit within the new bounds', () => {
     const children = [child(0, 0, 2, 2), child(2, 0, 2, 2)];
-    expect(wouldClipFrameChildren(children, 4, 4)).toBe(false);
+    expect(wouldClipFrameChildren(children, 4, 4, 6, 6)).toBe(false);
   });
 
-  it('is true when a child exceeds the new width', () => {
+  it('is true when shrinking width clips a child', () => {
     const children = [child(2, 0, 3, 2)];
-    expect(wouldClipFrameChildren(children, 4, 4)).toBe(true);
+    expect(wouldClipFrameChildren(children, 4, 4, 6, 4)).toBe(true);
   });
 
-  it('is true when a child exceeds the new height', () => {
+  it('is true when shrinking height clips a child', () => {
     const children = [child(0, 2, 2, 3)];
-    expect(wouldClipFrameChildren(children, 4, 4)).toBe(true);
+    expect(wouldClipFrameChildren(children, 4, 4, 4, 6)).toBe(true);
   });
 
   it('treats a child landing exactly on the new edge as fitting', () => {
     const children = [child(0, 0, 4, 4)];
-    expect(wouldClipFrameChildren(children, 4, 4)).toBe(false);
+    expect(wouldClipFrameChildren(children, 4, 4, 6, 6)).toBe(false);
+  });
+
+  it('is false when enlarging both axes past a previously-clipping state', () => {
+    // Corrupted/legacy data: child already exceeds the frame's old size on
+    // both axes. Enlarging can only reduce clipping risk, never cause it.
+    const children = [child(0, 0, 10, 10)];
+    expect(wouldClipFrameChildren(children, 8, 8, 4, 4)).toBe(false);
+  });
+
+  it('is true when shrinking one axis clips, even while the other axis grows', () => {
+    const children = [child(0, 0, 3, 2)];
+    expect(wouldClipFrameChildren(children, 2, 10, 4, 4)).toBe(true);
+  });
+
+  it('is false when only a non-shrinking axis has stale out-of-bounds data', () => {
+    // The child's y+h already exceeds newH from corrupted pre-existing data,
+    // but height isn't being shrunk this gesture (newH === oldH) — must not
+    // block on an axis that isn't being touched.
+    const children = [child(0, 0, 2, 8)];
+    expect(wouldClipFrameChildren(children, 2, 4, 4, 4)).toBe(false);
+  });
+
+  it('is false for a no-op resize', () => {
+    const children = [child(0, 0, 10, 10)];
+    expect(wouldClipFrameChildren(children, 4, 4, 4, 4)).toBe(false);
   });
 });
 
