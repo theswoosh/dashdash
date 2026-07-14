@@ -20,6 +20,13 @@ describe('parseThemeColor', () => {
     expect(parseThemeColor('rgba(255, 255, 255, 0.05)')).toEqual({ hex: '#ffffff', alpha: 0.05 });
   });
 
+  it('parses 8-digit hex-with-alpha', () => {
+    expect(parseThemeColor('#ffffff0d')).toEqual({ hex: '#ffffff', alpha: 13 / 255 });
+    expect(parseThemeColor('#39ff6e08')).toEqual({ hex: '#39ff6e', alpha: 8 / 255 });
+    expect(parseThemeColor('#00000000')).toEqual({ hex: '#000000', alpha: 0 });
+    expect(parseThemeColor('#ffffffff')).toEqual({ hex: '#ffffff', alpha: 1 });
+  });
+
   it('handles surrounding whitespace', () => {
     expect(parseThemeColor('  #ffffff  ')).toEqual({ hex: '#ffffff', alpha: 1 });
     expect(parseThemeColor('rgba( 0 , 0 , 0 , 1 )')).toEqual({ hex: '#000000', alpha: 1 });
@@ -57,6 +64,16 @@ describe('getThemeColorDefaults', () => {
     document.body.appendChild(el);
     const defaults = getThemeColorDefaults(el);
     expect(defaults.fg).toEqual({ hex: '#000000', alpha: 0.88 });
+    document.body.removeChild(el);
+  });
+
+  it('reads translucent --card-bg when computed as 8-digit hex (Chromium serialization)', () => {
+    const el = document.createElement('div');
+    el.style.setProperty('--card-bg', '#ffffff0d');
+    document.body.appendChild(el);
+    const defaults = getThemeColorDefaults(el);
+    expect(defaults.bg).toEqual({ hex: '#ffffff', alpha: 13 / 255 });
+    expect(defaults.bg.alpha).not.toBe(1);
     document.body.removeChild(el);
   });
 });

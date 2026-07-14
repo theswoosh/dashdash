@@ -1,11 +1,12 @@
 const HEX3_RE = /^#([0-9a-fA-F]{3})$/;
 const HEX6_RE = /^#([0-9a-fA-F]{6})$/;
+const HEX8_RE = /^#([0-9a-fA-F]{6})([0-9a-fA-F]{2})$/;
 const RGB_RE = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+))?\s*\)$/;
 
 const FALLBACK_BG = { hex: '#ffffff', alpha: 1 };
 const FALLBACK_FG = { hex: '#191919', alpha: 1 };
 
-/** Parse a plain `#rgb`, `#rrggbb`, `rgb()` or `rgba()` color string. */
+/** Parse a plain `#rgb`, `#rrggbb`, `#rrggbbaa`, `rgb()` or `rgba()` color string. */
 export function parseThemeColor(raw: string): { hex: string; alpha: number } | null {
   const value = raw.trim();
   if (value === '') return null;
@@ -19,6 +20,12 @@ export function parseThemeColor(raw: string): { hex: string; alpha: number } | n
   const hex6 = HEX6_RE.exec(value);
   if (hex6) {
     return { hex: `#${hex6[1]}`.toLowerCase(), alpha: 1 };
+  }
+
+  const hex8 = HEX8_RE.exec(value);
+  if (hex8) {
+    const alpha = parseInt(hex8[2]!, 16) / 255;
+    return { hex: `#${hex8[1]}`.toLowerCase(), alpha };
   }
 
   const rgb = RGB_RE.exec(value);
