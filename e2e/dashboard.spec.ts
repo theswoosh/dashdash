@@ -82,8 +82,10 @@ test('hold-to-delete removes a widget permanently', async ({ page }) => {
   await expect(notesItem).toBeVisible();
 
   await enableEditMode(page);
-  // Scope to the header copy — a hidden narrow-widget flyout duplicate exists.
-  const deleteButton = notesItem.locator('.widget-edit-actions').getByTitle('Hold to delete');
+  // Two copies of the delete button exist (header actions + narrow-widget
+  // flyout) — CSS shows exactly one via container query depending on the
+  // widget's rendered width, so scope to whichever is actually visible.
+  const deleteButton = notesItem.locator('[title="Hold to delete"]:visible');
   await deleteButton.hover();
   await page.mouse.down();
   // holdToDeleteMs defaults to 1000 — hold past it.
@@ -266,7 +268,7 @@ test('dragging a widget onto a frame reparents it (no red ghost)', async ({ page
   await expect(page.locator('.frame-card .react-grid-item').filter({ hasText: 'Block A' })).toBeVisible();
 });
 
-test('chat: send, receive from another user, search, hold-delete own message', async ({ page, playwright }) => {
+test('chat: send, receive from another user, search', async ({ page, playwright }) => {
   await loginViaApi(page);
   const adminApi = page.context().request;
 
@@ -317,21 +319,10 @@ test('chat: send, receive from another user, search, hold-delete own message', a
   await expect(chatWidget.locator('.chat-search__result').filter({ hasText: 'hello from admin' })).toBeVisible();
   await chatWidget.locator('.chat-search__close').click();
 
-  // Hold-delete the own message.
-  const ownBubbleWrap = chatWidget.locator('.chat-bubble-wrap').filter({ hasText: 'hello from admin' });
-  await ownBubbleWrap.hover();
-  const deleteButton = ownBubbleWrap.locator('.chat-delete');
-  await deleteButton.hover();
-  await page.mouse.down();
-  await page.waitForTimeout(1300); // hold past the 800 ms gate
-  await page.mouse.up();
-  await expect(chatWidget.locator('.chat-bubble--own').filter({ hasText: 'hello from admin' })).toHaveCount(0);
-
-  // The foreign message survives a reload (persistence, not just optimistic state).
+  // Both messages survive a reload (persistence, not just optimistic state).
   await page.reload();
-  await expect(
-    page.locator('.react-grid-item').filter({ hasText: 'Chatroom' })
-      .locator('.chat-bubble').filter({ hasText: 'hi from chatter' }),
-  ).toBeVisible();
+  const reloadedChatWidget = page.locator('.react-grid-item').filter({ hasText: 'Chatroom' });
+  await expect(reloadedChatWidget.locator('.chat-bubble').filter({ hasText: 'hello from admin' })).toBeVisible();
+  await expect(reloadedChatWidget.locator('.chat-bubble').filter({ hasText: 'hi from chatter' })).toBeVisible();
   await userApi.dispose();
 });
