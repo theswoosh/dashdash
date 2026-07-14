@@ -21,6 +21,38 @@
   transform: translateX(0);
 }
 
+.config-panel--open.config-panel--collapsed {
+  transform: translateX(100%);
+}
+
+/* ── Collapse toggle handle ──────────────────────────────────────────────── */
+
+.config-panel-collapse-btn {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--topbar-bg, rgba(15, 15, 20, 0.92));
+  border: 1px solid var(--border-color);
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+  transition: right 0.25s cubic-bezier(0.4, 0, 0.2, 1), color var(--transition), background var(--transition);
+  z-index: 51;
+}
+
+.config-panel-collapse-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+}
+
 /* ── Tab bar ─────────────────────────────────────────────────────────────── */
 
 .config-panel-tabs {

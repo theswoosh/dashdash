@@ -70,6 +70,8 @@ config:
   engine: "Suchmaschine"
   searchPlaceholder: "Platzhaltertext"
   comingSoon: "Demnächst"
+  collapsePanel: "Seitenleiste einklappen"
+  expandPanel: "Seitenleiste ausklappen"
 
 widgetConfig:
   configure: "Konfigurieren: {{title}}"

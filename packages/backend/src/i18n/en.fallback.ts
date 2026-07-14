@@ -76,6 +76,8 @@ export const EN_FALLBACK: Record<string, unknown> = {
     engine: 'Engine',
     searchPlaceholder: 'Placeholder text',
     comingSoon: 'Coming soon',
+    collapsePanel: 'Collapse sidebar',
+    expandPanel: 'Expand sidebar',
   },
   widgetConfig: {
     configure: 'Configure: {{title}}',
