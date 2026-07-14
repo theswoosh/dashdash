@@ -12,7 +12,6 @@ import { WidgetCard } from './widget-card.component';
 import { serviceAsGridItem, persistedHeight } from '../utils/widget-layout';
 import type { GridConfigLike } from '../utils/widget-layout';
 import { OVERLAP_COMPACTOR, DROPPING_ELEMENT_ID, findOverlappingItems, classifyChildDragTarget } from '../utils/grid-collision';
-import { getTemplate } from '../widgets/catalog';
 import './FrameCard.css';
 
 const DRAG_GHOST_OFFSET_PX = 12;
@@ -161,8 +160,22 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
   const [draggingChild, setDraggingChild] = useState<ServiceConfig | null>(null);
   const draggingIdRef = useRef<string | null>(null);
   const dragGhostElRef = useRef<HTMLDivElement | null>(null);
+  const draggedElRef = useRef<HTMLElement | null>(null);
 
-  const trackChildDrag = useCallback((newLayout: Layout, _oldItem?: LayoutItem | null, newItem?: LayoutItem | null, _placeholder?: LayoutItem | null, event?: Event) => {
+  // When a child drag is outside this frame's own bounds, RGL's inner
+  // placeholder clamps to the grid's valid columns/rows instead of
+  // disappearing — hiding it (and the dragged item's own node) avoids the
+  // "stuck at the edge" illusion since dropping there isn't what happens
+  // (reparent, not landing in the frame). visibility (not display) so RGL's
+  // own layout measurements stay undisturbed.
+  const setOutsideFrameHidden = useCallback((isOutside: boolean) => {
+    const visibility = isOutside ? 'hidden' : '';
+    if (draggedElRef.current) draggedElRef.current.style.visibility = visibility;
+    const placeholderEl = bodyElRef.current?.querySelector<HTMLElement>('.react-grid-placeholder');
+    if (placeholderEl) placeholderEl.style.visibility = visibility;
+  }, []);
+
+  const trackChildDrag = useCallback((newLayout: Layout, _oldItem?: LayoutItem | null, newItem?: LayoutItem | null, _placeholder?: LayoutItem | null, event?: Event, element?: HTMLElement | null) => {
     if (!editMode || !newItem) return;
     setGhostInvalid(findOverlappingItems(newItem, newLayout).length > 0);
 
@@ -170,6 +183,7 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
       draggingIdRef.current = newItem.i;
       setDraggingChild(children.find(c => c.id === newItem.i) ?? null);
     }
+    if (element) draggedElRef.current = element;
 
     const evt = event as unknown as { clientX?: number; clientY?: number } | undefined;
     if (typeof evt?.clientX !== 'number' || typeof evt?.clientY !== 'number') return;
@@ -187,6 +201,7 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
       && clientY >= frameRect.top && clientY <= frameRect.bottom;
     ghostEl.style.opacity = isInsideFrame ? '0' : '1';
     ghostEl.style.visibility = isInsideFrame ? 'hidden' : 'visible';
+    setOutsideFrameHidden(!isInsideFrame);
 
     if (isInsideFrame) return;
 
@@ -195,7 +210,7 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
     const isOverRootGrid = !!el?.closest('.dash-grid-canvas');
     const target = classifyChildDragTarget(service.id, hitFrameId, isOverRootGrid);
     ghostEl.classList.toggle('frame-child-drag-ghost--invalid', target.kind === 'invalid');
-  }, [editMode, setGhostInvalid, children, service.id]);
+  }, [editMode, setGhostInvalid, children, service.id, setOutsideFrameHidden]);
 
   const syncLayoutAfterGesture = useCallback((newLayout: Layout, oldItem?: LayoutItem | null, newItem?: LayoutItem | null) => {
     if (!editMode) return;
@@ -224,6 +239,8 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
   ) => {
     draggingIdRef.current = null;
     setDraggingChild(null);
+    setOutsideFrameHidden(false);
+    draggedElRef.current = null;
     if (!editMode) return;
     setGhostInvalid(false);
     if (newItem && oldItem) {
@@ -264,7 +281,7 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
     }
     dragLayoutRef.current = items;
     setLayout(items);
-  }, [editMode, setGhostInvalid, service.id, children, onChildReparent]);
+  }, [editMode, setGhostInvalid, setOutsideFrameHidden, service.id, children, onChildReparent]);
 
   const deleteChild = useCallback(async (id: string) => {
     setLayout(prev => prev.filter(l => l.i !== id));
@@ -353,12 +370,15 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
         </ReactGridLayout>
       </div>
       {draggingChild && createPortal(
-        <div ref={dragGhostElRef} className="frame-child-drag-ghost">
-          {(() => {
-            const Icon = getTemplate(draggingChild.widget)?.icon;
-            return Icon ? <Icon size={18} /> : null;
-          })()}
-          <span className="frame-child-drag-ghost__title">{draggingChild.title}</span>
+        <div
+          ref={dragGhostElRef}
+          className="frame-child-drag-ghost"
+          style={{
+            width: draggingChild.layout.w * (rowHeight + gap) - gap,
+            height: draggingChild.layout.h * (rowHeight + gap) - gap,
+          }}
+        >
+          <WidgetCard service={draggingChild} editMode={false} dragHandleClassName="frame-widget-drag-handle" />
         </div>,
         document.body,
       )}
