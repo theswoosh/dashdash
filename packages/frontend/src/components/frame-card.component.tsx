@@ -10,7 +10,7 @@ import { useT } from '../i18n';
 import { WidgetCard } from './widget-card.component';
 import { serviceAsGridItem, persistedHeight } from '../utils/widget-layout';
 import type { GridConfigLike } from '../utils/widget-layout';
-import { OVERLAP_COMPACTOR, DROPPING_ELEMENT_ID, findOverlappingItems } from '../utils/grid-collision';
+import { OVERLAP_COMPACTOR, DROPPING_ELEMENT_ID, findOverlappingItems, classifyChildDragTarget } from '../utils/grid-collision';
 import './FrameCard.css';
 
 const CONTAINER_PADDING: [number, number] = [0, 0];
@@ -66,10 +66,11 @@ interface Props {
   renderConfig: { rowHeight: number; gap: number };
   frameLayout?: LayoutItem | undefined;
   onDelete?: ((id: string) => void) | undefined;
+  onChildReparent?: ((child: ServiceConfig, targetFrameId: string | null, clientX: number, clientY: number) => void) | undefined;
   reloadServices: () => unknown;
 }
 
-export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig, renderConfig, frameLayout, onDelete, reloadServices }: Props) {
+export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig, renderConfig, frameLayout, onDelete, onChildReparent, reloadServices }: Props) {
   const t = useT();
   const Card = useThemeCard();
   const { holdToDeleteMs } = useBehavior();
@@ -160,6 +161,60 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
     setLayout(items);
   }, [editMode, setGhostInvalid]);
 
+  // Drag (not resize) can carry the dragged child out of this frame's own
+  // inner grid entirely — into another frame, or onto the root grid. RGL's
+  // drag is confined to its own grid instance, so the only way to detect a
+  // cross-container drop is a DOM hit-test at the raw mouse position, same
+  // technique as findParentFrame in dash-grid.component.tsx.
+  const syncChildDragStop = useCallback((
+    newLayout: Layout,
+    oldItem?: LayoutItem | null,
+    newItem?: LayoutItem | null,
+    _placeholder?: LayoutItem | null,
+    event?: Event,
+  ) => {
+    if (!editMode) return;
+    setGhostInvalid(false);
+    if (newItem && oldItem) {
+      const evt = event as unknown as { clientX?: number; clientY?: number } | undefined;
+      if (typeof evt?.clientX === 'number' && typeof evt?.clientY === 'number') {
+        const el = typeof document !== 'undefined' ? document.elementFromPoint(evt.clientX, evt.clientY) : null;
+        const hitFrameId = (el?.closest('[data-frame-id]') as HTMLElement | null)?.getAttribute('data-frame-id') ?? null;
+        const isOverRootGrid = !!el?.closest('.dash-grid-canvas');
+        const target = classifyChildDragTarget(service.id, hitFrameId, isOverRootGrid);
+
+        if (target.kind === 'invalid') {
+          const reverted = newLayout.map(it =>
+            it.i === newItem.i ? { ...it, x: oldItem.x, y: oldItem.y, w: oldItem.w, h: oldItem.h } : it,
+          );
+          dragLayoutRef.current = reverted;
+          setLayout(reverted);
+          return;
+        }
+
+        if (target.kind === 'reparent-frame' || target.kind === 'reparent-root') {
+          const child = children.find(c => c.id === newItem.i);
+          if (child && onChildReparent) {
+            const remaining = newLayout.filter(it => it.i !== newItem.i);
+            dragLayoutRef.current = remaining;
+            setLayout(remaining);
+            onChildReparent(child, target.kind === 'reparent-frame' ? target.frameId : null, evt.clientX, evt.clientY);
+            return;
+          }
+        }
+      }
+    }
+
+    let items = [...newLayout];
+    if (newItem && oldItem && findOverlappingItems(newItem, items).length > 0) {
+      items = items.map(it =>
+        it.i === newItem.i ? { ...it, x: oldItem.x, y: oldItem.y, w: oldItem.w, h: oldItem.h } : it,
+      );
+    }
+    dragLayoutRef.current = items;
+    setLayout(items);
+  }, [editMode, setGhostInvalid, service.id, children, onChildReparent]);
+
   const deleteChild = useCallback(async (id: string) => {
     setLayout(prev => prev.filter(l => l.i !== id));
     // Drop the stale entry so save-on-close never PUTs a deleted id.
@@ -229,7 +284,7 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
           dropConfig={FRAME_DROP_CONFIG}
           compactor={OVERLAP_COMPACTOR}
           onDrag={tintGhostDuringGesture}
-          onDragStop={syncLayoutAfterGesture}
+          onDragStop={syncChildDragStop}
           onResize={tintGhostDuringGesture}
           onResizeStop={syncLayoutAfterGesture}
           onLayoutChange={recordDragPositions}

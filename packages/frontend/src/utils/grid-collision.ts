@@ -75,6 +75,27 @@ export function evaluateRootDragTarget(
   return findOverlappingItems(item, layout).length > 0 ? { kind: 'invalid' } : { kind: 'valid' };
 }
 
+export type ChildDragTarget =
+  | { kind: 'same-frame' }
+  | { kind: 'reparent-frame'; frameId: string }
+  | { kind: 'reparent-root' }
+  | { kind: 'invalid' };
+
+/** Classify where a frame child's drag ended, from a DOM hit-test at the
+ *  drop point. `hitFrameId` is the `data-frame-id` of whatever frame element
+ *  (if any) is under the cursor; `isOverRootGrid` is whether the cursor is
+ *  over the root grid's canvas at all. */
+export function classifyChildDragTarget(
+  ownFrameId: string,
+  hitFrameId: string | null,
+  isOverRootGrid: boolean,
+): ChildDragTarget {
+  if (hitFrameId === ownFrameId) return { kind: 'same-frame' };
+  if (hitFrameId) return { kind: 'reparent-frame', frameId: hitFrameId };
+  if (isOverRootGrid) return { kind: 'reparent-root' };
+  return { kind: 'invalid' };
+}
+
 /** First position where `item` fits without overlapping `siblings`, scanning
  *  row-major from the requested spot. Used when reparenting/dropping into a
  *  frame whose target area is occupied — overlap must never persist. */

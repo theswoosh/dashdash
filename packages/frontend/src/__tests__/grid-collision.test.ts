@@ -8,6 +8,7 @@ import {
   evaluateRootDragTarget,
   resolveNonOverlappingPosition,
   wouldClipFrameChildren,
+  classifyChildDragTarget,
 } from '../utils/grid-collision';
 
 function item(i: string, x: number, y: number, w = 2, h = 2): LayoutItem {
@@ -146,6 +147,24 @@ describe('wouldClipFrameChildren', () => {
   it('treats a child landing exactly on the new edge as fitting', () => {
     const children = [child(0, 0, 4, 4)];
     expect(wouldClipFrameChildren(children, 4, 4)).toBe(false);
+  });
+});
+
+describe('classifyChildDragTarget', () => {
+  it('is same-frame when the hit frame matches the origin frame', () => {
+    expect(classifyChildDragTarget('frame-1', 'frame-1', true)).toEqual({ kind: 'same-frame' });
+  });
+
+  it('reparents into a different frame when one is hit', () => {
+    expect(classifyChildDragTarget('frame-1', 'frame-2', true)).toEqual({ kind: 'reparent-frame', frameId: 'frame-2' });
+  });
+
+  it('reparents to root when over the root grid but no frame is hit', () => {
+    expect(classifyChildDragTarget('frame-1', null, true)).toEqual({ kind: 'reparent-root' });
+  });
+
+  it('is invalid when neither a frame nor the root grid is hit', () => {
+    expect(classifyChildDragTarget('frame-1', null, false)).toEqual({ kind: 'invalid' });
   });
 });
 

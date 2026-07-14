@@ -469,6 +469,52 @@ export function DashGrid() {
   );
   const margin = useMemo<[number, number]>(() => [gap, gap], [gap]);
   const cellPitch = rowHeight + gap;
+
+  // Reparent a frame child dragged out of its own frame — into a different
+  // frame's inner grid, or onto the root grid. FrameCard already removed the
+  // item from its own local layout before calling this (optimistic).
+  const reparentChild = useCallback(
+    (child: ServiceConfig, targetFrameId: string | null, clientX: number, clientY: number) => {
+      let relLayout: { x: number; y: number; w: number; h: number };
+
+      if (targetFrameId) {
+        const frameService = rootServices.find(s => s.id === targetFrameId);
+        if (!frameService) return;
+        const frameLayoutItem = layoutById.get(targetFrameId) ?? {
+          i: targetFrameId,
+          x: frameService.layout.x ?? 0,
+          y: frameService.layout.y ?? 0,
+          w: frameService.layout.w,
+          h: frameService.layout.h,
+        };
+        const childItems = (frameService.children ?? []).map(c => serviceAsGridItem(c, gridConfig));
+        const desired = { i: child.id, x: 0, y: 0, w: child.layout.w, h: child.layout.h };
+        const pos = resolveNonOverlappingPosition(desired, childItems, frameLayoutItem.w);
+        relLayout = { x: pos.x, y: pos.y, w: child.layout.w, h: child.layout.h };
+      } else {
+        const rootItems = layout.length > 0 ? layout : baseLayout;
+        const rect = canvasElRef.current?.getBoundingClientRect();
+        const desiredX = rect ? Math.max(0, Math.round((clientX - rect.left) / cellPitch)) : 0;
+        const desiredY = rect ? Math.max(0, Math.round((clientY - rect.top) / cellPitch)) : 0;
+        const desired = { i: child.id, x: desiredX, y: desiredY, w: child.layout.w, h: child.layout.h };
+        const pos = resolveNonOverlappingPosition(desired, rootItems, cols);
+        relLayout = { x: pos.x, y: pos.y, w: child.layout.w, h: child.layout.h };
+      }
+
+      void fetch(`/api/services/${child.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ parentId: targetFrameId, layout: relLayout }),
+      }).then(async r => {
+        if (!r.ok) console.error('Reparent failed:', r.status, await r.text());
+        await reloadServices();
+      }).catch((err: unknown) => {
+        console.error('Reparent network error:', err);
+      });
+    },
+    [rootServices, layoutById, gridConfig, layout, baseLayout, cols, cellPitch, reloadServices],
+  );
+
   const rglDropItem = useMemo<LayoutItem | undefined>(
     () => editMode ? { i: DROPPING_ELEMENT_ID, x: 0, y: 0, w: droppingItem?.w ?? 2, h: droppingItem?.h ?? 2 } : undefined,
     [editMode, droppingItem?.w, droppingItem?.h],
@@ -539,6 +585,7 @@ export function DashGrid() {
                 service={s}
                 editMode={editMode}
                 onDelete={deleteService}
+                onChildReparent={reparentChild}
                 gridConfig={gridConfig}
                 renderConfig={{ rowHeight, gap }}
                 frameLayout={layoutById.get(s.id)}
