@@ -9,9 +9,8 @@ import {
   BgColorPicker,
   parseRgba,
   buildRgba,
-  DEFAULT_BG_HEX,
-  DEFAULT_BG_ALPHA,
 } from './bg-color-picker.component';
+import { getThemeColorDefaults } from '../utils/theme-color-defaults';
 import { useT } from '../i18n';
 import './WidgetConfigModal.css';
 
@@ -62,6 +61,10 @@ export function WidgetTemplateConfigModal({ type, onClose }: WidgetTemplateConfi
   const initialBg = typeof current?.defaultOptions?.['bg_color'] === 'string'
     ? parseRgba(current.defaultOptions['bg_color'] as string)
     : null;
+  const initialFg = typeof current?.defaultOptions?.['font_color'] === 'string'
+    ? parseRgba(current.defaultOptions['font_color'] as string)
+    : null;
+  const themeDefaults = getThemeColorDefaults();
   const initialLayoutSize = String(
     current?.defaultOptions?.['layoutSize'] ?? layoutSizeField?.default ?? '',
   );
@@ -71,8 +74,11 @@ export function WidgetTemplateConfigModal({ type, onClose }: WidgetTemplateConfi
   const [width, setWidth] = useState(initialSize.w);
   const [height, setHeight] = useState(initialSize.h);
   const [hasBg, setHasBg] = useState(initialBg != null);
-  const [bgHex, setBgHex] = useState(initialBg?.hex ?? DEFAULT_BG_HEX);
-  const [bgAlpha, setBgAlpha] = useState(initialBg?.alpha ?? DEFAULT_BG_ALPHA);
+  const [bgHex, setBgHex] = useState(initialBg?.hex ?? themeDefaults.bg.hex);
+  const [bgAlpha, setBgAlpha] = useState(initialBg?.alpha ?? themeDefaults.bg.alpha);
+  const [hasFg, setHasFg] = useState(initialFg != null);
+  const [fgHex, setFgHex] = useState(initialFg?.hex ?? themeDefaults.fg.hex);
+  const [fgAlpha, setFgAlpha] = useState(initialFg?.alpha ?? themeDefaults.fg.alpha);
   const [layoutSize, setLayoutSize] = useState(initialLayoutSize);
   const [thresholds, setThresholds] = useState<StatsThresholds>(() => readThresholds(current?.defaultOptions));
   const [thresholdError, setThresholdError] = useState(false);
@@ -93,6 +99,12 @@ export function WidgetTemplateConfigModal({ type, onClose }: WidgetTemplateConfi
     setBgAlpha(alpha);
   };
 
+  const updateFontColor = (hex: string, alpha: number) => {
+    setHasFg(true);
+    setFgHex(hex);
+    setFgAlpha(alpha);
+  };
+
   // Escape closes the popup (dashtest #25) — it renders in a portal, so a
   // document-level listener is the reliable path.
   useEffect(() => {
@@ -104,18 +116,37 @@ export function WidgetTemplateConfigModal({ type, onClose }: WidgetTemplateConfi
   const colorClipboard = useUIStore(s => s.colorClipboard);
   const setColorClipboard = useUIStore(s => s.setColorClipboard);
   const applyColorClipboard = () => {
-    if (colorClipboard?.bg == null) return;
-    const parsed = parseRgba(colorClipboard.bg);
-    if (!parsed) return;
-    setHasBg(true);
-    setBgHex(parsed.hex);
-    setBgAlpha(parsed.alpha);
+    if (colorClipboard === null) return;
+    if (colorClipboard.bg != null) {
+      const parsed = parseRgba(colorClipboard.bg);
+      if (parsed) {
+        setHasBg(true);
+        setBgHex(parsed.hex);
+        setBgAlpha(parsed.alpha);
+      }
+    }
+    if (colorClipboard.fg != null) {
+      const parsed = parseRgba(colorClipboard.fg);
+      if (parsed) {
+        setHasFg(true);
+        setFgHex(parsed.hex);
+        setFgAlpha(parsed.alpha);
+      }
+    }
   };
 
   const resetBgColor = () => {
     setHasBg(false);
-    setBgHex(DEFAULT_BG_HEX);
-    setBgAlpha(DEFAULT_BG_ALPHA);
+    const defaults = getThemeColorDefaults();
+    setBgHex(defaults.bg.hex);
+    setBgAlpha(defaults.bg.alpha);
+  };
+
+  const resetFontColor = () => {
+    setHasFg(false);
+    const defaults = getThemeColorDefaults();
+    setFgHex(defaults.fg.hex);
+    setFgAlpha(defaults.fg.alpha);
   };
 
   const saveTemplateDefaults = async () => {
@@ -127,6 +158,8 @@ export function WidgetTemplateConfigModal({ type, onClose }: WidgetTemplateConfi
     const defaultOptions: Record<string, unknown> = { ...(current?.defaultOptions ?? {}) };
     if (hasBg) defaultOptions['bg_color'] = buildRgba(bgHex, bgAlpha);
     else delete defaultOptions['bg_color'];
+    if (hasFg) defaultOptions['font_color'] = buildRgba(fgHex, fgAlpha);
+    else delete defaultOptions['font_color'];
     if (layoutSizeField) defaultOptions['layoutSize'] = layoutSize;
     if (isStats) defaultOptions['thresholds'] = thresholds;
 
@@ -200,13 +233,16 @@ export function WidgetTemplateConfigModal({ type, onClose }: WidgetTemplateConfi
                 <button
                   type="button"
                   className="color-clipboard-btn"
-                  onClick={() => setColorClipboard({ bg: buildRgba(bgHex, bgAlpha), fg: null })}
+                  onClick={() => setColorClipboard({
+                    bg: buildRgba(bgHex, bgAlpha),
+                    fg: hasFg ? buildRgba(fgHex, fgAlpha) : null,
+                  })}
                   title={t('widgetConfig.copyColor')}
                   aria-label={t('widgetConfig.copyColor')}
                 >
                   <Copy size={13} />
                 </button>
-                {colorClipboard?.bg != null && (
+                {colorClipboard !== null && (
                   <button
                     type="button"
                     className="color-clipboard-btn"
@@ -225,6 +261,17 @@ export function WidgetTemplateConfigModal({ type, onClose }: WidgetTemplateConfi
               hasValue={hasBg}
               onChange={updateBgColor}
               onReset={resetBgColor}
+            />
+          </div>
+
+          <div className="config-field">
+            <label className="config-label">{t('widgetConfig.fontColor')}</label>
+            <BgColorPicker
+              hex={fgHex}
+              alpha={fgAlpha}
+              hasValue={hasFg}
+              onChange={updateFontColor}
+              onReset={resetFontColor}
             />
           </div>
 

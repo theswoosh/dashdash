@@ -7,7 +7,7 @@ import { WidgetTemplateConfigModal } from '../components/widget-template-config-
 const EN_TRANSLATIONS = {
   en: {
     common: { save: 'Save', cancel: 'Cancel', close: 'Close', reset: 'Reset' },
-    widgetConfig: { widgetBackground: 'Widget background' },
+    widgetConfig: { widgetBackground: 'Widget background', fontColor: 'Font color' },
     widgetTemplateConfig: {
       title: 'Defaults: {{label}}',
       configureAria: 'Configure {{label}} defaults',
@@ -63,5 +63,49 @@ describe('WidgetTemplateConfigModal', () => {
       );
     });
     await waitFor(() => expect(onClose).toHaveBeenCalled());
+  });
+
+  it('seeds background from the theme default (not the hardcoded #4488ff) when unset', () => {
+    wrap(<WidgetTemplateConfigModal type="clock" onClose={() => {}} />);
+    const [bgHexInput] = screen.getAllByLabelText('Hex color');
+    expect(bgHexInput).toHaveValue('#ffffff');
+  });
+
+  it('renders a font color picker and round-trips it through save', async () => {
+    wrap(<WidgetTemplateConfigModal type="clock" onClose={() => {}} />);
+    expect(screen.getByText('Font color')).toBeInTheDocument();
+
+    const [, fgHexInput] = screen.getAllByLabelText('Hex color');
+    expect(fgHexInput).toHaveValue('#191919');
+    fireEvent.change(fgHexInput!, { target: { value: '#abcdef' } });
+
+    fireEvent.click(screen.getByText('Save'));
+
+    await waitFor(() => {
+      const patchCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls
+        .find(call => call[1]?.method === 'PATCH');
+      expect(patchCall).toBeDefined();
+      const body = JSON.parse(patchCall![1].body as string) as { defaultOptions: Record<string, unknown> };
+      expect(body.defaultOptions['font_color']).toBe('rgba(171, 205, 239, 1.00)');
+    });
+  });
+
+  it('omits font_color from the PATCH body when reset to unset', async () => {
+    wrap(<WidgetTemplateConfigModal type="clock" onClose={() => {}} />);
+    const [, fgHexInput] = screen.getAllByLabelText('Hex color');
+    fireEvent.change(fgHexInput!, { target: { value: '#abcdef' } });
+
+    const resetButtons = screen.getAllByText('Reset');
+    fireEvent.click(resetButtons[1]!);
+
+    fireEvent.click(screen.getByText('Save'));
+
+    await waitFor(() => {
+      const patchCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls
+        .find(call => call[1]?.method === 'PATCH');
+      expect(patchCall).toBeDefined();
+      const body = JSON.parse(patchCall![1].body as string) as { defaultOptions: Record<string, unknown> };
+      expect(body.defaultOptions['font_color']).toBeUndefined();
+    });
   });
 });
