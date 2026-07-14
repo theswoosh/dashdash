@@ -30,3 +30,32 @@
   background: var(--danger, #dc2626);
   opacity: 0.3;
 }
+
+.frame-child-drag-ghost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1300;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm, 6px);
+  background: var(--modal-bg, rgba(14, 14, 20, 0.97));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  color: var(--card-fg, inherit);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.frame-child-drag-ghost__title {
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.frame-child-drag-ghost--invalid {
+  border-color: var(--danger, #dc2626);
+  box-shadow: 0 8px 24px rgba(220, 38, 38, 0.35);
+}
