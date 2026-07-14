@@ -25,6 +25,7 @@ import {
   findOverlappingItems,
   evaluateRootDragTarget,
   resolveNonOverlappingPosition,
+  wouldClipFrameChildren,
 } from '../utils/grid-collision';
 import './DashGrid.css';
 
@@ -309,22 +310,29 @@ export function DashGrid() {
     commitLayout(items);
   }, [commitLayout, frameIds, gridConfig, reloadServices, revertGesturedItem, rootServices, setGhostInvalid, setReparentingIds]);
 
-  // Resize never reparents — any overlap (frames included) is invalid.
+  const wouldClipResizedFrame = useCallback((newItem: LayoutItem): boolean => {
+    if (!frameIds.has(newItem.i)) return false;
+    const frame = rootServices.find(s => s.id === newItem.i);
+    return wouldClipFrameChildren(frame?.children ?? [], newItem.w, newItem.h);
+  }, [frameIds, rootServices]);
+
+  // Resize never reparents — any overlap (frames included) is invalid, as is
+  // shrinking a frame below what its own children need.
   const tintGhostDuringResize = useCallback((newLayout: Layout, _oldItem?: LayoutItem | null, newItem?: LayoutItem | null) => {
     if (!editModeRef.current || !newItem) return;
-    setGhostInvalid(findOverlappingItems(newItem, newLayout).length > 0);
-  }, [setGhostInvalid]);
+    setGhostInvalid(findOverlappingItems(newItem, newLayout).length > 0 || wouldClipResizedFrame(newItem));
+  }, [setGhostInvalid, wouldClipResizedFrame]);
 
   const syncLayoutAfterResize = useCallback((newLayout: Layout, oldItem?: LayoutItem | null, newItem?: LayoutItem | null) => {
     if (!editModeRef.current) return;
     setGhostInvalid(false);
     const items = [...newLayout];
-    if (newItem && oldItem && findOverlappingItems(newItem, items).length > 0) {
+    if (newItem && oldItem && (findOverlappingItems(newItem, items).length > 0 || wouldClipResizedFrame(newItem))) {
       revertGesturedItem(items, newItem, oldItem);
       return;
     }
     commitLayout(items);
-  }, [commitLayout, revertGesturedItem, setGhostInvalid]);
+  }, [commitLayout, revertGesturedItem, setGhostInvalid, wouldClipResizedFrame]);
 
   // RGL removes the external drop ghost without firing a callback when the
   // drag leaves the grid — clear the tint here so it can't stick.

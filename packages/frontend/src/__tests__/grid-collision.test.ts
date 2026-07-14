@@ -7,6 +7,7 @@ import {
   findOverlappingItems,
   evaluateRootDragTarget,
   resolveNonOverlappingPosition,
+  wouldClipFrameChildren,
 } from '../utils/grid-collision';
 
 function item(i: string, x: number, y: number, w = 2, h = 2): LayoutItem {
@@ -115,6 +116,36 @@ describe('resolveNonOverlappingPosition', () => {
   it('clamps negative coordinates to zero', () => {
     const pos = resolveNonOverlappingPosition(item('w1', -3, -2), [], 6);
     expect(pos).toEqual({ x: 0, y: 0 });
+  });
+});
+
+describe('wouldClipFrameChildren', () => {
+  function child(x: number, y: number, w: number, h: number) {
+    return { layout: { x, y, w, h } };
+  }
+
+  it('is false when there are no children', () => {
+    expect(wouldClipFrameChildren([], 4, 4)).toBe(false);
+  });
+
+  it('is false when all children fit within the new bounds', () => {
+    const children = [child(0, 0, 2, 2), child(2, 0, 2, 2)];
+    expect(wouldClipFrameChildren(children, 4, 4)).toBe(false);
+  });
+
+  it('is true when a child exceeds the new width', () => {
+    const children = [child(2, 0, 3, 2)];
+    expect(wouldClipFrameChildren(children, 4, 4)).toBe(true);
+  });
+
+  it('is true when a child exceeds the new height', () => {
+    const children = [child(0, 2, 2, 3)];
+    expect(wouldClipFrameChildren(children, 4, 4)).toBe(true);
+  });
+
+  it('treats a child landing exactly on the new edge as fitting', () => {
+    const children = [child(0, 0, 4, 4)];
+    expect(wouldClipFrameChildren(children, 4, 4)).toBe(false);
   });
 });
 

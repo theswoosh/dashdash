@@ -167,17 +167,8 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
     await onDelete?.(id);
   }, [onDelete]);
 
-  const roRef = useRef<ResizeObserver | null>(null);
-  const [width, setWidth] = useState(200);
   const bodyRef = useCallback((node: HTMLDivElement | null) => {
     bodyElRef.current = node;
-    if (roRef.current) { roRef.current.disconnect(); roRef.current = null; }
-    if (!node) return;
-    const ro = new ResizeObserver(([entry]) => {
-      if (entry) setWidth(entry.contentRect.width);
-    });
-    ro.observe(node);
-    roRef.current = ro;
   }, []);
 
   const { rowHeight, gap } = renderConfig;
@@ -187,6 +178,7 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
     () => ({ cols: frameCols, rowHeight, margin, containerPadding: CONTAINER_PADDING }),
     [frameCols, rowHeight, margin],
   );
+  const gridWidth = useMemo(() => frameCols * (rowHeight + gap) - gap, [frameCols, rowHeight, gap]);
   const dragConfig = useMemo(() => ({ enabled: editMode, handle: CHILD_DRAG_HANDLE }), [editMode]);
   const resizeConfig = useMemo(() => ({ enabled: editMode }), [editMode]);
   const isHeaderHidden = service.options?.['hideHeader'] === true && !editMode;
@@ -230,7 +222,7 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
         <ReactGridLayout
           className="frame-grid"
           layout={layout.length > 0 ? layout : baseLayout}
-          width={width}
+          width={gridWidth}
           gridConfig={innerGridConfig}
           dragConfig={dragConfig}
           resizeConfig={resizeConfig}

@@ -31,6 +31,20 @@ export function findOverlappingItems(
   );
 }
 
+/** True if any child's stored (frame-relative) layout would fall outside a
+ *  frame resized to `newW`x`newH` grid units. Boundary is inclusive — a child
+ *  ending exactly at the new edge (x + w === newW) still fits, matching the
+ *  edge-touching-is-not-overlap convention used by `layoutItemsOverlap`. */
+export function wouldClipFrameChildren(
+  children: readonly { layout: { x?: number | undefined; y?: number | undefined; w: number; h: number } }[],
+  newW: number,
+  newH: number,
+): boolean {
+  return children.some(child =>
+    (child.layout.x ?? 0) + child.layout.w > newW || (child.layout.y ?? 0) + child.layout.h > newH,
+  );
+}
+
 export type DragTargetResult =
   | { kind: 'valid' }
   | { kind: 'invalid' }
