@@ -41,20 +41,52 @@ export function usePreferences() {
 
   useEffect(() => () => { if (saveTimer.current) clearTimeout(saveTimer.current); }, []);
 
+  const pendingPatch = useRef<Partial<Preferences>>({});
+  const pendingMerged = useRef<Preferences>({ ...DEFAULT_PREFERENCES, theme: fallbackTheme });
+  const cyclePromise = useRef<Promise<Preferences> | null>(null);
+  const cycleSettle = useRef<{ resolve: (data: Preferences) => void; reject: (error: unknown) => void } | null>(null);
+
   const savePreferences = useCallback(
     (patch: Partial<Preferences>) => {
-      void mutate(current => ({ ...(current ?? DEFAULT_PREFERENCES), ...patch }), {
-        revalidate: false,
-      });
+      pendingPatch.current = { ...pendingPatch.current, ...patch };
+
+      if (!cyclePromise.current) {
+        cyclePromise.current = new Promise<Preferences>((resolve, reject) => {
+          cycleSettle.current = { resolve, reject };
+        });
+      }
+      const cycle = cyclePromise.current;
 
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
-        void fetch('/api/preferences', {
+        const finalPatch = pendingPatch.current;
+        const settle = cycleSettle.current;
+        pendingPatch.current = {};
+        cyclePromise.current = null;
+        cycleSettle.current = null;
+
+        fetch('/api/preferences', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(patch),
-        }).catch(() => { /* preference save is best-effort */ });
+          body: JSON.stringify(finalPatch),
+        })
+          .then(res => {
+            if (!res.ok) throw new Error('preferences save failed');
+            settle?.resolve(pendingMerged.current);
+          })
+          .catch(error => settle?.reject(error));
       }, SAVE_DEBOUNCE_MS);
+
+      void mutate(cycle, {
+        optimisticData: current => {
+          const merged = { ...(current ?? DEFAULT_PREFERENCES), ...pendingPatch.current };
+          pendingMerged.current = merged;
+          return merged;
+        },
+        populateCache: false,
+        revalidate: false,
+        rollbackOnError: true,
+      }).catch(() => { /* preference save is best-effort */ });
     },
     [mutate]
   );
