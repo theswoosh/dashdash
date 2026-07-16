@@ -203,13 +203,15 @@
   color: var(--text-faint);
 }
 
-/* Edit flyout — config/delete stay reachable when the widget is too narrow
-   for header buttons. Sits above the card, moves with it (same grid item). */
+/* Edit flyout — config/delete (and the drag handle when the header is
+   hidden) as a pill INSIDE the card's bottom-right corner. Inside the
+   widget's own footprint it can never be covered by an adjacent widget
+   (fix_and_optimize 2026-07-15: adjacent-widgets overlap). */
 .widget-edit-flyout {
   display: none;
   position: absolute;
-  top: calc(100% + 2px);
-  right: 0;
+  bottom: 4px;
+  right: 4px;
   z-index: 30;
   align-items: center;
   gap: 4px;
@@ -218,6 +220,12 @@
   border: 1px solid var(--border-color);
   border-radius: 8px;
   box-shadow: var(--shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.4));
+}
+
+/* Header hidden in edit mode: the flyout is the widget's only controls —
+   always visible, regardless of width. */
+.widget-edit-flyout--always {
+  display: flex;
 }
 
 @container (max-width: 90px) {

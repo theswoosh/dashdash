@@ -113,3 +113,10 @@
 .react-grid-item {
   container-type: inline-size;
 }
+
+/* A flyout pill wider than a very narrow widget can bleed into the next
+   grid item; raising the hovered item keeps its controls clickable on top.
+   Harmless outside edit mode (items never overlap in display mode). */
+.dash-grid-canvas .react-grid-item:hover {
+  z-index: 25;
+}
