@@ -85,6 +85,21 @@ export function ChatWidget({ options }: WidgetProps) {
     return <div className="chat-empty">{t('chat.noChannels')}</div>;
   }
 
+  const layoutSize = options['layoutSize'];
+  const isTiny = layoutSize === 'tiny';
+
+  if (isTiny) {
+    const last = messages[messages.length - 1];
+    return (
+      <div className="chat-widget chat-widget--tiny">
+        <span className="chat-widget--tiny__channel">{activeChannel?.name ?? t('chat.noChannels')}</span>
+        <span className="chat-widget--tiny__preview">
+          {last ? `${last.senderName}: ${last.body}` : t('chat.noMessages')}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className={`chat-widget chat--skin-${skin}`}>
       <div className="chat-header">
