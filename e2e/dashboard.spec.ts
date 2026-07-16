@@ -376,7 +376,9 @@ test('frame shrinks into a vacated child position without an intermediate save',
   const frameBoxBefore = await frameItem.boundingBox();
   if (!frameBoxBefore) throw new Error('Frame has no bounding box');
 
-  const resizeHandle = frameItem.locator('.react-resizable-handle');
+  // Direct child only — a descendant selector also matches the resize
+  // handles of the frame's own inner-grid children (strict-mode violation).
+  const resizeHandle = frameItem.locator('> .react-resizable-handle');
   await resizeHandle.hover({ force: true });
   await page.mouse.down();
   await page.mouse.move(frameBoxBefore.x + frameBoxBefore.width / 3, frameBoxBefore.y + frameBoxBefore.height, { steps: 12 });
@@ -454,17 +456,25 @@ test('chat: send, receive from another user, search', async ({ page, playwright 
 test('long widget title wraps to a second line instead of clipping', async ({ page }) => {
   await loginViaApi(page);
   await page.goto('/');
-  const clockItem = page.locator('.react-grid-item').filter({ hasText: 'Clock' });
+  let clockItem = page.locator('.react-grid-item').filter({ hasText: 'Clock' });
   await expect(clockItem).toBeVisible();
+  // Tag the element before renaming it — once the title changes, a
+  // hasText: 'Clock' locator stops matching this item at all.
+  await clockItem.evaluate(el => el.setAttribute('data-e2e-clock', 'true'));
+  clockItem = page.locator('[data-e2e-clock="true"]');
 
   await enableEditMode(page);
 
   // Rename the widget to something wider than its card via the config modal.
+  // Clock is narrower than the 90px container-query breakpoint, so its
+  // Configure button lives in the always-visible flyout, not .widget-edit-actions.
   await clockItem.hover();
-  await clockItem.locator('.widget-edit-actions').getByLabel('Configure widget').click();
+  await clockItem.locator('button[aria-label="Configure widget"]:visible').click();
   const longTitle = 'An Extremely Long Widget Title That Cannot Fit One Line';
   const titleField = page.locator('.config-field').filter({ hasText: 'Widget title' });
-  await titleField.locator('input').fill(longTitle);
+  // The title field wraps both the text input and the hide-header checkbox —
+  // narrow to the text input to avoid a strict-mode violation.
+  await titleField.locator('input[type="text"]').fill(longTitle);
   const save = page.waitForResponse(r =>
     r.url().includes('/api/services/') && r.request().method() === 'PATCH' && r.ok());
   await page.locator('.modal').getByRole('button', { name: 'Save' }).click();
@@ -472,7 +482,13 @@ test('long widget title wraps to a second line instead of clipping', async ({ pa
 
   const title = page.locator('.widget-title', { hasText: longTitle }).first();
   const box = await title.boundingBox();
-  const lineHeightPx = await title.evaluate(el => parseFloat(getComputedStyle(el).lineHeight));
+  // line-height is unset (computes to 'normal', not a px value) — fall back
+  // to the standard ~1.2x-font-size approximation for a single line.
+  const lineHeightPx = await title.evaluate(el => {
+    const style = getComputedStyle(el);
+    const parsed = parseFloat(style.lineHeight);
+    return Number.isNaN(parsed) ? parseFloat(style.fontSize) * 1.2 : parsed;
+  });
   expect(box).not.toBeNull();
   // Wrapped = element taller than one line.
   expect(box!.height).toBeGreaterThan(lineHeightPx * 1.5);
@@ -480,18 +496,35 @@ test('long widget title wraps to a second line instead of clipping', async ({ pa
   const overflows = await title.evaluate(el => el.scrollWidth > el.clientWidth + 1);
   expect(overflows).toBe(false);
 
+  // Restore the original title — later tests locate this widget by its
+  // "Clock" text, and the suite shares one services.yml across the run.
+  await clockItem.locator('button[aria-label="Configure widget"]:visible').click();
+  const restoreTitleField = page.locator('.config-field').filter({ hasText: 'Widget title' });
+  await restoreTitleField.locator('input[type="text"]').fill('Clock');
+  const restoreSave = page.waitForResponse(r =>
+    r.url().includes('/api/services/') && r.request().method() === 'PATCH' && r.ok());
+  await page.locator('.modal').getByRole('button', { name: 'Save' }).click();
+  await restoreSave;
+
   await page.getByLabel('Save & exit').click();
 });
 
 test('hide header bar applies immediately in edit mode and the widget stays draggable', async ({ page }) => {
   await loginViaApi(page);
   await page.goto('/');
-  const clockItem = page.locator('.react-grid-item').filter({ hasText: 'Clock' });
+  let clockItem = page.locator('.react-grid-item').filter({ hasText: 'Clock' });
   await expect(clockItem).toBeVisible();
+  // Tag the element before hiding its header — once hidden, the "Clock" text
+  // (only present in the header title) disappears, and a hasText-filtered
+  // locator would stop matching anything at all.
+  await clockItem.evaluate(el => el.setAttribute('data-e2e-clock', 'true'));
+  clockItem = page.locator('[data-e2e-clock="true"]');
 
   await enableEditMode(page);
   await clockItem.hover();
-  await clockItem.locator('.widget-edit-actions').getByLabel('Configure widget').click();
+  // Clock is narrower than the 90px container-query breakpoint, so its
+  // Configure button lives in the always-visible flyout, not .widget-edit-actions.
+  await clockItem.locator('button[aria-label="Configure widget"]:visible').click();
   await page.locator('.config-field--checkbox').filter({ hasText: 'Hide header bar' }).locator('input').check();
   await page.locator('.modal').getByRole('button', { name: 'Save' }).click();
 
