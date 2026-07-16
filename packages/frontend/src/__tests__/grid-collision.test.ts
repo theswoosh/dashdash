@@ -204,3 +204,18 @@ describe('OVERLAP_COMPACTOR', () => {
     );
   });
 });
+
+describe('wouldClipFrameChildren with live layout items', () => {
+  const asChildRect = (l: { x: number; y: number; w: number; h: number }) => ({ layout: l });
+
+  it('a child moved off the right edge in-session no longer blocks a width shrink', () => {
+    // Persisted position was x:3 (would block newW=3); live position is x:0.
+    const live = [asChildRect({ x: 0, y: 0, w: 2, h: 2 })];
+    expect(wouldClipFrameChildren(live, 3, 4, 5, 4)).toBe(false);
+  });
+
+  it('still blocks when the live position would clip', () => {
+    const live = [asChildRect({ x: 2, y: 0, w: 2, h: 2 })];
+    expect(wouldClipFrameChildren(live, 3, 4, 5, 4)).toBe(true);
+  });
+});

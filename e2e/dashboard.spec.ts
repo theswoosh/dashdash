@@ -330,6 +330,68 @@ test('dragging a child out of a frame preserves its in-session size', async ({ p
   expect(Math.abs(reloadedBox.height - resizedBox.height)).toBeLessThan(8);
 });
 
+test('frame shrinks into a vacated child position without an intermediate save', async ({ page }) => {
+  await loginViaApi(page);
+  const api = page.context().request;
+
+  // Look up ids for the Group frame and Block B via the API — Block A is used
+  // (and left back on the root grid) by the previous two tests, so Block B is
+  // the one still free to reparent here.
+  const servicesRes = await api.get('/api/services');
+  const { services: allServices } = await servicesRes.json() as { services: Array<{ id: string; title: string }> };
+  const groupId = allServices.find(s => s.title === 'Group')?.id;
+  const blockBId = allServices.find(s => s.title === 'Block B')?.id;
+  if (!groupId || !blockBId) throw new Error('Fixture missing Group frame or Block B');
+
+  // Persist Block B inside the frame at the right edge (x:16, occupying the
+  // last third of the frame's 24-wide inner grid) — this footprint would
+  // block shrinking the frame down to w:8 until the child moves away.
+  const setupRes = await api.patch(`/api/services/${blockBId}`, {
+    data: { parentId: groupId, layout: { x: 16, y: 0, w: 8, h: 8 } },
+  });
+  expect(setupRes.ok()).toBeTruthy();
+
+  await page.goto('/');
+  const frame = page.locator('.frame-card');
+  const childInFrame = frame.locator('.react-grid-item').filter({ hasText: 'Block B' });
+  await expect(childInFrame).toBeVisible();
+
+  await enableEditMode(page);
+
+  // Drag the child from the right edge to the left edge, in-session only —
+  // this move is never saved.
+  const childBox = await childInFrame.boundingBox();
+  if (!childBox) throw new Error('Block B has no bounding box');
+  const dragHandle = childInFrame.locator('.frame-widget-drag-handle');
+  await dragHandle.hover();
+  await page.mouse.down();
+  await page.mouse.move(childBox.x - childBox.width - 4, childBox.y, { steps: 12 });
+  await page.mouse.up();
+
+  // Now shrink the frame itself from w:24 toward w:8. Before this fix the
+  // resize reverted (red ghost) because the clip check still saw the child
+  // at its persisted x:16 position; it must now succeed because the clip
+  // check sees the live (moved) in-session position instead.
+  const frameItem = page.locator('.react-grid-item').filter({ has: page.locator('.frame-card') });
+  const frameBoxBefore = await frameItem.boundingBox();
+  if (!frameBoxBefore) throw new Error('Frame has no bounding box');
+
+  const resizeHandle = frameItem.locator('.react-resizable-handle');
+  await resizeHandle.hover({ force: true });
+  await page.mouse.down();
+  await page.mouse.move(frameBoxBefore.x + frameBoxBefore.width / 3, frameBoxBefore.y + frameBoxBefore.height, { steps: 12 });
+  await page.mouse.up();
+
+  const frameBoxAfter = await frameItem.boundingBox();
+  if (!frameBoxAfter) throw new Error('Frame has no bounding box after resize');
+
+  // A reverted resize snaps back to the original width; a successful shrink
+  // must leave the frame noticeably narrower.
+  expect(frameBoxAfter.width).toBeLessThan(frameBoxBefore.width * 0.75);
+
+  await page.getByLabel('Save & exit').click();
+});
+
 test('chat: send, receive from another user, search', async ({ page, playwright }) => {
   await loginViaApi(page);
   const adminApi = page.context().request;

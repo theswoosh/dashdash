@@ -70,10 +70,11 @@ interface Props {
   frameLayout?: LayoutItem | undefined;
   onDelete?: ((id: string) => void) | undefined;
   onChildReparent?: ((child: ServiceConfig, targetFrameId: string | null, clientX: number, clientY: number, liveSize: { w: number; h: number }) => void) | undefined;
+  onChildLayoutSync?: ((frameId: string, items: LayoutItem[]) => void) | undefined;
   reloadServices: () => unknown;
 }
 
-export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig, renderConfig, frameLayout, onDelete, onChildReparent, reloadServices }: Props) {
+export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig, renderConfig, frameLayout, onDelete, onChildReparent, onChildLayoutSync, reloadServices }: Props) {
   const t = useT();
   const Card = useThemeCard();
   const { holdToDeleteMs } = useBehavior();
@@ -131,8 +132,11 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
   const recordDragPositions = useCallback((newLayout: Layout) => {
     if (!editMode) return;
     const withoutGhost = newLayout.filter(l => l.i !== DROPPING_ELEMENT_ID);
-    if (withoutGhost.length > 0) dragLayoutRef.current = [...withoutGhost];
-  }, [editMode]);
+    if (withoutGhost.length > 0) {
+      dragLayoutRef.current = [...withoutGhost];
+      onChildLayoutSync?.(service.id, withoutGhost);
+    }
+  }, [editMode, onChildLayoutSync, service.id]);
 
   // Red "invalid drop" tint on the frame body — DOM class toggle only, no
   // setState during drag/resize ticks (same pattern as the main grid).
@@ -222,8 +226,9 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
       );
     }
     dragLayoutRef.current = items;
+    onChildLayoutSync?.(service.id, items);
     setLayout(items);
-  }, [editMode, setGhostInvalid]);
+  }, [editMode, setGhostInvalid, onChildLayoutSync, service.id]);
 
   // Drag (not resize) can carry the dragged child out of this frame's own
   // inner grid entirely — into another frame, or onto the root grid. RGL's
@@ -256,6 +261,7 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
             it.i === newItem.i ? { ...it, x: oldItem.x, y: oldItem.y, w: oldItem.w, h: oldItem.h } : it,
           );
           dragLayoutRef.current = reverted;
+          onChildLayoutSync?.(service.id, reverted);
           setLayout(reverted);
           return;
         }
@@ -265,6 +271,7 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
           if (child && onChildReparent) {
             const remaining = newLayout.filter(it => it.i !== newItem.i);
             dragLayoutRef.current = remaining;
+            onChildLayoutSync?.(service.id, remaining);
             setLayout(remaining);
             onChildReparent(
               child,
@@ -286,15 +293,18 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
       );
     }
     dragLayoutRef.current = items;
+    onChildLayoutSync?.(service.id, items);
     setLayout(items);
-  }, [editMode, setGhostInvalid, setOutsideFrameHidden, service.id, children, onChildReparent]);
+  }, [editMode, setGhostInvalid, setOutsideFrameHidden, service.id, children, onChildReparent, onChildLayoutSync]);
 
   const deleteChild = useCallback(async (id: string) => {
     setLayout(prev => prev.filter(l => l.i !== id));
     // Drop the stale entry so save-on-close never PUTs a deleted id.
-    dragLayoutRef.current = dragLayoutRef.current.filter(l => l.i !== id);
+    const remaining = dragLayoutRef.current.filter(l => l.i !== id);
+    dragLayoutRef.current = remaining;
+    onChildLayoutSync?.(service.id, remaining);
     await onDelete?.(id);
-  }, [onDelete]);
+  }, [onDelete, onChildLayoutSync, service.id]);
 
   const bodyRef = useCallback((node: HTMLDivElement | null) => {
     bodyElRef.current = node;

@@ -97,6 +97,15 @@ export function DashGrid() {
   // per-tick drag/resize updates never trigger React re-renders.
   const canvasElRef = useRef<HTMLDivElement | null>(null);
   const isGhostInvalidRef = useRef(false);
+
+  // Live inner layouts reported by each FrameCard per gesture — lets the
+  // frame-shrink clip check see unsaved child moves (fix_and_optimize
+  // 2026-07-15: vacated space usable before save). Ref, not state: written
+  // on drag ticks.
+  const frameChildLayoutsRef = useRef(new Map<string, LayoutItem[]>());
+  const syncFrameChildLayout = useCallback((frameId: string, items: LayoutItem[]) => {
+    frameChildLayoutsRef.current.set(frameId, items);
+  }, []);
   const setGhostInvalid = useCallback((isInvalid: boolean) => {
     if (isGhostInvalidRef.current === isInvalid) return;
     isGhostInvalidRef.current = isInvalid;
@@ -193,6 +202,7 @@ export function DashGrid() {
     }
 
     if (wasEditing && !editMode) {
+      frameChildLayoutsRef.current.clear();
       const source = dragLayoutRef.current.length > 0 ? dragLayoutRef.current : layout;
       const items = source
         .filter(l => l.i !== DROPPING_ELEMENT_ID)
@@ -315,7 +325,11 @@ export function DashGrid() {
     const frame = rootServices.find(s => s.id === newItem.i);
     const oldW = oldItem?.w ?? newItem.w;
     const oldH = oldItem?.h ?? newItem.h;
-    return wouldClipFrameChildren(frame?.children ?? [], newItem.w, newItem.h, oldW, oldH);
+    const liveItems = frameChildLayoutsRef.current.get(newItem.i);
+    const childRects = liveItems
+      ? liveItems.map(l => ({ layout: { x: l.x, y: l.y, w: l.w, h: l.h } }))
+      : (frame?.children ?? []);
+    return wouldClipFrameChildren(childRects, newItem.w, newItem.h, oldW, oldH);
   }, [frameIds, rootServices]);
 
   // Resize never reparents — any overlap (frames included) is invalid, as is
@@ -589,6 +603,7 @@ export function DashGrid() {
                 editMode={editMode}
                 onDelete={deleteService}
                 onChildReparent={reparentChild}
+                onChildLayoutSync={syncFrameChildLayout}
                 gridConfig={gridConfig}
                 renderConfig={{ rowHeight, gap }}
                 frameLayout={layoutById.get(s.id)}
