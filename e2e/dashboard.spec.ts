@@ -268,6 +268,68 @@ test('dragging a widget onto a frame reparents it (no red ghost)', async ({ page
   await expect(page.locator('.frame-card .react-grid-item').filter({ hasText: 'Block A' })).toBeVisible();
 });
 
+test('dragging a child out of a frame preserves its in-session size', async ({ page }) => {
+  // Depends on the previous test having reparented Block A into the Group frame.
+  await loginViaApi(page);
+  await page.goto('/');
+  const frame = page.locator('.frame-card');
+  const blockAInFrame = frame.locator('.react-grid-item').filter({ hasText: 'Block A' });
+  await expect(blockAInFrame).toBeVisible();
+
+  await enableEditMode(page);
+
+  // Resize Block A inside the frame — in-session only, never saved.
+  const initialBox = await blockAInFrame.boundingBox();
+  if (!initialBox) throw new Error('Block A has no bounding box');
+  await blockAInFrame.hover();
+  const resizeHandle = blockAInFrame.locator('.react-resizable-handle');
+  await resizeHandle.hover({ force: true });
+  await page.mouse.down();
+  await page.mouse.move(initialBox.x + initialBox.width + 60, initialBox.y + initialBox.height + 30, { steps: 10 });
+  await page.mouse.up();
+
+  const resizedBox = await blockAInFrame.boundingBox();
+  if (!resizedBox) throw new Error('Block A has no bounding box after resize');
+  expect(resizedBox.width).toBeGreaterThan(initialBox.width);
+  expect(resizedBox.height).toBeGreaterThan(initialBox.height);
+
+  // Drag the resized child out of the frame onto empty root-grid space — same
+  // drag-handle technique as the reparent-onto-frame test above, but the
+  // frame-internal handle class.
+  const dragHandle = blockAInFrame.locator('.frame-widget-drag-handle');
+  await dragHandle.hover();
+  await page.mouse.down();
+  await page.mouse.move(150, 550, { steps: 12 });
+
+  const patchReq = page.waitForRequest(r =>
+    r.method() === 'PATCH' && r.url().includes('/api/services/'));
+  await page.mouse.up();
+  const body = (await patchReq).postDataJSON() as { layout: { w: number; h: number } };
+
+  // Before the fix, the PATCH always carried the persisted 8x8 size — the
+  // in-session resize was silently discarded on reparent. It must now reflect
+  // the live (resized) size instead.
+  expect(body.layout.w).not.toBe(8);
+  expect(body.layout.h).not.toBe(8);
+
+  // Visually, the dropped widget on the root grid keeps the resized dimensions.
+  const blockAOnRoot = page.locator('.dash-grid-canvas .react-grid-item').filter({ hasText: 'Block A' });
+  await expect(blockAOnRoot).toBeVisible();
+  const droppedBox = await blockAOnRoot.boundingBox();
+  if (!droppedBox) throw new Error('Block A has no bounding box after drop');
+  expect(Math.abs(droppedBox.width - resizedBox.width)).toBeLessThan(8);
+  expect(Math.abs(droppedBox.height - resizedBox.height)).toBeLessThan(8);
+
+  await page.getByLabel('Save & exit').click();
+  await page.reload();
+  const reloadedBlockA = page.locator('.react-grid-item').filter({ hasText: 'Block A' });
+  await expect(reloadedBlockA).toBeVisible();
+  const reloadedBox = await reloadedBlockA.boundingBox();
+  if (!reloadedBox) throw new Error('Block A has no bounding box after reload');
+  expect(Math.abs(reloadedBox.width - resizedBox.width)).toBeLessThan(8);
+  expect(Math.abs(reloadedBox.height - resizedBox.height)).toBeLessThan(8);
+});
+
 test('chat: send, receive from another user, search', async ({ page, playwright }) => {
   await loginViaApi(page);
   const adminApi = page.context().request;

@@ -476,7 +476,8 @@ export function DashGrid() {
   // frame's inner grid, or onto the root grid. FrameCard already removed the
   // item from its own local layout before calling this (optimistic).
   const reparentChild = useCallback(
-    (child: ServiceConfig, targetFrameId: string | null, clientX: number, clientY: number) => {
+    (child: ServiceConfig, targetFrameId: string | null, clientX: number, clientY: number, liveSize: { w: number; h: number }) => {
+      const persistedH = isTinyLayoutService(child) ? child.layout.h : liveSize.h;
       let relLayout: { x: number; y: number; w: number; h: number };
 
       if (targetFrameId) {
@@ -490,17 +491,17 @@ export function DashGrid() {
           h: frameService.layout.h,
         };
         const childItems = (frameService.children ?? []).map(c => serviceAsGridItem(c, gridConfig));
-        const desired = { i: child.id, x: 0, y: 0, w: child.layout.w, h: child.layout.h };
+        const desired = { i: child.id, x: 0, y: 0, w: liveSize.w, h: liveSize.h };
         const pos = resolveNonOverlappingPosition(desired, childItems, frameLayoutItem.w);
-        relLayout = { x: pos.x, y: pos.y, w: child.layout.w, h: child.layout.h };
+        relLayout = { x: pos.x, y: pos.y, w: liveSize.w, h: persistedH };
       } else {
         const rootItems = layout.length > 0 ? layout : baseLayout;
         const rect = canvasElRef.current?.getBoundingClientRect();
         const desiredX = rect ? Math.max(0, Math.round((clientX - rect.left) / cellPitch)) : 0;
         const desiredY = rect ? Math.max(0, Math.round((clientY - rect.top) / cellPitch)) : 0;
-        const desired = { i: child.id, x: desiredX, y: desiredY, w: child.layout.w, h: child.layout.h };
+        const desired = { i: child.id, x: desiredX, y: desiredY, w: liveSize.w, h: liveSize.h };
         const pos = resolveNonOverlappingPosition(desired, rootItems, cols);
-        relLayout = { x: pos.x, y: pos.y, w: child.layout.w, h: child.layout.h };
+        relLayout = { x: pos.x, y: pos.y, w: liveSize.w, h: persistedH };
       }
 
       void fetch(`/api/services/${child.id}`, {

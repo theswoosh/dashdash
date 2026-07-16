@@ -69,7 +69,7 @@ interface Props {
   renderConfig: { rowHeight: number; gap: number };
   frameLayout?: LayoutItem | undefined;
   onDelete?: ((id: string) => void) | undefined;
-  onChildReparent?: ((child: ServiceConfig, targetFrameId: string | null, clientX: number, clientY: number) => void) | undefined;
+  onChildReparent?: ((child: ServiceConfig, targetFrameId: string | null, clientX: number, clientY: number, liveSize: { w: number; h: number }) => void) | undefined;
   reloadServices: () => unknown;
 }
 
@@ -266,7 +266,13 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
             const remaining = newLayout.filter(it => it.i !== newItem.i);
             dragLayoutRef.current = remaining;
             setLayout(remaining);
-            onChildReparent(child, target.kind === 'reparent-frame' ? target.frameId : null, evt.clientX, evt.clientY);
+            onChildReparent(
+              child,
+              target.kind === 'reparent-frame' ? target.frameId : null,
+              evt.clientX,
+              evt.clientY,
+              { w: newItem.w, h: newItem.h },
+            );
             return;
           }
         }
