@@ -326,3 +326,35 @@ test('chat: send, receive from another user, search', async ({ page, playwright 
   await expect(reloadedChatWidget.locator('.chat-bubble').filter({ hasText: 'hi from chatter' })).toBeVisible();
   await userApi.dispose();
 });
+
+test('long widget title wraps to a second line instead of clipping', async ({ page }) => {
+  await loginViaApi(page);
+  await page.goto('/');
+  const clockItem = page.locator('.react-grid-item').filter({ hasText: 'Clock' });
+  await expect(clockItem).toBeVisible();
+
+  await enableEditMode(page);
+
+  // Rename the widget to something wider than its card via the config modal.
+  await clockItem.hover();
+  await clockItem.locator('.widget-edit-actions').getByLabel('Configure widget').click();
+  const longTitle = 'An Extremely Long Widget Title That Cannot Fit One Line';
+  const titleField = page.locator('.config-field').filter({ hasText: 'Widget title' });
+  await titleField.locator('input').fill(longTitle);
+  const save = page.waitForResponse(r =>
+    r.url().includes('/api/services/') && r.request().method() === 'PATCH' && r.ok());
+  await page.locator('.modal').getByRole('button', { name: 'Save' }).click();
+  await save;
+
+  const title = page.locator('.widget-title', { hasText: longTitle }).first();
+  const box = await title.boundingBox();
+  const lineHeightPx = await title.evaluate(el => parseFloat(getComputedStyle(el).lineHeight));
+  expect(box).not.toBeNull();
+  // Wrapped = element taller than one line.
+  expect(box!.height).toBeGreaterThan(lineHeightPx * 1.5);
+  // And no horizontal clipping.
+  const overflows = await title.evaluate(el => el.scrollWidth > el.clientWidth + 1);
+  expect(overflows).toBe(false);
+
+  await page.getByLabel('Save & exit').click();
+});
