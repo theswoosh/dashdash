@@ -237,7 +237,6 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
       {
         key: 'layoutSize',
         label: 'Layout size',
-        labelKey: 'widgetConfig.layoutSize',
         type: 'select',
         options: [
           { value: 'normal', label: 'Normal' },
