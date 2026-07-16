@@ -16,8 +16,8 @@ services:
       PORT: 3000
       DATA_DIR: /data
       CONFIG_DIR: /config
-      # Integration API keys (format: DASHDASH_INTEGRATION_<ID_UPPERCASE>_<FIELD>)
-      # DASHDASH_INTEGRATION_SONARR_MAIN_KEY: your-sonarr-api-key
+      # Integration API keys (format: BOARD_INTEGRATION_<ID_UPPERCASE>_<FIELD>)
+      # BOARD_INTEGRATION_SONARR_MAIN_KEY: your-sonarr-api-key
     restart: unless-stopped
     # Defense-in-depth: immutable root filesystem (data lives in the volumes),
     # no capabilities beyond what the entrypoint needs (chown volumes, drop to

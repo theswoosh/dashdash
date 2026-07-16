@@ -12,16 +12,16 @@ async function freshCreateUpdateCheckRoutes(): Promise<typeof CreateUpdateCheckR
 }
 
 describe('update-check route', () => {
-  const originalToken = process.env['DASHDASH_GITHUB_TOKEN'];
+  const originalToken = process.env['BOARD_GITHUB_TOKEN'];
 
   afterEach(() => {
-    if (originalToken === undefined) delete process.env['DASHDASH_GITHUB_TOKEN'];
-    else process.env['DASHDASH_GITHUB_TOKEN'] = originalToken;
+    if (originalToken === undefined) delete process.env['BOARD_GITHUB_TOKEN'];
+    else process.env['BOARD_GITHUB_TOKEN'] = originalToken;
     vi.unstubAllGlobals();
   });
 
   it('no-ops without a token', async () => {
-    delete process.env['DASHDASH_GITHUB_TOKEN'];
+    delete process.env['BOARD_GITHUB_TOKEN'];
     const createUpdateCheckRoutes = await freshCreateUpdateCheckRoutes();
     const app = Fastify();
     await app.register(createUpdateCheckRoutes({ currentVersion: '0.0.2' }), { prefix: '/api' });
@@ -32,7 +32,7 @@ describe('update-check route', () => {
   });
 
   it('reports updateAvailable when the fetched tag is newer', async () => {
-    process.env['DASHDASH_GITHUB_TOKEN'] = 'test-token';
+    process.env['BOARD_GITHUB_TOKEN'] = 'test-token';
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ tag_name: 'v0.0.3', html_url: 'https://github.com/theswoosh/dashdash/releases/tag/v0.0.3' }),
@@ -47,7 +47,7 @@ describe('update-check route', () => {
   });
 
   it('soft no-ops when the GitHub fetch throws', async () => {
-    process.env['DASHDASH_GITHUB_TOKEN'] = 'test-token';
+    process.env['BOARD_GITHUB_TOKEN'] = 'test-token';
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network down')));
     const createUpdateCheckRoutes = await freshCreateUpdateCheckRoutes();
     const app = Fastify();

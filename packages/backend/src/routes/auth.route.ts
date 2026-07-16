@@ -280,7 +280,7 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
         VALUES (?, ?, ?, ?)
       `).run(randomUUID(), user.id, hash, expiresAt);
 
-      const baseUrl = process.env['DASHDASH_BASE_URL'] ?? 'http://localhost:3000';
+      const baseUrl = process.env['BOARD_BASE_URL'] ?? 'http://localhost:3000';
       const resetUrl = `${baseUrl}/reset-password?token=${raw}`;
 
       try {
@@ -309,7 +309,7 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
 
         const state = generateState();
         const codeVerifier = generateCodeVerifier();
-        const baseUrl = process.env['DASHDASH_BASE_URL'] ?? 'http://localhost:3000';
+        const baseUrl = process.env['BOARD_BASE_URL'] ?? 'http://localhost:3000';
         const redirectUri = `${baseUrl}/api/auth/oidc/callback`;
 
         createOidcState(db, state, codeVerifier, redirectUri, OIDC_STATE_EXPIRES_SECONDS);

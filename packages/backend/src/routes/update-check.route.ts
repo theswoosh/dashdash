@@ -61,7 +61,7 @@ async function fetchLatestRelease(token: string): Promise<UpdateCheckResultInter
 export function createUpdateCheckRoutes(deps: { currentVersion: string }): FastifyPluginAsync {
   return async fastify => {
     fastify.get('/update-check', async (_req, reply) => {
-      const token = process.env['DASHDASH_GITHUB_TOKEN'];
+      const token = process.env['BOARD_GITHUB_TOKEN'];
       if (!token) {
         return reply.send({
           currentVersion: deps.currentVersion,

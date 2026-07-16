@@ -88,7 +88,7 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
   await server.register(cors, {
     origin: isDev
       ? 'http://localhost:3000'
-      : (process.env['DASHDASH_CORS_ORIGIN'] ?? false),
+      : (process.env['BOARD_CORS_ORIGIN'] ?? false),
     credentials: true,
   });
 
@@ -136,19 +136,19 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
     log.warn(`Config validation: ${errors} error(s), ${warnings} warning(s) — check the Validation tab in the admin panel`);
   }
 
-  const oidcIssuer   = process.env['DASHDASH_OIDC_ISSUER']   ?? '';
-  const oidcClientId = process.env['DASHDASH_OIDC_CLIENT_ID'] ?? '';
-  const oidcSecret   = process.env['DASHDASH_OIDC_SECRET']   ?? '';
+  const oidcIssuer   = process.env['BOARD_OIDC_ISSUER']   ?? '';
+  const oidcClientId = process.env['BOARD_OIDC_CLIENT_ID'] ?? '';
+  const oidcSecret   = process.env['BOARD_OIDC_SECRET']   ?? '';
   const oidcConfig: OidcConfig = {
     enabled:      Boolean(oidcIssuer && oidcClientId && oidcSecret),
     issuer:       oidcIssuer,
     clientId:     oidcClientId,
     clientSecret: oidcSecret,
-    scopes:       process.env['DASHDASH_OIDC_SCOPES']       ?? 'openid profile email',
-    groupsClaim:  process.env['DASHDASH_OIDC_GROUPS_CLAIM'] ?? '',
-    adminGroup:   process.env['DASHDASH_OIDC_ADMIN_GROUP']  ?? '',
-    autoLink:     process.env['DASHDASH_OIDC_AUTO_LINK']    !== 'false',
-    allowInsecureHttp: process.env['DASHDASH_OIDC_ALLOW_HTTP'] === 'true',
+    scopes:       process.env['BOARD_OIDC_SCOPES']       ?? 'openid profile email',
+    groupsClaim:  process.env['BOARD_OIDC_GROUPS_CLAIM'] ?? '',
+    adminGroup:   process.env['BOARD_OIDC_ADMIN_GROUP']  ?? '',
+    autoLink:     process.env['BOARD_OIDC_AUTO_LINK']    !== 'false',
+    allowInsecureHttp: process.env['BOARD_OIDC_ALLOW_HTTP'] === 'true',
   };
 
   // Auth middleware runs before all route handlers.

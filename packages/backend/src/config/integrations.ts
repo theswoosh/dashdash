@@ -29,11 +29,11 @@ export function loadIntegrations(configDir: string, logger: Logger = console): I
 
 /**
  * Resolve credentials for an integration from environment variables.
- * Convention: DASHDASH_INTEGRATION_{ID_UPPER}_{FIELD} → credentials.field
- * e.g. DASHDASH_INTEGRATION_MYROUTER_PASSWORD → credentials.password
+ * Convention: BOARD_INTEGRATION_{ID_UPPER}_{FIELD} → credentials.field
+ * e.g. BOARD_INTEGRATION_MYROUTER_PASSWORD → credentials.password
  */
 export function resolveCredentials(id: string): Record<string, string> {
-  const prefix = `DASHDASH_INTEGRATION_${id.toUpperCase().replace(/-/g, '_')}_`;
+  const prefix = `BOARD_INTEGRATION_${id.toUpperCase().replace(/-/g, '_')}_`;
   const credentials: Record<string, string> = {};
   for (const [key, value] of Object.entries(process.env)) {
     if (key.startsWith(prefix) && value !== undefined) {

@@ -16,10 +16,10 @@ function createTransport(smtp: SmtpConfig) {
     host: smtp.host,
     port: smtp.port,
     secure: smtp.secure,
-    auth: process.env['DASHDASH_SMTP_USER']
+    auth: process.env['BOARD_SMTP_USER']
       ? {
-          user: process.env['DASHDASH_SMTP_USER'],
-          pass: process.env['DASHDASH_SMTP_PASS'] ?? '',
+          user: process.env['BOARD_SMTP_USER'],
+          pass: process.env['BOARD_SMTP_PASS'] ?? '',
         }
       : undefined,
   });

@@ -86,7 +86,7 @@ monitoring hosts on your own network.
 Credentials are passed via environment variables — never stored in config files:
 
 ```env
-DASHDASH_INTEGRATION_<ID_UPPERCASE>_KEY=your-api-key
+BOARD_INTEGRATION_<ID_UPPERCASE>_KEY=your-api-key
 ```
 
 See `.env.example` for supported variables.

@@ -4,9 +4,9 @@
 - id: pihole-main
   type: pihole
   url: http://pihole
-  # apiKey via env: DASHDASH_INTEGRATION_PIHOLE_MAIN_KEY
+  # apiKey via env: BOARD_INTEGRATION_PIHOLE_MAIN_KEY
 
 - id: jellyfin-main
   type: jellyfin
   url: http://jellyfin:8096
-  # apiKey via env: DASHDASH_INTEGRATION_JELLYFIN_MAIN_KEY
+  # apiKey via env: BOARD_INTEGRATION_JELLYFIN_MAIN_KEY

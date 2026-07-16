@@ -141,7 +141,7 @@ export function createUsersRoutes(db: Db, mailConfig: MailConfig): FastifyPlugin
         VALUES (?, ?, ?, ?)
       `).run(randomUUID(), target.id, hash, expiresAt);
 
-      const baseUrl = process.env['DASHDASH_BASE_URL'] ?? 'http://localhost:3000';
+      const baseUrl = process.env['BOARD_BASE_URL'] ?? 'http://localhost:3000';
       const resetUrl = `${baseUrl}/reset-password?token=${raw}`;
 
       try {

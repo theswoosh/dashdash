@@ -11,7 +11,7 @@ export function getSessionCookieOptions(): {
 } {
   return {
     httpOnly: true,
-    secure: process.env['DASHDASH_COOKIE_SECURE'] !== 'false'
+    secure: process.env['BOARD_COOKIE_SECURE'] !== 'false'
       && process.env['NODE_ENV'] === 'production',
     sameSite: 'strict',
     path: '/',
