@@ -22,7 +22,13 @@ const DEFAULT_THRESHOLD_WARN = 65;
 const DEFAULT_THRESHOLD_CRIT = 85;
 
 interface ThresholdPair { warn: number; crit: number }
-interface StatsThresholds { cpu: ThresholdPair; mem: ThresholdPair }
+
+const METRIC_LABEL_KEY: Record<'cpu' | 'mem' | 'disk', string> = {
+  cpu: 'widgetTemplateConfig.thresholdCpu',
+  mem: 'widgetTemplateConfig.thresholdMem',
+  disk: 'widgetTemplateConfig.thresholdDisk',
+};
+interface StatsThresholds { cpu: ThresholdPair; mem: ThresholdPair; disk: ThresholdPair }
 
 function readThresholds(defaultOptions: Record<string, unknown> | undefined): StatsThresholds {
   const fallback: ThresholdPair = { warn: DEFAULT_THRESHOLD_WARN, crit: DEFAULT_THRESHOLD_CRIT };
@@ -37,7 +43,7 @@ function readThresholds(defaultOptions: Record<string, unknown> | undefined): St
       crit: typeof crit === 'number' ? crit : fallback.crit,
     };
   };
-  return { cpu: readPair('cpu'), mem: readPair('mem') };
+  return { cpu: readPair('cpu'), mem: readPair('mem'), disk: readPair('disk') };
 }
 
 interface WidgetTemplateConfigModalProps {
@@ -85,7 +91,7 @@ export function WidgetTemplateConfigModal({ type, onClose }: WidgetTemplateConfi
   const [isSaving, setIsSaving] = useState(false);
 
   const clampPct = (n: number) => Math.min(100, Math.max(0, Math.round(n)));
-  const updateThreshold = (metric: 'cpu' | 'mem', bound: 'warn' | 'crit', raw: number) => {
+  const updateThreshold = (metric: 'cpu' | 'mem' | 'disk', bound: 'warn' | 'crit', raw: number) => {
     setThresholdError(false);
     setThresholds(prev => ({ ...prev, [metric]: { ...prev[metric], [bound]: clampPct(raw) } }));
   };
@@ -150,7 +156,7 @@ export function WidgetTemplateConfigModal({ type, onClose }: WidgetTemplateConfi
   };
 
   const saveTemplateDefaults = async () => {
-    if (isStats && (thresholds.cpu.warn >= thresholds.cpu.crit || thresholds.mem.warn >= thresholds.mem.crit)) {
+    if (isStats && (thresholds.cpu.warn >= thresholds.cpu.crit || thresholds.mem.warn >= thresholds.mem.crit || thresholds.disk.warn >= thresholds.disk.crit)) {
       setThresholdError(true);
       return;
     }
@@ -278,10 +284,10 @@ export function WidgetTemplateConfigModal({ type, onClose }: WidgetTemplateConfi
           {isStats && (
             <div className="config-field">
               <label className="config-label">{t('widgetTemplateConfig.thresholds')}</label>
-              {(['cpu', 'mem'] as const).map(metric => (
+              {(['cpu', 'mem', 'disk'] as const).map(metric => (
                 <div className="wtc-size-row wtc-threshold-row" key={metric}>
                   <span className="wtc-threshold-metric">
-                    {t(metric === 'cpu' ? 'widgetTemplateConfig.thresholdCpu' : 'widgetTemplateConfig.thresholdMem')}
+                    {t(METRIC_LABEL_KEY[metric])}
                   </span>
                   <label className="wtc-size-field">
                     <span className="wtc-size-label">{t('widgetTemplateConfig.thresholdWarn')}</span>

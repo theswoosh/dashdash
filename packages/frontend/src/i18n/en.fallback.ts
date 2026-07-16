@@ -141,6 +141,7 @@ export const EN_FALLBACK: Record<string, unknown> = {
     thresholds: 'Utilization colour thresholds (%)',
     thresholdCpu: 'CPU',
     thresholdMem: 'RAM',
+    thresholdDisk: 'Disk',
     thresholdWarn: 'Warn',
     thresholdCrit: 'Critical',
     thresholdOrderError: 'Warn must be below critical',

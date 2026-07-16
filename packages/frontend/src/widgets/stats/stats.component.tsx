@@ -22,6 +22,8 @@ interface StatsData {
   memUsedMb: number;
   memTotalMb: number;
   uptimeSecs: number;
+  diskUsedPct: number | null;
+  cpuTempC: number | null;
 }
 
 interface ThresholdPair {
@@ -33,7 +35,7 @@ const DEFAULT_THRESHOLDS: ThresholdPair = { warn: THRESHOLD_WARNING, crit: THRES
 
 /** Read `{ warn, crit }` for one metric from options.thresholds, tolerating
  *  partial/malformed config (falls back per-field). */
-function thresholdsFor(options: Record<string, unknown>, metric: 'cpu' | 'mem'): ThresholdPair {
+function thresholdsFor(options: Record<string, unknown>, metric: 'cpu' | 'mem' | 'disk'): ThresholdPair {
   const root = options['thresholds'];
   if (typeof root !== 'object' || root === null) return DEFAULT_THRESHOLDS;
   const entry = (root as Record<string, unknown>)[metric];
@@ -97,12 +99,15 @@ function isStatsData(x: unknown): x is StatsData {
     && typeof r['memUsedPct'] === 'number'
     && typeof r['memUsedMb'] === 'number'
     && typeof r['memTotalMb'] === 'number'
-    && typeof r['uptimeSecs'] === 'number';
+    && typeof r['uptimeSecs'] === 'number'
+    && (r['diskUsedPct'] === null || typeof r['diskUsedPct'] === 'number')
+    && (r['cpuTempC'] === null || typeof r['cpuTempC'] === 'number');
 }
 
 export function StatsWidget({ data, error, loading, options }: WidgetProps) {
   const cpuThresholds = useMemo(() => thresholdsFor(options, 'cpu'), [options]);
   const memThresholds = useMemo(() => thresholdsFor(options, 'mem'), [options]);
+  const diskThresholds = useMemo(() => thresholdsFor(options, 'disk'), [options]);
 
   if (loading) return <WidgetSkeleton />;
   if (error) return <WidgetError message={error} />;
@@ -122,6 +127,14 @@ export function StatsWidget({ data, error, loading, options }: WidgetProps) {
           thresholds={memThresholds}
           subtitle={`${statsData.memUsedMb} / ${statsData.memTotalMb} MB`}
         />
+      )}
+      {isMetricShown(options, 'showDisk') && statsData.diskUsedPct !== null && (
+        <StatBar label="Disk" value={statsData.diskUsedPct} thresholds={diskThresholds} />
+      )}
+      {isMetricShown(options, 'showCpuTemp') && statsData.cpuTempC !== null && (
+        <div className="stats-widget__uptime">
+          CPU temp: {statsData.cpuTempC}°C
+        </div>
       )}
       {isMetricShown(options, 'showUptime') && (
         <div className="stats-widget__uptime">

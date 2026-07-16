@@ -137,6 +137,7 @@ widgetTemplateConfig:
   thresholds: "Auslastungs-Farbschwellwerte (%)"
   thresholdCpu: "CPU"
   thresholdMem: "RAM"
+  thresholdDisk: "Speicher"
   thresholdWarn: "Warnung"
   thresholdCrit: "Kritisch"
   thresholdOrderError: "Warnung muss unter Kritisch liegen"
