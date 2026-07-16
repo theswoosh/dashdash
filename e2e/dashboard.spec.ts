@@ -564,6 +564,78 @@ test('chat: inactive tab shows an unread dot until selected', async ({ page, pla
   await userApi.dispose();
 });
 
+test('chat: admin restricts a channel to specific members', async ({ page, playwright }) => {
+  await loginViaApi(page);
+  const adminApi = page.context().request;
+
+  const channelRes = await adminApi.post('/api/chat/channels', {
+    data: { name: `e2e-acl-${Date.now()}` },
+  });
+  expect(channelRes.status()).toBe(201);
+  const { channel } = await channelRes.json() as { channel: { id: string; name: string } };
+  const patchRes = await adminApi.patch('/api/services/chat-e2e', {
+    data: { options: { channelIds: [channel.id], pollingInterval: 0 } },
+  });
+  expect(patchRes.ok()).toBeTruthy();
+
+  // Second (member-to-be) and third (never-added) users, registered up front
+  // so both appear in the admin's user picker.
+  const memberApi = await playwright.request.newContext({ baseURL: 'http://127.0.0.1:4317' });
+  await memberApi.post('/api/auth/register', {
+    data: { email: 'chat-acl-member@test.local', password: 'chat-password-123', name: 'AclMember' },
+  });
+  const memberLogin = await memberApi.post('/api/auth/login', {
+    data: { email: 'chat-acl-member@test.local', password: 'chat-password-123' },
+  });
+  expect(memberLogin.ok()).toBeTruthy();
+
+  const outsiderApi = await playwright.request.newContext({ baseURL: 'http://127.0.0.1:4317' });
+  await outsiderApi.post('/api/auth/register', {
+    data: { email: 'chat-acl-outsider@test.local', password: 'chat-password-123', name: 'AclOutsider' },
+  });
+  const outsiderLogin = await outsiderApi.post('/api/auth/login', {
+    data: { email: 'chat-acl-outsider@test.local', password: 'chat-password-123' },
+  });
+  expect(outsiderLogin.ok()).toBeTruthy();
+
+  // Sanity: channel is open before any member is added.
+  const beforeMsg = await outsiderApi.post(`/api/chat/channels/${channel.id}/messages`, {
+    data: { body: 'still open' },
+  });
+  expect(beforeMsg.status()).toBe(201);
+
+  // Admin opens the chat widget's config modal, edits the channel, and adds
+  // the member through the picker.
+  await page.goto('/');
+  await enableEditMode(page);
+  const chatWidget = page.locator('.react-grid-item').filter({ hasText: 'Chatroom' });
+  await chatWidget.getByLabel('Configure widget').click();
+  const modal = page.locator('.modal');
+  await expect(modal).toBeVisible();
+
+  const channelRow = modal.locator('.channels-editor__row').filter({ hasText: channel.name });
+  await channelRow.getByLabel(`Edit ${channel.name}`).click();
+  const editingRow = modal.locator('.channels-editor__row--editing').filter({ hasText: channel.name });
+  await editingRow.locator('.channel-members-picker__add select').selectOption({ label: 'AclMember' });
+  await editingRow.locator('.channel-members-picker__add button').click();
+  await expect(editingRow.locator('.channel-members-picker__list li').filter({ hasText: 'AclMember' })).toBeVisible();
+  await modal.getByLabel('Close').click();
+
+  // Member can now post; the never-added outsider is rejected.
+  const memberMsg = await memberApi.post(`/api/chat/channels/${channel.id}/messages`, {
+    data: { body: 'member in' },
+  });
+  expect(memberMsg.status()).toBe(201);
+
+  const afterMsg = await outsiderApi.post(`/api/chat/channels/${channel.id}/messages`, {
+    data: { body: 'outsider blocked' },
+  });
+  expect(afterMsg.status()).toBe(403);
+
+  await memberApi.dispose();
+  await outsiderApi.dispose();
+});
+
 test('long widget title wraps to a second line instead of clipping', async ({ page }) => {
   await loginViaApi(page);
   await page.goto('/');

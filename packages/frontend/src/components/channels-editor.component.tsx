@@ -4,6 +4,7 @@ import { useT } from '../i18n';
 import { useAuth } from '../hooks/use-auth.hook';
 import { useChatChannels } from '../widgets/chat/hooks/use-chat-channels.hook';
 import { useHoldAction } from '../hooks/use-hold-action.hook';
+import { ChannelMembersPicker } from './channel-members-picker.component';
 
 const RETENTION_OPTIONS = [null, 7, 30, 60, 180, 365] as const;
 
@@ -90,6 +91,7 @@ function ChannelRow({
           ✕
         </button>
         {error && <span className="channels-editor__error">{error}</span>}
+        {canManage && <ChannelMembersPicker channelId={channel.id} />}
       </div>
     );
   }

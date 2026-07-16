@@ -106,6 +106,9 @@ widgetConfig:
     retention365d: "1 Jahr"
     channelExists: "Ein Kanal mit diesem Namen existiert bereits"
     holdToDeleteChannel: "Halten, um Kanal samt Nachrichten zu löschen"
+    membersOpenHint: "Für alle Nutzer offen — Mitglied hinzufügen, um den Kanal einzuschränken"
+    membersRestrictedHint: "Auf die folgenden Mitglieder beschränkt (+ Admins)"
+    addMember: "Mitglied hinzufügen…"
 
 chat:
   placeholder: "Nachricht…"

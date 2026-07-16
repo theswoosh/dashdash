@@ -112,6 +112,9 @@ export const EN_FALLBACK: Record<string, unknown> = {
       retention365d: '1 year',
       channelExists: 'A channel with this name already exists',
       holdToDeleteChannel: 'Hold to delete channel and its messages',
+      membersOpenHint: 'Open to all users — add a member to restrict this channel',
+      membersRestrictedHint: 'Restricted to the members below (+ admins)',
+      addMember: 'Add member…',
     },
   },
   chat: {
