@@ -375,19 +375,24 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
           ))}
         </ReactGridLayout>
       </div>
-      {draggingChild && createPortal(
-        <div
-          ref={dragGhostElRef}
-          className="frame-child-drag-ghost"
-          style={{
-            width: draggingChild.layout.w * (rowHeight + gap) - gap,
-            height: draggingChild.layout.h * (rowHeight + gap) - gap,
-          }}
-        >
-          <WidgetCard service={draggingChild} editMode={false} dragHandleClassName="frame-widget-drag-handle" />
-        </div>,
-        document.body,
-      )}
+      {draggingChild && (() => {
+        const liveItem = (layout.length > 0 ? layout : baseLayout).find(l => l.i === draggingChild.id);
+        const w = liveItem?.w ?? draggingChild.layout.w;
+        const h = liveItem?.h ?? draggingChild.layout.h;
+        return createPortal(
+          <div
+            ref={dragGhostElRef}
+            className="frame-child-drag-ghost"
+            style={{
+              width: w * (rowHeight + gap) - gap,
+              height: h * (rowHeight + gap) - gap,
+            }}
+          >
+            <WidgetCard service={draggingChild} editMode={false} dragHandleClassName="frame-widget-drag-handle" />
+          </div>,
+          document.body,
+        );
+      })()}
     </Card>
   );
 });
