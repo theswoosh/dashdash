@@ -17,7 +17,7 @@ function readPackageVersion(): string {
   }
 }
 
-const APP_VERSION = readPackageVersion();
+export const APP_VERSION = readPackageVersion();
 
 export const healthRoutes: FastifyPluginAsync = async fastify => {
   fastify.get('/health', async (_req, reply) => {

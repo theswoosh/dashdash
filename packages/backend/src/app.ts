@@ -12,7 +12,7 @@ import type { WebSocket } from 'ws';
 import { createDb, type Db } from './db/index.js';
 import { loadServices, loadSettings } from './config/loader.js';
 import { addWsClient, removeWsClient } from './config/watcher.js';
-import { healthRoutes } from './routes/health.route.js';
+import { healthRoutes, APP_VERSION } from './routes/health.route.js';
 import { createServicesRoutes } from './routes/services.route.js';
 import { createSettingsRoutes } from './routes/settings.route.js';
 import { createBehaviorRoutes } from './routes/behavior.route.js';
@@ -33,6 +33,7 @@ import { registerAuthMiddleware } from './middleware/auth.middleware.js';
 import { cleanupExpiredSessions, validateSession } from './db/sessions.db.js';
 import { cleanupExpiredOidcStates } from './db/oidc-state.db.js';
 import { createChatRoutes } from './routes/chat.route.js';
+import { createUpdateCheckRoutes } from './routes/update-check.route.js';
 import { purgeExpiredChatMessages } from './db/chat.db.js';
 
 export interface AppOptions {
@@ -183,6 +184,7 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
   await server.register(createLocalesRoutes(configDir), { prefix: '/api' });
   await server.register(createConfigValidateRoutes(configDir), { prefix: '/api' });
   await server.register(createHealthcheckBatchRoutes({ getServices, getSettings }), { prefix: '/api' });
+  await server.register(createUpdateCheckRoutes({ currentVersion: APP_VERSION }), { prefix: '/api' });
 
   server.get('/api/ws', { websocket: true }, (socket: WebSocket, request) => {
     const sessionId = request.cookies?.[COOKIE_NAME];
