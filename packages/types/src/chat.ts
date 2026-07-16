@@ -5,6 +5,7 @@ export interface ChatChannel {
   retentionDays: number | null;
   createdBy: string | null;
   createdAt: string;
+  markdownEnabled: boolean;
 }
 
 export interface ChatMessage {

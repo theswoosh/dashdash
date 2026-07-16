@@ -8,6 +8,7 @@ interface ChannelRow {
   retention_days: number | null;
   created_by: string | null;
   created_at: string;
+  markdown_enabled: number;
 }
 
 interface MessageRow {
@@ -28,6 +29,7 @@ function toChannel(row: ChannelRow): ChatChannel {
     retentionDays: row.retention_days,
     createdBy: row.created_by,
     createdAt: row.created_at,
+    markdownEnabled: row.markdown_enabled === 1,
   };
 }
 
@@ -59,24 +61,25 @@ export function findChannelById(db: Db, id: string): ChatChannel | undefined {
 
 export function createChannel(
   db: Db,
-  params: { name: string; retentionDays: number | null; createdBy: string },
+  params: { name: string; retentionDays: number | null; createdBy: string; markdownEnabled?: boolean | undefined },
 ): ChatChannel {
   const id = randomUUID();
   db.prepare(
-    'INSERT INTO chat_channels (id, name, retention_days, created_by) VALUES (?, ?, ?, ?)',
-  ).run(id, params.name.trim(), params.retentionDays, params.createdBy);
+    'INSERT INTO chat_channels (id, name, retention_days, created_by, markdown_enabled) VALUES (?, ?, ?, ?, ?)',
+  ).run(id, params.name.trim(), params.retentionDays, params.createdBy, params.markdownEnabled ? 1 : 0);
   return findChannelById(db, id)!;
 }
 
 export function updateChannel(
   db: Db,
   id: string,
-  params: { name?: string | undefined; retentionDays?: number | null | undefined },
+  params: { name?: string | undefined; retentionDays?: number | null | undefined; markdownEnabled?: boolean | undefined },
 ): void {
   const sets: string[] = [];
   const values: unknown[] = [];
   if (params.name !== undefined) { sets.push('name = ?'); values.push(params.name.trim()); }
   if (params.retentionDays !== undefined) { sets.push('retention_days = ?'); values.push(params.retentionDays); }
+  if (params.markdownEnabled !== undefined) { sets.push('markdown_enabled = ?'); values.push(params.markdownEnabled ? 1 : 0); }
   if (sets.length === 0) return;
   values.push(id);
   db.prepare(`UPDATE chat_channels SET ${sets.join(', ')} WHERE id = ?`).run(...values);

@@ -100,6 +100,17 @@ describe('chat routes', () => {
       expect(res.statusCode).toBe(400);
     });
 
+    it('markdownEnabled defaults to false and can be turned on via PATCH', async () => {
+      const cookie = await loginAsUser();
+      const created = (await createChannel(cookie, 'md-chan')).json() as { channel: { id: string; markdownEnabled: boolean } };
+      expect(created.channel.markdownEnabled).toBe(false);
+      const patched = await server.inject({
+        method: 'PATCH', url: `/api/chat/channels/${created.channel.id}`,
+        headers: { cookie }, payload: { markdownEnabled: true },
+      });
+      expect((patched.json() as { channel: { markdownEnabled: boolean } }).channel.markdownEnabled).toBe(true);
+    });
+
     it('only creator or admin may rename/delete a channel', async () => {
       const adminCookie = await loginAsAdmin(server);
       const userCookie = await loginAsUser();

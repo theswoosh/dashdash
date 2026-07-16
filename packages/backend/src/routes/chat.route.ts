@@ -34,11 +34,13 @@ const RetentionSchema = z
 const CreateChannelBodySchema = z.object({
   name: z.string().trim().min(1).max(MAX_CHANNEL_NAME_LENGTH),
   retentionDays: RetentionSchema,
+  markdownEnabled: z.boolean().optional(),
 });
 
 const UpdateChannelBodySchema = z.object({
   name: z.string().trim().min(1).max(MAX_CHANNEL_NAME_LENGTH).optional(),
   retentionDays: RetentionSchema,
+  markdownEnabled: z.boolean().optional(),
 });
 
 const PostMessageBodySchema = z.object({
@@ -66,6 +68,7 @@ export function createChatRoutes(db: Db): FastifyPluginAsync {
           name: parsed.data.name,
           retentionDays: parsed.data.retentionDays ?? null,
           createdBy: request.userId,
+          markdownEnabled: parsed.data.markdownEnabled,
         });
         broadcastChatEvent({ type: 'chat:channel-created', channel });
         return reply.code(201).send({ channel });
