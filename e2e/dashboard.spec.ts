@@ -145,8 +145,12 @@ test('resizing into a neighbor shows a red ghost and reverts', async ({ page }) 
   if (!initialBox) throw new Error('Block A has no bounding box');
 
   await blockA.hover();
+  // Grab the handle near its SE corner (where the visible resize glyph is) —
+  // on narrow cards the edit pill overlaps the handle's center.
   const resizeHandle = blockA.locator('.react-resizable-handle');
-  await resizeHandle.hover({ force: true });
+  const handleBox = await resizeHandle.boundingBox();
+  if (!handleBox) throw new Error('Resize handle has no bounding box');
+  await page.mouse.move(handleBox.x + handleBox.width - 4, handleBox.y + handleBox.height - 4);
   await page.mouse.down();
   // Stretch right past Block B's left edge (Block B starts 4 grid units away).
   await page.mouse.move(initialBox.x + initialBox.width + 90, initialBox.y + initialBox.height - 5, { steps: 10 });
@@ -282,8 +286,12 @@ test('dragging a child out of a frame preserves its in-session size', async ({ p
   const initialBox = await blockAInFrame.boundingBox();
   if (!initialBox) throw new Error('Block A has no bounding box');
   await blockAInFrame.hover();
+  // Grab the handle near its SE corner (where the visible resize glyph is) —
+  // on narrow cards the edit pill overlaps the handle's center.
   const resizeHandle = blockAInFrame.locator('.react-resizable-handle');
-  await resizeHandle.hover({ force: true });
+  const handleBox = await resizeHandle.boundingBox();
+  if (!handleBox) throw new Error('Resize handle has no bounding box');
+  await page.mouse.move(handleBox.x + handleBox.width - 4, handleBox.y + handleBox.height - 4);
   await page.mouse.down();
   await page.mouse.move(initialBox.x + initialBox.width + 60, initialBox.y + initialBox.height + 30, { steps: 10 });
   await page.mouse.up();
@@ -313,8 +321,17 @@ test('dragging a child out of a frame preserves its in-session size', async ({ p
   expect(body.layout.h).not.toBe(8);
 
   // Visually, the dropped widget on the root grid keeps the resized dimensions.
-  const blockAOnRoot = page.locator('.dash-grid-canvas .react-grid-item').filter({ hasText: 'Block A' });
+  // Direct children of the root grid only, and exclude the frame item — during
+  // the reparent's SWR revalidation Block A briefly renders both inside the
+  // frame (making the frame's outer item match hasText) and on the root.
+  const blockAOnRoot = page.locator('.react-grid-layout.dash-grid > .react-grid-item')
+    .filter({ hasText: 'Block A' })
+    .filter({ hasNot: page.locator('.frame-card') });
   await expect(blockAOnRoot).toBeVisible();
+  // Poll: right after the drop the item can still be mid SWR-revalidation
+  // (transient size before the PATCHed layout is applied).
+  await expect.poll(async () => (await blockAOnRoot.boundingBox())?.width)
+    .toBeGreaterThan(resizedBox.width - 8);
   const droppedBox = await blockAOnRoot.boundingBox();
   if (!droppedBox) throw new Error('Block A has no bounding box after drop');
   expect(Math.abs(droppedBox.width - resizedBox.width)).toBeLessThan(8);

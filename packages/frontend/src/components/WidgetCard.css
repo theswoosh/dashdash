@@ -204,14 +204,16 @@
 }
 
 /* Edit flyout — config/delete (and the drag handle when the header is
-   hidden) as a pill INSIDE the card's bottom-right corner. Inside the
+   hidden) as a pill INSIDE the card's bottom-left corner. Inside the
    widget's own footprint it can never be covered by an adjacent widget
-   (fix_and_optimize 2026-07-15: adjacent-widgets overlap). */
+   (fix_and_optimize 2026-07-15: adjacent-widgets overlap). Anchored LEFT
+   so it can't cover RGL's .react-resizable-handle-se in the bottom-right
+   corner — overlapping it swallowed resize mousedowns on narrow widgets. */
 .widget-edit-flyout {
   display: none;
   position: absolute;
   bottom: 4px;
-  right: 4px;
+  left: 4px;
   z-index: 30;
   align-items: center;
   gap: 4px;
