@@ -1,10 +1,20 @@
 import { test, expect } from '@playwright/test';
-import type { Page } from '@playwright/test';
+import type { APIRequestContext, Page } from '@playwright/test';
 
 // Smoke flows against a prod-like instance (see start-server.mjs).
 // Tests run in order with one worker — they share the server's services.yml.
 
 const ADMIN = { email: 'e2e-admin@test.local', password: 'e2e-password-123', name: 'E2E Admin' };
+
+// First-registered user becomes admin (packages/backend/src/routes/auth.route.ts
+// isFirstUser). ADMIN must win that race — the ACL test's member picker calls
+// an admin-only endpoint (GET /api/users) — so register it here in a
+// file-level beforeAll, which always runs before the first test body
+// (including 'register and sign in through the UI', which would otherwise
+// register its own 'ui-user' first and leave ADMIN a plain non-admin user).
+test.beforeAll(async ({ request }) => {
+  await request.post('/api/auth/register', { data: ADMIN });
+});
 
 async function loginViaApi(page: Page): Promise<void> {
   const request = page.context().request;
@@ -20,6 +30,30 @@ async function loginViaApi(page: Page): Promise<void> {
     });
   }
   expect(res.ok()).toBeTruthy();
+}
+
+// Registration is rate-limited to 3/hour per IP (packages/backend/src/routes/
+// auth.route.ts RATE_WINDOWS), and that budget is shared across the *entire*
+// file: the very first test registers 'ui-user@test.local' through the UI
+// (claiming the first-user/admin slot), and loginViaApi's fallback registers
+// 'e2e-admin@test.local' the first time it's called — two of the three slots
+// are gone before any chat test runs. Chat tests needing "a second identity"
+// must reuse 'ui-user@test.local' (already registered, free) rather than
+// registering yet another throwaway user; only a test that genuinely needs a
+// *third*, never-added identity (e.g. the ACL outsider) may spend the last
+// slot. Try login first, only register when the account doesn't exist yet
+// (mirrors loginViaApi's admin pattern) so standalone `-g` runs still work.
+async function loginOrRegisterUser(
+  request: APIRequestContext,
+  email: string,
+  password: string,
+  name: string,
+): Promise<void> {
+  const loginRes = await request.post('/api/auth/login', { data: { email, password } });
+  if (loginRes.ok()) return;
+  await request.post('/api/auth/register', { data: { email, password, name } });
+  const retryRes = await request.post('/api/auth/login', { data: { email, password } });
+  expect(retryRes.ok()).toBeTruthy();
 }
 
 async function enableEditMode(page: Page): Promise<void> {
@@ -439,14 +473,7 @@ test('chat: send, receive from another user, search', async ({ page, playwright 
 
   // Second user posts via API — message must arrive through polling.
   const userApi = await playwright.request.newContext({ baseURL: 'http://127.0.0.1:4317' });
-  const registerRes = await userApi.post('/api/auth/register', {
-    data: { email: 'chat-user@test.local', password: 'chat-password-123', name: 'Chatter' },
-  });
-  expect(registerRes.ok()).toBeTruthy();
-  const userLogin = await userApi.post('/api/auth/login', {
-    data: { email: 'chat-user@test.local', password: 'chat-password-123' },
-  });
-  expect(userLogin.ok()).toBeTruthy();
+  await loginOrRegisterUser(userApi, 'ui-user@test.local', 'ui-password-123', 'UI User');
   const otherMsg = await userApi.post(`/api/chat/channels/${channel.id}/messages`, {
     data: { body: 'hi from chatter' },
   });
@@ -454,7 +481,7 @@ test('chat: send, receive from another user, search', async ({ page, playwright 
 
   const foreignBubble = chatWidget.locator('.chat-bubble:not(.chat-bubble--own)').filter({ hasText: 'hi from chatter' });
   await expect(foreignBubble).toBeVisible({ timeout: 5000 });
-  await expect(chatWidget.locator('.chat-sender').filter({ hasText: 'Chatter' })).toBeVisible();
+  await expect(chatWidget.locator('.chat-sender').filter({ hasText: 'UI User' })).toBeVisible();
 
   // Search finds the admin message.
   await chatWidget.getByLabel('Search messages').click();
@@ -470,7 +497,7 @@ test('chat: send, receive from another user, search', async ({ page, playwright 
   await userApi.dispose();
 });
 
-test('chat: message from another user appears via websocket push, not a 5s poll', async ({ page, playwright }) => {
+test('chat: message from another user appears via websocket push, not a 5s poll', async ({ page }) => {
   await loginViaApi(page);
   const adminApi = page.context().request;
 
@@ -491,17 +518,13 @@ test('chat: message from another user appears via websocket push, not a 5s poll'
   const chatWidget = page.locator('.react-grid-item').filter({ hasText: 'Chatroom' });
   await expect(chatWidget).toBeVisible();
 
-  const userApi = await playwright.request.newContext({ baseURL: 'http://127.0.0.1:4317' });
-  const registerRes = await userApi.post('/api/auth/register', {
-    data: { email: 'chat-ws-user@test.local', password: 'chat-password-123', name: 'WsChatter' },
-  });
-  expect(registerRes.ok()).toBeTruthy();
-  const userLogin = await userApi.post('/api/auth/login', {
-    data: { email: 'chat-ws-user@test.local', password: 'chat-password-123' },
-  });
-  expect(userLogin.ok()).toBeTruthy();
-
-  const otherMsg = await userApi.post(`/api/chat/channels/${channel.id}/messages`, {
+  // The push assertion only cares that the message arrives without a reload
+  // or the 5s poll firing — the sender's identity is irrelevant here (unlike
+  // the send/receive test, which checks own- vs foreign-bubble alignment).
+  // Post through the already-authenticated admin context to avoid spending
+  // the register-endpoint's shared per-IP rate limit budget on a throwaway
+  // user (see loginOrRegisterUser).
+  const otherMsg = await adminApi.post(`/api/chat/channels/${channel.id}/messages`, {
     data: { body: 'pushed instantly' },
   });
   expect(otherMsg.ok()).toBeTruthy();
@@ -511,11 +534,9 @@ test('chat: message from another user appears via websocket push, not a 5s poll'
   await expect(
     chatWidget.locator('.chat-bubble').filter({ hasText: 'pushed instantly' }),
   ).toBeVisible({ timeout: 3000 });
-
-  await userApi.dispose();
 });
 
-test('chat: inactive tab shows an unread dot until selected', async ({ page, playwright }) => {
+test('chat: inactive tab shows an unread dot until selected', async ({ page }) => {
   await loginViaApi(page);
   const adminApi = page.context().request;
 
@@ -541,18 +562,19 @@ test('chat: inactive tab shows an unread dot until selected', async ({ page, pla
   await page.goto('/');
   const chatWidget = page.locator('.react-grid-item').filter({ hasText: 'Chatroom' });
   await expect(chatWidget).toBeVisible();
+  // The chat tab bar only renders once the channels SWR fetch resolves —
+  // wait for it before posting, otherwise the widget's WS connection (opened
+  // on mount) may not be established yet and the push gets missed (this
+  // previously happened to be masked by the register+login round trips of a
+  // throwaway second user, which gave the socket enough time to connect).
+  await expect(chatWidget.locator('.chat-tab')).toHaveCount(2);
 
-  const userApi = await playwright.request.newContext({ baseURL: 'http://127.0.0.1:4317' });
-  const registerRes = await userApi.post('/api/auth/register', {
-    data: { email: 'chat-unread-user@test.local', password: 'chat-password-123', name: 'UnreadChatter' },
-  });
-  expect(registerRes.ok()).toBeTruthy();
-  const userLogin = await userApi.post('/api/auth/login', {
-    data: { email: 'chat-unread-user@test.local', password: 'chat-password-123' },
-  });
-  expect(userLogin.ok()).toBeTruthy();
-
-  const otherChannelMsg = await userApi.post(`/api/chat/channels/${secondChannel.id}/messages`, {
+  // The unread-dot logic (chat.component.tsx) keys off channel activity only
+  // ("is this the active tab?"), not sender identity — so posting through the
+  // already-authenticated admin context exercises the same code path without
+  // spending the register endpoint's shared per-IP rate limit budget on a
+  // throwaway user (see loginOrRegisterUser).
+  const otherChannelMsg = await adminApi.post(`/api/chat/channels/${secondChannel.id}/messages`, {
     data: { body: 'unread me' },
   });
   expect(otherChannelMsg.ok()).toBeTruthy();
@@ -560,8 +582,6 @@ test('chat: inactive tab shows an unread dot until selected', async ({ page, pla
   await expect(chatWidget.locator('.chat-tab__unread-dot')).toBeVisible({ timeout: 3000 });
   await chatWidget.getByRole('tab', { name: new RegExp(secondChannel.name, 'i') }).click();
   await expect(chatWidget.locator('.chat-tab__unread-dot')).toHaveCount(0);
-
-  await userApi.dispose();
 });
 
 test('chat: admin restricts a channel to specific members', async ({ page, playwright }) => {
@@ -578,25 +598,15 @@ test('chat: admin restricts a channel to specific members', async ({ page, playw
   });
   expect(patchRes.ok()).toBeTruthy();
 
-  // Second (member-to-be) and third (never-added) users, registered up front
-  // so both appear in the admin's user picker.
+  // Member-to-be reuses the already-registered 'ui-user@test.local' fixture
+  // (claimed by the very first UI-registration test) — see the register
+  // rate-limit budget note above loginOrRegisterUser. Only the never-added
+  // outsider spends the file's last register-endpoint slot.
   const memberApi = await playwright.request.newContext({ baseURL: 'http://127.0.0.1:4317' });
-  await memberApi.post('/api/auth/register', {
-    data: { email: 'chat-acl-member@test.local', password: 'chat-password-123', name: 'AclMember' },
-  });
-  const memberLogin = await memberApi.post('/api/auth/login', {
-    data: { email: 'chat-acl-member@test.local', password: 'chat-password-123' },
-  });
-  expect(memberLogin.ok()).toBeTruthy();
+  await loginOrRegisterUser(memberApi, 'ui-user@test.local', 'ui-password-123', 'UI User');
 
   const outsiderApi = await playwright.request.newContext({ baseURL: 'http://127.0.0.1:4317' });
-  await outsiderApi.post('/api/auth/register', {
-    data: { email: 'chat-acl-outsider@test.local', password: 'chat-password-123', name: 'AclOutsider' },
-  });
-  const outsiderLogin = await outsiderApi.post('/api/auth/login', {
-    data: { email: 'chat-acl-outsider@test.local', password: 'chat-password-123' },
-  });
-  expect(outsiderLogin.ok()).toBeTruthy();
+  await loginOrRegisterUser(outsiderApi, 'chat-acl-outsider@test.local', 'chat-password-123', 'AclOutsider');
 
   // Sanity: channel is open before any member is added.
   const beforeMsg = await outsiderApi.post(`/api/chat/channels/${channel.id}/messages`, {
@@ -609,16 +619,24 @@ test('chat: admin restricts a channel to specific members', async ({ page, playw
   await page.goto('/');
   await enableEditMode(page);
   const chatWidget = page.locator('.react-grid-item').filter({ hasText: 'Chatroom' });
-  await chatWidget.getByLabel('Configure widget').click();
+  // Both the header button and the narrow-widget flyout pill render a
+  // "Configure widget" control (widget-card.component.tsx) — scope to the
+  // header's action group, same as the skin-switch test below, or the
+  // locator is ambiguous (strict-mode violation).
+  await chatWidget.locator('.widget-edit-actions').getByLabel('Configure widget').click();
   const modal = page.locator('.modal');
   await expect(modal).toBeVisible();
 
   const channelRow = modal.locator('.channels-editor__row').filter({ hasText: channel.name });
   await channelRow.getByLabel(`Edit ${channel.name}`).click();
-  const editingRow = modal.locator('.channels-editor__row--editing').filter({ hasText: channel.name });
-  await editingRow.locator('.channel-members-picker__add select').selectOption({ label: 'AclMember' });
+  // The editing row shows the channel name inside an <input value="...">,
+  // not as text content — filter({ hasText }) can't match an input's value
+  // (only rendered text nodes), so it always resolved to zero elements. Only
+  // one row can be in edit mode at a time, so no filter is needed at all.
+  const editingRow = modal.locator('.channels-editor__row--editing');
+  await editingRow.locator('.channel-members-picker__add select').selectOption({ label: 'UI User' });
   await editingRow.locator('.channel-members-picker__add button').click();
-  await expect(editingRow.locator('.channel-members-picker__list li').filter({ hasText: 'AclMember' })).toBeVisible();
+  await expect(editingRow.locator('.channel-members-picker__list li').filter({ hasText: 'UI User' })).toBeVisible();
   await modal.getByLabel('Close').click();
 
   // Member can now post; the never-added outsider is rejected.
@@ -799,12 +817,15 @@ test('chat: markdown renders bold/italic when enabled on the channel, plain text
   const reloadedChatWidget = page.locator('.react-grid-item').filter({ hasText: 'Chatroom' });
   await expect(reloadedChatWidget).toBeVisible();
 
+  // Distinct text for the second message — markdownEnabled applies to the
+  // whole channel, so the first message now also renders as markdown after
+  // reload; reusing the same text would make the bubble locator ambiguous.
   const composer2 = reloadedChatWidget.locator('.chat-composer__input');
-  await composer2.fill('**bold** and *italic*');
+  await composer2.fill('**second** and *message*');
   await composer2.press('Enter');
-  const mdBubble = reloadedChatWidget.locator('.chat-bubble--own').filter({ hasText: 'bold and italic' });
-  await expect(mdBubble.locator('strong').filter({ hasText: 'bold' })).toBeVisible();
-  await expect(mdBubble.locator('em').filter({ hasText: 'italic' })).toBeVisible();
+  const mdBubble = reloadedChatWidget.locator('.chat-bubble--own').filter({ hasText: 'second and message' });
+  await expect(mdBubble.locator('strong').filter({ hasText: 'second' })).toBeVisible();
+  await expect(mdBubble.locator('em').filter({ hasText: 'message' })).toBeVisible();
 });
 
 test('chat: switching skin changes the widget root class', async ({ page }) => {
