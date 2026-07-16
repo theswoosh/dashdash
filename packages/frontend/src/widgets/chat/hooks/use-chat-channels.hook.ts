@@ -1,5 +1,6 @@
 import useSWR from 'swr';
 import type { ChatChannel } from '@dashdash/types';
+import { useChatWs } from '../../../hooks/use-chat-ws.hook';
 
 interface ChannelsResponse {
   channels: ChatChannel[];
@@ -16,6 +17,14 @@ export function useChatChannels() {
   const { data, error, isLoading, mutate } = useSWR<ChannelsResponse>('/api/chat/channels', fetcher, {
     revalidateOnFocus: false,
   });
+
+  useChatWs(event => {
+    if (event.type === 'chat:channel-created' || event.type === 'chat:channel-updated'
+      || event.type === 'chat:channel-deleted') {
+      void mutate();
+    }
+  });
+
   return {
     channels: data?.channels ?? [],
     error: error instanceof Error ? error.message : undefined,

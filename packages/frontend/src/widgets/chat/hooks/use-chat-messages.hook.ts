@@ -3,8 +3,10 @@ import useSWR from 'swr';
 import type { ChatMessage, ChatMessagesPage } from '@dashdash/types';
 import { useAuth } from '../../../hooks/use-auth.hook';
 import { usePreferences } from '../../../hooks/use-preferences.hook';
+import { useChatWs } from '../../../hooks/use-chat-ws.hook';
 
 const PAGE_SIZE = 50;
+const FALLBACK_POLL_INTERVAL_MS = 30_000; // safety net only — WS is primary
 
 const pageFetcher = ([url]: [string, string]): Promise<ChatMessagesPage> =>
   fetch(url).then(res => {
@@ -36,9 +38,19 @@ export function useChatMessages(channelId: string | null, pollingIntervalSec: nu
     pageFetcher,
     {
       revalidateOnFocus: false,
-      refreshInterval: pollingIntervalSec > 0 ? pollingIntervalSec * 1000 : 0,
+      refreshInterval: pollingIntervalSec > 0 ? FALLBACK_POLL_INTERVAL_MS : 0,
     },
   );
+
+  useChatWs(event => {
+    if (event.type !== 'chat:message' || event.channelId !== channelId) return;
+    void mutate(current => ({
+      messages: current && current.messages.some(m => m.id === event.message.id)
+        ? current.messages
+        : [...(current?.messages ?? []), event.message],
+      hasMore: current?.hasMore ?? false,
+    }), { revalidate: false });
+  });
 
   // hasMore from the server only counts messages behind the latest page; once
   // older pages are loaded, the flag from the deepest loaded page wins.

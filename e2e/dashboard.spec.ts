@@ -470,6 +470,51 @@ test('chat: send, receive from another user, search', async ({ page, playwright 
   await userApi.dispose();
 });
 
+test('chat: message from another user appears via websocket push, not a 5s poll', async ({ page, playwright }) => {
+  await loginViaApi(page);
+  const adminApi = page.context().request;
+
+  // Same channel/widget setup as the previous chat E2E test, but pollingInterval
+  // is disabled (0) so any message arrival can only be explained by the WS
+  // push, not the fallback poll.
+  const channelRes = await adminApi.post('/api/chat/channels', {
+    data: { name: `e2e-ws-room-${Date.now()}` },
+  });
+  expect(channelRes.status()).toBe(201);
+  const { channel } = await channelRes.json() as { channel: { id: string } };
+  const patchRes = await adminApi.patch('/api/services/chat-e2e', {
+    data: { options: { channelIds: [channel.id], pollingInterval: 0 } },
+  });
+  expect(patchRes.ok()).toBeTruthy();
+
+  await page.goto('/');
+  const chatWidget = page.locator('.react-grid-item').filter({ hasText: 'Chatroom' });
+  await expect(chatWidget).toBeVisible();
+
+  const userApi = await playwright.request.newContext({ baseURL: 'http://127.0.0.1:4317' });
+  const registerRes = await userApi.post('/api/auth/register', {
+    data: { email: 'chat-ws-user@test.local', password: 'chat-password-123', name: 'WsChatter' },
+  });
+  expect(registerRes.ok()).toBeTruthy();
+  const userLogin = await userApi.post('/api/auth/login', {
+    data: { email: 'chat-ws-user@test.local', password: 'chat-password-123' },
+  });
+  expect(userLogin.ok()).toBeTruthy();
+
+  const otherMsg = await userApi.post(`/api/chat/channels/${channel.id}/messages`, {
+    data: { body: 'pushed instantly' },
+  });
+  expect(otherMsg.ok()).toBeTruthy();
+
+  // No reload, no wait — push must land within a couple seconds, well under
+  // the old 5s poll interval this widget explicitly disabled.
+  await expect(
+    chatWidget.locator('.chat-bubble').filter({ hasText: 'pushed instantly' }),
+  ).toBeVisible({ timeout: 3000 });
+
+  await userApi.dispose();
+});
+
 test('long widget title wraps to a second line instead of clipping', async ({ page }) => {
   await loginViaApi(page);
   await page.goto('/');
