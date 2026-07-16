@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import * as watcher from '../config/watcher.js';
 import { mkdtempSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
@@ -397,6 +398,35 @@ describe('chat routes', () => {
         headers: { cookie },
       });
       expect(foreverRes.json().messages).toHaveLength(1);
+    });
+  });
+
+  describe('websocket broadcast', () => {
+    it('broadcasts chat:message over the ws channel on send', async () => {
+      const cookie = await loginAsUser();
+      const channelRes = await createChannel(cookie, 'ws-test');
+      const channel = (channelRes.json() as { channel: { id: string } }).channel;
+      const spy = vi.spyOn(watcher, 'broadcastChatEvent');
+      await postMessage(cookie, channel.id, 'hello over ws');
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'chat:message', channelId: channel.id }),
+      );
+      spy.mockRestore();
+    });
+
+    it('broadcasts chat:channel-created / -updated / -deleted', async () => {
+      const cookie = await loginAsAdmin(server);
+      const spy = vi.spyOn(watcher, 'broadcastChatEvent');
+      const created = (await createChannel(cookie, 'ws-channel-test')).json() as { channel: { id: string } };
+      expect(spy).toHaveBeenCalledWith(expect.objectContaining({ type: 'chat:channel-created' }));
+      await server.inject({
+        method: 'PATCH', url: `/api/chat/channels/${created.channel.id}`,
+        headers: { cookie }, payload: { name: 'renamed' },
+      });
+      expect(spy).toHaveBeenCalledWith(expect.objectContaining({ type: 'chat:channel-updated' }));
+      await server.inject({ method: 'DELETE', url: `/api/chat/channels/${created.channel.id}`, headers: { cookie } });
+      expect(spy).toHaveBeenCalledWith(expect.objectContaining({ type: 'chat:channel-deleted', channelId: created.channel.id }));
+      spy.mockRestore();
     });
   });
 });

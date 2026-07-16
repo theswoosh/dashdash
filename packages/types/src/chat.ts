@@ -25,3 +25,9 @@ export interface ChatMessagesPage {
   messages: ChatMessage[];
   hasMore: boolean;
 }
+
+export type ChatWsEvent =
+  | { type: 'chat:message'; channelId: string; message: ChatMessage }
+  | { type: 'chat:channel-created'; channel: ChatChannel }
+  | { type: 'chat:channel-updated'; channel: ChatChannel }
+  | { type: 'chat:channel-deleted'; channelId: string };

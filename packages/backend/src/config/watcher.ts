@@ -1,5 +1,6 @@
 import chokidar from 'chokidar';
 import { join, basename } from 'path';
+import type { ChatWsEvent } from '@dashdash/types';
 
 interface Logger { info: (msg: string) => void }
 
@@ -33,6 +34,10 @@ function broadcast(data: unknown): void {
       } catch { /* client disconnected between readyState check and send */ }
     }
   }
+}
+
+export function broadcastChatEvent(event: ChatWsEvent): void {
+  broadcast(event);
 }
 
 export function startWatcher(configDir: string, logger?: Logger | undefined) {

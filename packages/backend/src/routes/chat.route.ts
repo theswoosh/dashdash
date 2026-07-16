@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import type { Db } from '../db/index.js';
+import { broadcastChatEvent } from '../config/watcher.js';
 import {
   listChannels,
   findChannelById,
@@ -62,6 +63,7 @@ export function createChatRoutes(db: Db): FastifyPluginAsync {
           retentionDays: parsed.data.retentionDays ?? null,
           createdBy: request.userId,
         });
+        broadcastChatEvent({ type: 'chat:channel-created', channel });
         return reply.code(201).send({ channel });
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
@@ -92,7 +94,9 @@ export function createChatRoutes(db: Db): FastifyPluginAsync {
         }
         throw err;
       }
-      return { channel: findChannelById(db, channel.id) };
+      const updated = findChannelById(db, channel.id)!;
+      broadcastChatEvent({ type: 'chat:channel-updated', channel: updated });
+      return { channel: updated };
     });
 
     // DELETE /api/chat/channels/:id — cascades the channel's messages
@@ -103,6 +107,7 @@ export function createChatRoutes(db: Db): FastifyPluginAsync {
         return reply.code(403).send({ error: 'Only the channel creator or an admin can delete a channel' });
       }
       deleteChannel(db, channel.id);
+      broadcastChatEvent({ type: 'chat:channel-deleted', channelId: channel.id });
       return { ok: true };
     });
 
@@ -142,6 +147,7 @@ export function createChatRoutes(db: Db): FastifyPluginAsync {
         senderName: sender.name,
         body: parsed.data.body,
       });
+      broadcastChatEvent({ type: 'chat:message', channelId: request.params.id, message });
       return reply.code(201).send({ message });
     });
 
