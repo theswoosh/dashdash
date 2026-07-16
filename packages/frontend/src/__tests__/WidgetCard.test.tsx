@@ -105,3 +105,29 @@ describe('Healthcheck — description tooltip', () => {
     await waitFor(() => expect(screen.getByText('Jellyfin')).toHaveAttribute('title', 'Media server'));
   });
 });
+
+describe('WidgetCard — hidden header in edit mode', () => {
+  const hidden: ServiceConfig = {
+    ...clockService,
+    id: 'clock-hh',
+    options: { ...clockService.options, hideHeader: true },
+  };
+
+  it('hides the header immediately in edit mode', () => {
+    const { container } = wrap(<WidgetCard service={hidden} editMode={true} />);
+    expect(container.querySelector('.widget-header')).toBeNull();
+  });
+
+  it('moves the drag handle into the always-on flyout', () => {
+    const { container } = wrap(<WidgetCard service={hidden} editMode={true} />);
+    const flyout = container.querySelector('.widget-edit-flyout--always');
+    expect(flyout).not.toBeNull();
+    expect(flyout!.querySelector('.grid-drag-handle')).not.toBeNull();
+  });
+
+  it('keeps the header when hideHeader is off', () => {
+    const { container } = wrap(<WidgetCard service={clockService} editMode={true} />);
+    expect(container.querySelector('.widget-header')).not.toBeNull();
+    expect(container.querySelector('.widget-edit-flyout--always')).toBeNull();
+  });
+});

@@ -482,3 +482,33 @@ test('long widget title wraps to a second line instead of clipping', async ({ pa
 
   await page.getByLabel('Save & exit').click();
 });
+
+test('hide header bar applies immediately in edit mode and the widget stays draggable', async ({ page }) => {
+  await loginViaApi(page);
+  await page.goto('/');
+  const clockItem = page.locator('.react-grid-item').filter({ hasText: 'Clock' });
+  await expect(clockItem).toBeVisible();
+
+  await enableEditMode(page);
+  await clockItem.hover();
+  await clockItem.locator('.widget-edit-actions').getByLabel('Configure widget').click();
+  await page.locator('.config-field--checkbox').filter({ hasText: 'Hide header bar' }).locator('input').check();
+  await page.locator('.modal').getByRole('button', { name: 'Save' }).click();
+
+  // WITHOUT saving the board: the header disappears immediately.
+  await expect(clockItem.locator('.widget-header')).toHaveCount(0);
+  const flyout = clockItem.locator('.widget-edit-flyout--always');
+  await expect(flyout).toBeVisible();
+
+  // The drag handle relocated into the flyout and the widget is still draggable.
+  const initialTransform = await clockItem.evaluate(el => (el as HTMLElement).style.transform);
+  const handle = flyout.locator('.grid-drag-handle');
+  await handle.hover();
+  await page.mouse.down();
+  await page.mouse.move(400, 300, { steps: 12 });
+  await page.mouse.up();
+  const movedTransform = await clockItem.evaluate(el => (el as HTMLElement).style.transform);
+  expect(movedTransform).not.toBe(initialTransform);
+
+  await page.getByLabel('Save & exit').click();
+});

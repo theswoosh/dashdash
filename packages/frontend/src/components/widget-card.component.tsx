@@ -152,7 +152,7 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
     : pingData === null
     ? 'unknown'
     : pingData.status;
-  const isHeaderHidden = service.options?.['hideHeader'] === true && !editMode && !isTinyLayout;
+  const isHeaderHidden = service.options?.['hideHeader'] === true && !isTinyLayout;
   const bgColor = typeof service.options?.['bg_color'] === 'string' ? service.options['bg_color'] : undefined;
   const fontColor = typeof service.options?.['font_color'] === 'string' ? service.options['font_color'] : undefined;
   const tinyIconValue = isTinyLayout && service.icon && hasServiceIcon(service.icon) ? service.icon : null;
@@ -230,8 +230,13 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
 
   return (
     <>
-    {editMode && !isHeaderHidden && (
-      <div className="widget-edit-flyout">
+    {editMode && (
+      <div className={`widget-edit-flyout${isHeaderHidden ? ' widget-edit-flyout--always' : ''}`}>
+        {isHeaderHidden && (
+          <span className={dragHandleClassName ?? 'grid-drag-handle'} title={t('widgetCard.dragToMove')}>
+            <GripVertical size={14} />
+          </span>
+        )}
         {editActionButtons}
       </div>
     )}
