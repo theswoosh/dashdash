@@ -218,7 +218,11 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
       },
     });
 
-    server.setNotFoundHandler((_req, reply) => {
+    server.setNotFoundHandler((req, reply) => {
+      if (req.url.startsWith('/api')) {
+        void reply.code(404).send({ error: 'Not Found', path: req.url });
+        return;
+      }
       void reply.header('cache-control', 'no-cache').type('text/html').send(indexHtml);
     });
   }
