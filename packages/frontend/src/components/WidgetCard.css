@@ -237,5 +237,9 @@
 
   .widget-edit-flyout {
     display: flex;
+    /* Narrow cards: the pill spans nearly the full width, so bottom: 4px
+       would overlap RGL's ~20px SE resize-handle corner and steal its
+       mousedowns. Lift it clear of the handle zone. */
+    bottom: 26px;
   }
 }

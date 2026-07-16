@@ -562,3 +562,35 @@ test('hide header bar applies immediately in edit mode and the widget stays drag
 
   await page.getByLabel('Save & exit').click();
 });
+
+test('narrow-widget edit pill does not cover the resize handle', async ({ page }) => {
+  await loginViaApi(page);
+  await page.goto('/');
+
+  // Block B lives inside the Group frame at w:8 (~72px, narrower than the
+  // 90px container-query breakpoint) since the frame-shrink test above left
+  // it there. Its always-visible edit pill is the one under test — Clock's
+  // header is permanently hidden by the previous test, so it can no longer
+  // be located by its title text.
+  const frame = page.locator('.frame-card');
+  const item = frame.locator('.react-grid-item').filter({ hasText: 'Block B' });
+  await expect(item).toBeVisible();
+
+  await enableEditMode(page);
+  await item.hover();
+
+  // Direct child only — a descendant selector would also match the frame's
+  // own outer resize handle.
+  const handle = item.locator('> .react-resizable-handle');
+  const hb = await handle.boundingBox();
+  if (!hb) throw new Error('Resize handle has no bounding box');
+
+  // The topmost element at the handle's center must be the handle, not the pill.
+  const topEl = await page.evaluate(
+    ({ x, y }) => document.elementFromPoint(x, y)?.className ?? '',
+    { x: hb.x + hb.width / 2, y: hb.y + hb.height / 2 },
+  );
+  expect(topEl).toContain('react-resizable-handle');
+
+  await page.getByLabel('Save & exit').click();
+});
