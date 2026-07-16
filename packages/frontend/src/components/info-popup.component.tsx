@@ -7,6 +7,13 @@ import './info-popup.css';
 const healthFetcher = (url: string) =>
   fetch(url).then(res => res.json()) as Promise<{ version?: string }>;
 
+interface UpdateCheck {
+  updateAvailable: boolean;
+  latestVersion: string | null;
+  releaseUrl: string | null;
+}
+const updateFetcher = (url: string) => fetch(url).then(res => res.json()) as Promise<UpdateCheck>;
+
 export function InfoPopup() {
   const t = useT();
   const isInfoOpen = useUIStore(s => s.isInfoOpen);
@@ -15,6 +22,10 @@ export function InfoPopup() {
   // Fetched only while the popup is open (conditional key) — no polling,
   // no cost on dashboard load.
   const { data: health } = useSWR(isInfoOpen ? '/api/health' : null, healthFetcher, {
+    revalidateOnFocus: false,
+  });
+
+  const { data: updateCheck } = useSWR(isInfoOpen ? '/api/update-check' : null, updateFetcher, {
     revalidateOnFocus: false,
   });
 
@@ -35,6 +46,20 @@ export function InfoPopup() {
             <span className="info-row-label">{t('info.version')}</span>
             <span className="info-row-value">{health?.version ?? '—'}</span>
           </div>
+
+          {updateCheck?.updateAvailable && (
+            <div className="info-row">
+              <span className="info-row-label">{t('info.updateAvailable')}</span>
+              <a
+                className="info-link"
+                href={updateCheck.releaseUrl ?? 'https://github.com/theswoosh/dashdash/releases'}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {updateCheck.latestVersion}
+              </a>
+            </div>
+          )}
 
           <div className="info-row">
             <span className="info-row-label">{t('info.developedBy')}</span>

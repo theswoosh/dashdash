@@ -267,6 +267,7 @@ export const EN_FALLBACK: Record<string, unknown> = {
   info: {
     version: 'Version',
     title: 'About dashdash',
+    updateAvailable: 'Update available',
     developedBy: 'Developed by',
     license: 'License',
     support: 'Support the project',

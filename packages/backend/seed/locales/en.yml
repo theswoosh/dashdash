@@ -289,6 +289,7 @@ languages:
 info:
   title: "About dashdash"
   version: "Version"
+  updateAvailable: "Update available"
   developedBy: "Developed by"
   license: "License"
   support: "Support the project"
