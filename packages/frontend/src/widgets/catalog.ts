@@ -228,6 +228,7 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
         options: [
           { value: 'imessage', label: 'iMessage' },
           { value: 'whatsapp', label: 'WhatsApp' },
+          { value: 'irc', label: 'IRC / Terminal' },
         ],
         default: 'imessage',
       },

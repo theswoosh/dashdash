@@ -806,3 +806,22 @@ test('chat: markdown renders bold/italic when enabled on the channel, plain text
   await expect(mdBubble.locator('strong').filter({ hasText: 'bold' })).toBeVisible();
   await expect(mdBubble.locator('em').filter({ hasText: 'italic' })).toBeVisible();
 });
+
+test('chat: switching skin changes the widget root class', async ({ page }) => {
+  await loginViaApi(page);
+  await page.goto('/');
+  const chatWidget = page.locator('.react-grid-item').filter({ hasText: 'Chatroom' });
+  await expect(chatWidget).toBeVisible();
+
+  await enableEditMode(page);
+  await chatWidget.hover();
+  await chatWidget.locator('.widget-edit-actions').getByLabel('Configure widget').click();
+  const skinField = page.locator('.config-field').filter({ hasText: 'Skin' });
+  await skinField.locator('select').selectOption('irc');
+  const save = page.waitForResponse(r =>
+    r.url().includes('/api/services/') && r.request().method() === 'PATCH' && r.ok());
+  await page.locator('.modal').getByRole('button', { name: 'Save' }).click();
+  await save;
+
+  await expect(chatWidget.locator('.chat-widget')).toHaveClass(/chat--skin-irc/);
+});

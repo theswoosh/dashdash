@@ -395,3 +395,42 @@
   color: var(--sender-color, var(--color-accent));
   font-weight: 600;
 }
+
+.chat--skin-irc {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 13px;
+}
+
+.chat--skin-irc .chat-bubble-wrap,
+.chat--skin-irc .chat-bubble {
+  display: inline;
+  background: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+.chat--skin-irc .chat-row {
+  display: block;
+  padding: 1px 4px;
+}
+
+.chat--skin-irc .chat-sender {
+  display: inline;
+  color: var(--sender-color, var(--color-accent));
+  font-weight: 700;
+}
+
+.chat--skin-irc .chat-sender::before { content: '<'; }
+.chat--skin-irc .chat-sender::after { content: '> '; color: var(--text-muted); }
+
+.chat--skin-irc .chat-row--own .chat-sender { color: var(--color-accent); }
+
+.chat--skin-irc .chat-time {
+  display: inline;
+  color: var(--text-muted);
+  font-size: 11px;
+  margin-right: 6px;
+}
+
+.chat--skin-irc .chat-time::before { content: '['; }
+.chat--skin-irc .chat-time::after { content: ']'; }

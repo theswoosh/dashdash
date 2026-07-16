@@ -5,6 +5,7 @@ import { renderWithLinks } from '../../utils/linkify';
 import { renderMarkdownLite } from '../../utils/markdown-lite';
 import { formatMessageTime, parseMessageDate, messageDayKey } from './chat-time';
 import { resolveSenderColor } from './chat-colors';
+import type { ChatSkinId } from './skins/skin-registry';
 
 const SENDER_GROUP_GAP_MS = 5 * 60 * 1000;
 
@@ -13,6 +14,7 @@ interface MessageListProps {
   currentUserId: string | undefined;
   showTimestamps: boolean;
   markdownEnabled: boolean;
+  chatSkin: ChatSkinId;
   hasMore: boolean;
   isLoadingOlder: boolean;
   onLoadOlder: () => void;
@@ -63,6 +65,7 @@ export function MessageList({
   currentUserId,
   showTimestamps,
   markdownEnabled,
+  chatSkin,
   hasMore,
   isLoadingOlder,
   onLoadOlder,
@@ -146,7 +149,7 @@ export function MessageList({
             <MessageBubble
               message={message}
               isOwn={isOwn}
-              showSender={!isOwn && isNewGroup}
+              showSender={chatSkin === 'irc' ? !isOwn : (!isOwn && isNewGroup)}
               showTimestamp={showTimestamps && isNewGroup}
               markdownEnabled={markdownEnabled}
             />

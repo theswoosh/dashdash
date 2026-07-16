@@ -129,6 +129,7 @@ export function ChatWidget({ options }: WidgetProps) {
                 currentUserId={currentUserId}
                 showTimestamps={showTimestamps}
                 markdownEnabled={activeChannel?.markdownEnabled ?? false}
+                chatSkin={skin}
                 hasMore={hasMore}
                 isLoadingOlder={isLoadingOlder}
                 onLoadOlder={loadOlderStable}
