@@ -85,7 +85,7 @@ widgetConfig:
   urlRequired: "URL ist erforderlich"
   invalidHost: "Hostname, IP, host:port oder http(s)://-URL eingeben"
   resetToDefault: "Auf Standard zurücksetzen"
-  hideHeader: "Kopfzeile im Anzeigemodus ausblenden"
+  hideHeader: "Kopfzeile ausblenden"
   fontColor: "Schriftfarbe"
   bookmarkColors: "Lesezeichen-Farben"
   copyColor: "Farbeinstellungen kopieren"
