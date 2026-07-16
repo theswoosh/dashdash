@@ -434,24 +434,3 @@
 
 .chat--skin-irc .chat-time::before { content: '['; }
 .chat--skin-irc .chat-time::after { content: ']'; }
-
-.chat-widget--tiny {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 100%;
-  padding: 0 10px;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.chat-widget--tiny__channel {
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-.chat-widget--tiny__preview {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: var(--text-muted);
-}

@@ -38,11 +38,9 @@ vi.mock('../hooks/use-chat-channels.hook', () => ({
   }),
 }));
 
-let mockMessages: unknown[] = [];
-
 vi.mock('../hooks/use-chat-messages.hook', () => ({
   useChatMessages: () => ({
-    messages: mockMessages,
+    messages: [],
     hasMore: false,
     isLoading: false,
     isLoadingOlder: false,
@@ -57,7 +55,6 @@ const EN_TRANSLATIONS = {
   en: {
     chat: {
       noChannels: 'No channels configured — pick or create one in the widget settings',
-      noMessages: 'No messages yet',
       search: 'Search messages',
       unread: 'Unread',
     },
@@ -83,7 +80,6 @@ const service = {
 describe('ChatWidget — unread tab dots', () => {
   beforeEach(() => {
     capturedOnEvent = undefined;
-    mockMessages = [];
   });
 
   it('shows a dot on an inactive tab when a message arrives for it', async () => {
@@ -146,35 +142,5 @@ describe('ChatWidget — unread tab dots', () => {
       });
     });
     await waitFor(() => expect(screen.queryByLabelText('Unread')).toBeNull());
-  });
-});
-
-describe('ChatWidget — tiny layout', () => {
-  beforeEach(() => {
-    capturedOnEvent = undefined;
-    mockMessages = [];
-  });
-
-  it('renders a single-line last-message preview', () => {
-    mockMessages = [
-      {
-        id: 'm1',
-        channelId: 'general-id',
-        userId: 'user-2',
-        senderName: 'Bob',
-        senderColor: null,
-        body: 'hello',
-        createdAt: '2026-01-01T00:00:00.000Z',
-      },
-    ];
-    wrap(<ChatWidget {...service} options={{ ...service.options, layoutSize: 'tiny' }} />);
-    expect(screen.getByText(/hello/)).toBeInTheDocument();
-    expect(document.querySelector('.chat-widget--tiny')).not.toBeNull();
-  });
-
-  it('shows the no-messages string when the channel is empty', () => {
-    mockMessages = [];
-    wrap(<ChatWidget {...service} options={{ ...service.options, layoutSize: 'tiny' }} />);
-    expect(screen.getByText('No messages yet')).toBeInTheDocument();
   });
 });

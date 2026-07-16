@@ -234,16 +234,6 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
       },
       { key: 'pollingInterval', label: 'Refresh interval (seconds, 0 = off)', labelKey: 'widgetConfig.chat.pollingInterval', type: 'number', default: 5 },
       { key: 'showTimestamps', label: 'Show timestamps', labelKey: 'widgetConfig.chat.showTimestamps', type: 'boolean', default: true },
-      {
-        key: 'layoutSize',
-        label: 'Layout size',
-        type: 'select',
-        options: [
-          { value: 'normal', label: 'Normal' },
-          { value: 'tiny', label: 'Tiny' },
-        ],
-        default: 'normal',
-      },
     ],
   },
   {

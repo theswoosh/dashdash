@@ -846,37 +846,3 @@ test('chat: switching skin changes the widget root class', async ({ page }) => {
 
   await expect(chatWidget.locator('.chat-widget')).toHaveClass(/chat--skin-irc/);
 });
-
-test('chat: tiny layout shows a last-message preview line', async ({ page }) => {
-  await loginViaApi(page);
-  const adminApi = page.context().request;
-
-  const channelRes = await adminApi.post('/api/chat/channels', {
-    data: { name: `e2e-tiny-room-${Date.now()}` },
-  });
-  expect(channelRes.status()).toBe(201);
-  const { channel } = await channelRes.json() as { channel: { id: string } };
-  const patchRes = await adminApi.patch('/api/services/chat-e2e', {
-    data: { options: { channelIds: [channel.id], pollingInterval: 1 } },
-  });
-  expect(patchRes.ok()).toBeTruthy();
-
-  await page.goto('/');
-  const chatWidget = page.locator('.react-grid-item').filter({ hasText: 'Chatroom' });
-  await expect(chatWidget).toBeVisible();
-
-  const composer = chatWidget.locator('.chat-composer__input');
-  await composer.fill('hello from admin');
-  await composer.press('Enter');
-  await expect(chatWidget.locator('.chat-bubble--own').filter({ hasText: 'hello from admin' })).toBeVisible();
-
-  const tinyPatchRes = await adminApi.patch('/api/services/chat-e2e', {
-    data: { options: { channelIds: [channel.id], pollingInterval: 1, layoutSize: 'tiny' } },
-  });
-  expect(tinyPatchRes.ok()).toBeTruthy();
-  await page.reload();
-
-  const tinyWidget = page.locator('.react-grid-item').filter({ hasText: 'Chatroom' });
-  await expect(tinyWidget.locator('.chat-widget--tiny')).toBeVisible();
-  await expect(tinyWidget.locator('.chat-widget--tiny__preview')).toContainText('hello from admin');
-});
