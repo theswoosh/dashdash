@@ -161,6 +161,7 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
             clientId: oidcConfig.clientId,
             clientSecret: oidcConfig.clientSecret,
             scopes: oidcConfig.scopes,
+            allowInsecureHttp: oidcConfig.allowInsecureHttp,
           });
           const endSessionUrl = getEndSessionUrl(resolvedOidcConfig);
           if (endSessionUrl) {
@@ -303,6 +304,7 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
           clientId: oidcConfig.clientId,
           clientSecret: oidcConfig.clientSecret,
           scopes: oidcConfig.scopes,
+          allowInsecureHttp: oidcConfig.allowInsecureHttp,
         });
 
         const state = generateState();
@@ -350,6 +352,7 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
           clientId: oidcConfig.clientId,
           clientSecret: oidcConfig.clientSecret,
           scopes: oidcConfig.scopes,
+          allowInsecureHttp: oidcConfig.allowInsecureHttp,
         });
 
         const currentUrl = new URL(

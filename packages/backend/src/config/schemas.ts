@@ -167,6 +167,7 @@ export interface OidcConfig {
   groupsClaim: string;
   adminGroup: string;
   autoLink: boolean;
+  allowInsecureHttp: boolean;
 }
 
 const MailConfigSchema = z.object({

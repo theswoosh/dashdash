@@ -5,6 +5,7 @@ export interface OidcProviderConfig {
   clientId: string;
   clientSecret: string;
   scopes: string;
+  allowInsecureHttp: boolean;
 }
 
 export interface OidcUserClaims {
@@ -23,10 +24,15 @@ export async function buildOidcConfig(providerConfig: OidcProviderConfig): Promi
     return cachedConfig;
   }
 
+  const issuerUrl = new URL(providerConfig.issuer);
+  const allowInsecure = providerConfig.allowInsecureHttp && issuerUrl.protocol === 'http:';
+
   const config = await oidcClient.discovery(
-    new URL(providerConfig.issuer),
+    issuerUrl,
     providerConfig.clientId,
     providerConfig.clientSecret,
+    undefined,
+    allowInsecure ? { execute: [oidcClient.allowInsecureRequests] } : undefined,
   );
 
   cachedConfig = config;

@@ -148,6 +148,7 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
     groupsClaim:  process.env['DASHDASH_OIDC_GROUPS_CLAIM'] ?? '',
     adminGroup:   process.env['DASHDASH_OIDC_ADMIN_GROUP']  ?? '',
     autoLink:     process.env['DASHDASH_OIDC_AUTO_LINK']    !== 'false',
+    allowInsecureHttp: process.env['DASHDASH_OIDC_ALLOW_HTTP'] === 'true',
   };
 
   // Auth middleware runs before all route handlers.
