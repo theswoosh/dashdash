@@ -17,6 +17,7 @@ const MIGRATIONS = [
   { version: 6, file: '006_oidc_state.sql' },
   { version: 7, file: '007_rate_limits.sql' },
   { version: 8, file: '008_chat.sql' },
+  { version: 9, file: '009_chat_channel_members.sql' },
 ] as const;
 
 // SQLite ALTER TABLE ADD COLUMN does not support IF NOT EXISTS.

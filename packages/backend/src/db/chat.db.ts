@@ -163,6 +163,39 @@ export function searchMessages(db: Db, channelId: string, query: string, limit: 
   return rows.map(toMessage);
 }
 
+// ── Channel membership (ACL) ────────────────────────────────────────────────
+
+export function listChannelMembers(db: Db, channelId: string): { userId: string; name: string }[] {
+  return db.prepare(
+    `SELECT u.id AS userId, u.name AS name
+     FROM chat_channel_members m JOIN users u ON u.id = m.user_id
+     WHERE m.channel_id = ? ORDER BY u.name ASC`,
+  ).all(channelId) as { userId: string; name: string }[];
+}
+
+export function addChannelMember(db: Db, channelId: string, userId: string): void {
+  db.prepare(
+    'INSERT OR IGNORE INTO chat_channel_members (channel_id, user_id) VALUES (?, ?)',
+  ).run(channelId, userId);
+}
+
+export function removeChannelMember(db: Db, channelId: string, userId: string): void {
+  db.prepare('DELETE FROM chat_channel_members WHERE channel_id = ? AND user_id = ?').run(channelId, userId);
+}
+
+/** Open channel (no members configured) → everyone. Restricted channel → members + admins. */
+export function canAccessChannel(db: Db, channelId: string, userId: string, role: string): boolean {
+  if (role === 'admin') return true;
+  const memberCount = (db.prepare(
+    'SELECT COUNT(*) AS n FROM chat_channel_members WHERE channel_id = ?',
+  ).get(channelId) as { n: number }).n;
+  if (memberCount === 0) return true;
+  const isMember = db.prepare(
+    'SELECT 1 FROM chat_channel_members WHERE channel_id = ? AND user_id = ?',
+  ).get(channelId, userId);
+  return isMember !== undefined;
+}
+
 /** Deletes messages past their channel's retention window. Returns rows deleted. */
 export function purgeExpiredChatMessages(db: Db): number {
   const result = db.prepare(
