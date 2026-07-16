@@ -515,6 +515,55 @@ test('chat: message from another user appears via websocket push, not a 5s poll'
   await userApi.dispose();
 });
 
+test('chat: inactive tab shows an unread dot until selected', async ({ page, playwright }) => {
+  await loginViaApi(page);
+  const adminApi = page.context().request;
+
+  // Two channels on the same widget: the second stays inactive so a message
+  // pushed into it must produce a tab dot, not just update the active view.
+  const firstChannelRes = await adminApi.post('/api/chat/channels', {
+    data: { name: `e2e-unread-first-${Date.now()}` },
+  });
+  expect(firstChannelRes.status()).toBe(201);
+  const { channel: firstChannel } = await firstChannelRes.json() as { channel: { id: string; name: string } };
+
+  const secondChannelRes = await adminApi.post('/api/chat/channels', {
+    data: { name: `e2e-unread-second-${Date.now()}` },
+  });
+  expect(secondChannelRes.status()).toBe(201);
+  const { channel: secondChannel } = await secondChannelRes.json() as { channel: { id: string; name: string } };
+
+  const patchRes = await adminApi.patch('/api/services/chat-e2e', {
+    data: { options: { channelIds: [firstChannel.id, secondChannel.id], pollingInterval: 0 } },
+  });
+  expect(patchRes.ok()).toBeTruthy();
+
+  await page.goto('/');
+  const chatWidget = page.locator('.react-grid-item').filter({ hasText: 'Chatroom' });
+  await expect(chatWidget).toBeVisible();
+
+  const userApi = await playwright.request.newContext({ baseURL: 'http://127.0.0.1:4317' });
+  const registerRes = await userApi.post('/api/auth/register', {
+    data: { email: 'chat-unread-user@test.local', password: 'chat-password-123', name: 'UnreadChatter' },
+  });
+  expect(registerRes.ok()).toBeTruthy();
+  const userLogin = await userApi.post('/api/auth/login', {
+    data: { email: 'chat-unread-user@test.local', password: 'chat-password-123' },
+  });
+  expect(userLogin.ok()).toBeTruthy();
+
+  const otherChannelMsg = await userApi.post(`/api/chat/channels/${secondChannel.id}/messages`, {
+    data: { body: 'unread me' },
+  });
+  expect(otherChannelMsg.ok()).toBeTruthy();
+
+  await expect(chatWidget.locator('.chat-tab__unread-dot')).toBeVisible({ timeout: 3000 });
+  await chatWidget.getByRole('tab', { name: new RegExp(secondChannel.name, 'i') }).click();
+  await expect(chatWidget.locator('.chat-tab__unread-dot')).toHaveCount(0);
+
+  await userApi.dispose();
+});
+
 test('long widget title wraps to a second line instead of clipping', async ({ page }) => {
   await loginViaApi(page);
   await page.goto('/');

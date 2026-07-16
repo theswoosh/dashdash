@@ -35,6 +35,7 @@
 }
 
 .chat-tab {
+  position: relative;
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
@@ -48,6 +49,16 @@
 .chat-tab--active {
   color: var(--card-fg, var(--text-primary));
   border-bottom-color: var(--accent);
+}
+
+.chat-tab__unread-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  vertical-align: middle;
 }
 
 /* ── Messages ────────────────────────────────────────────────────────── */

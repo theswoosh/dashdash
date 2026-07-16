@@ -127,6 +127,7 @@ export const EN_FALLBACK: Record<string, unknown> = {
     emoji: 'Insert emoji',
     today: 'Today',
     yesterday: 'Yesterday',
+    unread: 'Unread',
   },
   topbar: {
     openConfig: 'Open configuration',

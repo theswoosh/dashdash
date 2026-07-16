@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import type { WidgetProps } from '@dashdash/types';
 import { useT } from '../../i18n';
+import { useChatWs } from '../../hooks/use-chat-ws.hook';
 import { useChatChannels } from './hooks/use-chat-channels.hook';
 import { useChatMessages } from './hooks/use-chat-messages.hook';
 import { MessageList } from './message-list.component';
@@ -38,6 +39,31 @@ export function ChatWidget({ options }: WidgetProps) {
   const activeChannel =
     subscribed.find(c => c.id === selectedChannelId) ?? subscribed[0] ?? null;
 
+  const [unreadChannelIds, setUnreadChannelIds] = useState<Set<string>>(new Set());
+
+  useChatWs(event => {
+    if (event.type !== 'chat:message') return;
+    if (event.channelId === activeChannel?.id) return; // active tab: never mark unread
+    if (!subscribed.some(c => c.id === event.channelId)) return; // not one of ours
+    setUnreadChannelIds(prev => {
+      if (prev.has(event.channelId)) return prev;
+      const next = new Set(prev);
+      next.add(event.channelId);
+      return next;
+    });
+  });
+
+  const selectChannel = useCallback((channelId: string) => {
+    setSelectedChannelId(channelId);
+    setIsSearching(false);
+    setUnreadChannelIds(prev => {
+      if (!prev.has(channelId)) return prev;
+      const next = new Set(prev);
+      next.delete(channelId);
+      return next;
+    });
+  }, []);
+
   const {
     messages,
     hasMore,
@@ -71,9 +97,12 @@ export function ChatWidget({ options }: WidgetProps) {
                 role="tab"
                 aria-selected={channel.id === activeChannel?.id}
                 className={`chat-tab${channel.id === activeChannel?.id ? ' chat-tab--active' : ''}`}
-                onClick={() => { setSelectedChannelId(channel.id); setIsSearching(false); }}
+                onClick={() => selectChannel(channel.id)}
               >
                 {channel.name}
+                {unreadChannelIds.has(channel.id) && (
+                  <span className="chat-tab__unread-dot" aria-label={t('chat.unread')} />
+                )}
               </button>
             ))}
           </div>

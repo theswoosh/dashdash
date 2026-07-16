@@ -120,6 +120,7 @@ chat:
   emoji: "Emoji einfügen"
   today: "Heute"
   yesterday: "Gestern"
+  unread: "Ungelesen"
 
 widgetTemplateConfig:
   title: "Standardwerte: {{label}}"
