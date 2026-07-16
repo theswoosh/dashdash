@@ -87,12 +87,13 @@ export function HealthcheckWidget({ options, data, error, loading }: WidgetProps
           target="_blank"
           rel="noopener noreferrer"
           className={`${cls} healthcheck-widget__name-link`}
+          title={description}
         >
           {appName}
         </a>
       );
     }
-    return <span className={cls}>{appName}</span>;
+    return <span className={cls} title={description}>{appName}</span>;
   }
 
   const modifier = layoutSize === 'big' ? 'healthcheck-widget--big' : 'healthcheck-widget--normal';
@@ -109,6 +110,7 @@ export function HealthcheckWidget({ options, data, error, loading }: WidgetProps
     <div
       className={`healthcheck-widget ${modifier}`}
       style={{ '--hc-font-scale': fontScale } as CSSProperties}
+      title={description}
     >
       {showName === 'above' && nameEl()}
       {iconArea}

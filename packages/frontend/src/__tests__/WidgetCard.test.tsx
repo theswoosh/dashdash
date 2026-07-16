@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import type { ServiceConfig } from '@dashdash/types';
 import { ThemeProvider } from '../themes/registry';
@@ -78,5 +78,30 @@ describe('WidgetCard — theme switching', () => {
   it('renders with liquid-glass theme (with canvas mock)', () => {
     wrap(<WidgetCard service={{ ...clockService, title: 'Glass Widget' }} editMode={false} />, 'liquid-glass');
     expect(screen.getByText('Glass Widget')).toBeInTheDocument();
+  });
+});
+
+const hcService: ServiceConfig = {
+  id: 'hc-1',
+  title: 'Jellyfin',
+  widget: 'healthcheck',
+  layout: { w: 2, h: 2, x: 0, y: 0 },
+  options: { ping: false, description: 'Media server', showName: 'below' },
+};
+
+describe('Healthcheck — description tooltip', () => {
+  it('exposes the description as a title tooltip on the widget body', async () => {
+    const { container } = wrap(<WidgetCard service={hcService} editMode={false} />);
+    await waitFor(() => expect(container.querySelector('.healthcheck-widget')).not.toBeNull());
+    expect(container.querySelector('.healthcheck-widget')).toHaveAttribute('title', 'Media server');
+  });
+
+  it('exposes the description on the tiny-layout title', async () => {
+    const tiny: ServiceConfig = {
+      ...hcService,
+      options: { ...hcService.options, layoutSize: 'tiny', internalUrl: 'https://jf.local' },
+    };
+    wrap(<WidgetCard service={tiny} editMode={false} />);
+    await waitFor(() => expect(screen.getByText('Jellyfin')).toHaveAttribute('title', 'Media server'));
   });
 });

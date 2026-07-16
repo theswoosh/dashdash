@@ -274,11 +274,12 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
             target="_blank"
             rel="noopener noreferrer"
             className="widget-title widget-title--link"
+            title={tinyDescription}
           >
             {service.title}
           </a>
         ) : (
-          <span className="widget-title">{service.title}</span>
+          <span className="widget-title" title={isTinyLayout ? tinyDescription : undefined}>{service.title}</span>
         )}
         {service.widget === 'notepad' && !editMode && (
           <>
