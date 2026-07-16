@@ -3,7 +3,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import type { Db } from '../db/index.js';
 import { findUserByEmail, findUserById, createUser, updateUser, deleteUser, countAdmins, isFirstUser, findUserByOidc, createOidcUser, linkOidcToUser } from '../db/users.db.js';
-import { createSession, destroySession, destroyAllUserSessions } from '../db/sessions.db.js';
+import { createSession, destroySession, destroyAllUserSessions, findSessionOidcIdToken } from '../db/sessions.db.js';
 import { consumeRateLimit, resetRateLimit, cleanupExpiredRateLimits } from '../db/rate-limits.db.js';
 import { createOidcState, consumeOidcState } from '../db/oidc-state.db.js';
 import { hashPassword, verifyPassword, generateResetToken, hashResetToken } from '../services/password.service.js';
@@ -150,6 +150,7 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
     fastify.post('/auth/logout', async (request, reply) => {
       const sessionId = request.cookies?.[COOKIE_NAME];
       const user = findUserById(db, request.userId);
+      const oidcIdToken = sessionId ? findSessionOidcIdToken(db, sessionId) : undefined;
       if (sessionId) destroySession(db, sessionId);
       void reply.clearCookie(COOKIE_NAME, clearCookieOpts);
 
@@ -163,7 +164,12 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
             scopes: oidcConfig.scopes,
             allowInsecureHttp: oidcConfig.allowInsecureHttp,
           });
-          const endSessionUrl = getEndSessionUrl(resolvedOidcConfig);
+          const endSessionUrl = getEndSessionUrl(
+            resolvedOidcConfig,
+            oidcIdToken
+              ? { idTokenHint: oidcIdToken, postLogoutRedirectUri: process.env['BOARD_BASE_URL'] ?? 'http://localhost:3000' }
+              : undefined,
+          );
           if (endSessionUrl) {
             return reply.send({ ok: true, redirectUrl: endSessionUrl });
           }
@@ -413,7 +419,7 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
           }
         }
 
-        const sessionId = createSession(db, userId, authConfig.session.maxAgeSeconds);
+        const sessionId = createSession(db, userId, authConfig.session.maxAgeSeconds, tokenSet.id_token);
         void reply.setCookie(COOKIE_NAME, sessionId, cookieOpts);
         return reply.redirect('/');
       } catch (err) {

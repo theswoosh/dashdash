@@ -103,7 +103,18 @@ export function generateState(): string {
   return oidcClient.randomState();
 }
 
-export function getEndSessionUrl(config: oidcClient.Configuration): string | undefined {
+export interface EndSessionParams {
+  idTokenHint?: string;
+  postLogoutRedirectUri?: string;
+}
+
+export function getEndSessionUrl(config: oidcClient.Configuration, params?: EndSessionParams): string | undefined {
   const metadata = config.serverMetadata();
-  return metadata.end_session_endpoint;
+  if (!metadata.end_session_endpoint) return undefined;
+
+  const parameters: Record<string, string> = {};
+  if (params?.idTokenHint) parameters['id_token_hint'] = params.idTokenHint;
+  if (params?.postLogoutRedirectUri) parameters['post_logout_redirect_uri'] = params.postLogoutRedirectUri;
+
+  return oidcClient.buildEndSessionUrl(config, parameters).toString();
 }

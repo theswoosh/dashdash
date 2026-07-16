@@ -8,16 +8,23 @@ interface SessionPayload {
   userRole: 'admin' | 'user';
 }
 
-export function createSession(db: Db, userId: string, maxAgeSeconds: number): string {
+export function createSession(db: Db, userId: string, maxAgeSeconds: number, oidcIdToken?: string): string {
   const sessionId = randomBytes(SESSION_TOKEN_BYTES).toString('base64url');
   const expiresAt = new Date(Date.now() + maxAgeSeconds * 1000).toISOString();
 
   db.prepare(`
-    INSERT INTO sessions (id, user_id, expires_at)
-    VALUES (?, ?, ?)
-  `).run(sessionId, userId, expiresAt);
+    INSERT INTO sessions (id, user_id, expires_at, oidc_id_token)
+    VALUES (?, ?, ?, ?)
+  `).run(sessionId, userId, expiresAt, oidcIdToken ?? null);
 
   return sessionId;
+}
+
+export function findSessionOidcIdToken(db: Db, sessionId: string): string | undefined {
+  const row = db.prepare('SELECT oidc_id_token FROM sessions WHERE id = ?').get(sessionId) as
+    | { oidc_id_token: string | null }
+    | undefined;
+  return row?.oidc_id_token ?? undefined;
 }
 
 export function validateSession(db: Db, sessionId: string): SessionPayload | undefined {
