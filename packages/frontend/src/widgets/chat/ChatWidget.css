@@ -374,3 +374,24 @@
   opacity: 0.3;
   cursor: default;
 }
+
+.chat--skin-whatsapp .chat-bubble {
+  border-radius: 8px;
+  background: var(--card-bg, #2a2f32);
+  color: var(--card-fg, #e9edef);
+}
+
+.chat--skin-whatsapp .chat-row--own .chat-bubble {
+  background: #005c4b;
+  color: #e9edef;
+  border-top-right-radius: 2px;
+}
+
+.chat--skin-whatsapp .chat-row:not(.chat-row--own) .chat-bubble {
+  border-top-left-radius: 2px;
+}
+
+.chat--skin-whatsapp .chat-sender {
+  color: var(--sender-color, var(--color-accent));
+  font-weight: 600;
+}

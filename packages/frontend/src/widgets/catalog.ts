@@ -227,6 +227,7 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
         type: 'select',
         options: [
           { value: 'imessage', label: 'iMessage' },
+          { value: 'whatsapp', label: 'WhatsApp' },
         ],
         default: 'imessage',
       },
