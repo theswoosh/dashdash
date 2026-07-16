@@ -110,6 +110,8 @@ widgetConfig:
     membersRestrictedHint: "Restricted to the members below (+ admins)"
     addMember: "Add member…"
     markdownFormatting: "Markdown formatting"
+  notepad:
+    markdownEnabled: "Render markdown formatting"
 
 chat:
   placeholder: "Message…"

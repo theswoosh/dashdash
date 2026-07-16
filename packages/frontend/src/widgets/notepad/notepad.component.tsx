@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import useSWR from 'swr';
 import type { WidgetProps } from '@dashdash/types';
 import { renderWithLinks } from '../../utils/linkify';
+import { renderMarkdownLite } from '../../utils/markdown-lite';
 import './NotepadWidget.css';
 
 const SAVE_DEBOUNCE_MS = 600;
@@ -12,6 +13,7 @@ const fetcher = (url: string) => fetch(url).then(res => res.json());
 export function NotepadWidget({ serviceId, options }: WidgetProps) {
   const rawInterval = options.pollingInterval;
   const pollingInterval = typeof rawInterval === 'number' ? rawInterval : DEFAULT_POLLING_INTERVAL_SEC;
+  const markdownEnabled = options.markdownEnabled === true;
 
   const { data, mutate } = useSWR<{ content: string }>(
     `/api/notepad/${serviceId}`,
@@ -71,7 +73,7 @@ export function NotepadWidget({ serviceId, options }: WidgetProps) {
       aria-label="Click to edit note"
     >
       {content
-        ? renderWithLinks(content, 'notepad-link').map((node, i) =>
+        ? (markdownEnabled ? renderMarkdownLite(content, 'notepad-link') : renderWithLinks(content, 'notepad-link')).map((node, i) =>
             typeof node === 'string'
               ? node.split('\n').map((line, j, arr) => (
                   <span key={`${i}-${j}`}>

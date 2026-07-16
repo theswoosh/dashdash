@@ -197,9 +197,10 @@ export const WIDGET_CATALOG: WidgetTemplate[] = [
     description: 'Persistent text notes with clickable links',
     descriptionKey: 'widgets.notepad.description',
     defaultSize: { w: 28, h: 21 },
-    defaultOptions: { pollingInterval: 60 },
+    defaultOptions: { pollingInterval: 60, markdownEnabled: false },
     configFields: [
       { key: 'pollingInterval', label: 'Auto-refresh interval (seconds, 0 = off)', type: 'number', default: 60 },
+      { key: 'markdownEnabled', label: 'Render markdown formatting', labelKey: 'widgetConfig.notepad.markdownEnabled', type: 'boolean', default: false },
     ],
   },
   {

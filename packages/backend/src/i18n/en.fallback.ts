@@ -117,6 +117,9 @@ export const EN_FALLBACK: Record<string, unknown> = {
       addMember: 'Add member…',
       markdownFormatting: 'Markdown formatting',
     },
+    notepad: {
+      markdownEnabled: 'Render markdown formatting',
+    },
   },
   chat: {
     placeholder: 'Message…',

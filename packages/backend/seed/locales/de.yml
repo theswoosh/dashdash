@@ -110,6 +110,8 @@ widgetConfig:
     membersRestrictedHint: "Auf die folgenden Mitglieder beschränkt (+ Admins)"
     addMember: "Mitglied hinzufügen…"
     markdownFormatting: "Markdown-Formatierung"
+  notepad:
+    markdownEnabled: "Markdown-Formatierung rendern"
 
 chat:
   placeholder: "Nachricht…"
