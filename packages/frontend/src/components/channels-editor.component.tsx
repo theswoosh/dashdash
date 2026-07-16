@@ -38,6 +38,7 @@ function ChannelRow({
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(channel.name);
   const [editRetention, setEditRetention] = useState<string>(String(channel.retentionDays ?? ''));
+  const [editMarkdown, setEditMarkdown] = useState(channel.markdownEnabled);
   const [error, setError] = useState('');
 
   const deleteChannel = async () => {
@@ -53,6 +54,7 @@ function ChannelRow({
       body: JSON.stringify({
         name: editName.trim(),
         retentionDays: editRetention === '' ? null : Number(editRetention),
+        markdownEnabled: editMarkdown,
       }),
     });
     if (res.status === 409) {
@@ -84,6 +86,14 @@ function ChannelRow({
             </option>
           ))}
         </select>
+        <label className="channels-editor__markdown-toggle">
+          <input
+            type="checkbox"
+            checked={editMarkdown}
+            onChange={e => setEditMarkdown(e.target.checked)}
+          />
+          {t('widgetConfig.chat.markdownFormatting')}
+        </label>
         <button type="button" className="channels-editor__btn" onClick={saveEdits} disabled={editName.trim().length === 0}>
           ✓
         </button>
@@ -134,6 +144,7 @@ export function ChannelsEditor({ value, onChange, registerBeforeSave }: Channels
 
   const [newName, setNewName] = useState('');
   const [newRetention, setNewRetention] = useState('');
+  const [newMarkdown, setNewMarkdown] = useState(false);
   const [createError, setCreateError] = useState('');
 
   const subscribedIds = Array.isArray(value)
@@ -157,6 +168,7 @@ export function ChannelsEditor({ value, onChange, registerBeforeSave }: Channels
       body: JSON.stringify({
         name,
         retentionDays: newRetention === '' ? null : Number(newRetention),
+        markdownEnabled: newMarkdown,
       }),
     });
     let channelId: string;
@@ -175,6 +187,7 @@ export function ChannelsEditor({ value, onChange, registerBeforeSave }: Channels
     setCreateError('');
     setNewName('');
     setNewRetention('');
+    setNewMarkdown(false);
     await mutate();
     const next = subscribedIds.includes(channelId) ? subscribedIds : [...subscribedIds, channelId];
     onChange(next); // auto-subscribe the new channel
@@ -226,6 +239,14 @@ export function ChannelsEditor({ value, onChange, registerBeforeSave }: Channels
             </option>
           ))}
         </select>
+        <label className="channels-editor__markdown-toggle">
+          <input
+            type="checkbox"
+            checked={newMarkdown}
+            onChange={e => setNewMarkdown(e.target.checked)}
+          />
+          {t('widgetConfig.chat.markdownFormatting')}
+        </label>
         <button
           type="button"
           className="channels-editor__btn channels-editor__btn--add"

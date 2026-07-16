@@ -115,6 +115,7 @@ export const EN_FALLBACK: Record<string, unknown> = {
       membersOpenHint: 'Open to all users — add a member to restrict this channel',
       membersRestrictedHint: 'Restricted to the members below (+ admins)',
       addMember: 'Add member…',
+      markdownFormatting: 'Markdown formatting',
     },
   },
   chat: {
@@ -131,6 +132,7 @@ export const EN_FALLBACK: Record<string, unknown> = {
     today: 'Today',
     yesterday: 'Yesterday',
     unread: 'Unread',
+    markdownHint: '**bold** *italic* ~~strike~~ `code`',
   },
   topbar: {
     openConfig: 'Open configuration',

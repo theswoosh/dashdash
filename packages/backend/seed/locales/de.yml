@@ -109,6 +109,7 @@ widgetConfig:
     membersOpenHint: "Für alle Nutzer offen — Mitglied hinzufügen, um den Kanal einzuschränken"
     membersRestrictedHint: "Auf die folgenden Mitglieder beschränkt (+ Admins)"
     addMember: "Mitglied hinzufügen…"
+    markdownFormatting: "Markdown-Formatierung"
 
 chat:
   placeholder: "Nachricht…"
@@ -124,6 +125,7 @@ chat:
   today: "Heute"
   yesterday: "Gestern"
   unread: "Ungelesen"
+  markdownHint: "**bold** *italic* ~~strike~~ `code`"
 
 widgetTemplateConfig:
   title: "Standardwerte: {{label}}"

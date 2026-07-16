@@ -2,6 +2,7 @@ import { useRef, useEffect, useLayoutEffect, Fragment } from 'react';
 import type { ChatMessage } from '@dashdash/types';
 import { useT } from '../../i18n';
 import { renderWithLinks } from '../../utils/linkify';
+import { renderMarkdownLite } from '../../utils/markdown-lite';
 import { formatMessageTime, parseMessageDate, messageDayKey } from './chat-time';
 import { resolveSenderColor } from './chat-colors';
 
@@ -11,6 +12,7 @@ interface MessageListProps {
   messages: ChatMessage[];
   currentUserId: string | undefined;
   showTimestamps: boolean;
+  markdownEnabled: boolean;
   hasMore: boolean;
   isLoadingOlder: boolean;
   onLoadOlder: () => void;
@@ -31,11 +33,13 @@ function MessageBubble({
   isOwn,
   showSender,
   showTimestamp,
+  markdownEnabled,
 }: {
   message: ChatMessage;
   isOwn: boolean;
   showSender: boolean;
   showTimestamp: boolean;
+  markdownEnabled: boolean;
 }) {
   const style = isOwn ? undefined : ({ '--sender-color': resolveSenderColor(message) } as React.CSSProperties);
 
@@ -44,7 +48,7 @@ function MessageBubble({
       {showSender && <div className="chat-sender">{message.senderName}</div>}
       <div className="chat-bubble-wrap">
         <div className={`chat-bubble${isOwn ? ' chat-bubble--own' : ''}`}>
-          {renderWithLinks(message.body, 'chat-link')}
+          {markdownEnabled ? renderMarkdownLite(message.body, 'chat-link') : renderWithLinks(message.body, 'chat-link')}
         </div>
       </div>
       {showTimestamp && (
@@ -58,6 +62,7 @@ export function MessageList({
   messages,
   currentUserId,
   showTimestamps,
+  markdownEnabled,
   hasMore,
   isLoadingOlder,
   onLoadOlder,
@@ -143,6 +148,7 @@ export function MessageList({
               isOwn={isOwn}
               showSender={!isOwn && isNewGroup}
               showTimestamp={showTimestamps && isNewGroup}
+              markdownEnabled={markdownEnabled}
             />
           </Fragment>
         );

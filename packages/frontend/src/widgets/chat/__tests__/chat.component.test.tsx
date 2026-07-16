@@ -17,6 +17,7 @@ const generalChannel: ChatChannel = {
   retentionDays: null,
   createdBy: null,
   createdAt: '2026-01-01T00:00:00.000Z',
+  markdownEnabled: false,
 };
 
 const randomChannel: ChatChannel = {
@@ -25,6 +26,7 @@ const randomChannel: ChatChannel = {
   retentionDays: null,
   createdBy: null,
   createdAt: '2026-01-01T00:00:00.000Z',
+  markdownEnabled: false,
 };
 
 vi.mock('../hooks/use-chat-channels.hook', () => ({

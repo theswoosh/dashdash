@@ -8,9 +8,10 @@ const COUNTER_THRESHOLD = MAX_MESSAGE_LENGTH - 200;
 interface MessageComposerProps {
   onSend: (body: string) => Promise<void>;
   disabled?: boolean | undefined;
+  markdownEnabled?: boolean | undefined;
 }
 
-export function MessageComposer({ onSend, disabled }: MessageComposerProps) {
+export function MessageComposer({ onSend, disabled, markdownEnabled }: MessageComposerProps) {
   const t = useT();
   const [draft, setDraft] = useState('');
   const [emojiAnchor, setEmojiAnchor] = useState<DOMRect | null>(null);
@@ -76,6 +77,7 @@ export function MessageComposer({ onSend, disabled }: MessageComposerProps) {
           }
         }}
       />
+      {markdownEnabled && <span className="chat-composer__md-hint">{t('chat.markdownHint')}</span>}
       {draft.length >= COUNTER_THRESHOLD && (
         <span className="chat-composer__counter">{draft.length} / {MAX_MESSAGE_LENGTH}</span>
       )}

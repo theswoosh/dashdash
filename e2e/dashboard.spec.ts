@@ -760,3 +760,49 @@ test('narrow-widget edit pill does not cover the resize handle', async ({ page }
 
   await page.getByLabel('Save & exit').click();
 });
+
+test('chat: markdown renders bold/italic when enabled on the channel, plain text otherwise', async ({ page }) => {
+  await loginViaApi(page);
+  const adminApi = page.context().request;
+
+  // Channel starts with markdown off (default) — subscribe the seeded chat
+  // widget to it.
+  const channelRes = await adminApi.post('/api/chat/channels', {
+    data: { name: `e2e-md-room-${Date.now()}` },
+  });
+  expect(channelRes.status()).toBe(201);
+  const { channel } = await channelRes.json() as { channel: { id: string } };
+  const patchRes = await adminApi.patch('/api/services/chat-e2e', {
+    data: { options: { channelIds: [channel.id], pollingInterval: 1 } },
+  });
+  expect(patchRes.ok()).toBeTruthy();
+
+  await page.goto('/');
+  const chatWidget = page.locator('.react-grid-item').filter({ hasText: 'Chatroom' });
+  await expect(chatWidget).toBeVisible();
+
+  // Markdown off (default): raw markers render as literal text.
+  const composer = chatWidget.locator('.chat-composer__input');
+  await composer.fill('**bold** and *italic*');
+  await composer.press('Enter');
+  const plainBubble = chatWidget.locator('.chat-bubble--own').filter({ hasText: '**bold** and *italic*' });
+  await expect(plainBubble).toBeVisible();
+  await expect(plainBubble.locator('strong')).toHaveCount(0);
+  await expect(plainBubble.locator('em')).toHaveCount(0);
+
+  // Enable markdownEnabled on the channel via the channels editor toggle.
+  const channelPatchRes = await adminApi.patch(`/api/chat/channels/${channel.id}`, {
+    data: { markdownEnabled: true },
+  });
+  expect(channelPatchRes.ok()).toBeTruthy();
+  await page.reload();
+  const reloadedChatWidget = page.locator('.react-grid-item').filter({ hasText: 'Chatroom' });
+  await expect(reloadedChatWidget).toBeVisible();
+
+  const composer2 = reloadedChatWidget.locator('.chat-composer__input');
+  await composer2.fill('**bold** and *italic*');
+  await composer2.press('Enter');
+  const mdBubble = reloadedChatWidget.locator('.chat-bubble--own').filter({ hasText: 'bold and italic' });
+  await expect(mdBubble.locator('strong').filter({ hasText: 'bold' })).toBeVisible();
+  await expect(mdBubble.locator('em').filter({ hasText: 'italic' })).toBeVisible();
+});

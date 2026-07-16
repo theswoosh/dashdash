@@ -128,12 +128,17 @@ export function ChatWidget({ options }: WidgetProps) {
                 messages={messages}
                 currentUserId={currentUserId}
                 showTimestamps={showTimestamps}
+                markdownEnabled={activeChannel?.markdownEnabled ?? false}
                 hasMore={hasMore}
                 isLoadingOlder={isLoadingOlder}
                 onLoadOlder={loadOlderStable}
               />
           )}
-          <MessageComposer onSend={send} disabled={activeChannel === null} />
+          <MessageComposer
+            onSend={send}
+            disabled={activeChannel === null}
+            markdownEnabled={activeChannel?.markdownEnabled ?? false}
+          />
         </>
       )}
     </div>
