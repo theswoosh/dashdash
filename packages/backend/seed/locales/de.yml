@@ -42,6 +42,7 @@ login:
   oidcEmailNotVerified: "Dein SSO-Anbieter hat deine E-Mail-Adresse nicht bestätigt."
   oidcDisabled: "SSO ist nicht konfiguriert."
   oidcAccountInactive: "Dein Konto wurde deaktiviert."
+  oidcEmailExists: "Für diese E-Mail-Adresse existiert bereits ein Konto. Melde dich mit deinem Passwort an oder bitte einen Administrator, die Kontoverknüpfung zu aktivieren."
   accountDisabled: "Dein Konto wurde deaktiviert. Bitte wende dich an einen Administrator."
   accountCreated: "Konto erstellt — bitte melde dich an."
   invalidEmail: "Ungültige E-Mail-Adresse"

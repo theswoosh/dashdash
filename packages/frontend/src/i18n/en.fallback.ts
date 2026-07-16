@@ -44,6 +44,7 @@ export const EN_FALLBACK: Record<string, unknown> = {
     oidcEmailNotVerified: 'Your SSO provider did not verify your email.',
     oidcDisabled: 'SSO is not configured.',
     oidcAccountInactive: 'Your account has been deactivated.',
+    oidcEmailExists: 'An account with this email already exists. Sign in with your password, or ask an admin to enable account linking.',
     accountDisabled: 'Your account has been disabled. Contact an administrator.',
     accountCreated: 'Account created — please sign in.',
     invalidEmail: 'Invalid email address',

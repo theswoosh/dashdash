@@ -396,6 +396,10 @@ export function createAuthRoutes(db: Db, authConfig: AuthConfig, mailConfig: Mai
             linkOidcToUser(db, existingLocalUser.id, oidcConfig.issuer, claims.sub);
             userId = existingLocalUser.id;
           } else {
+            if (existingLocalUser) {
+              return reply.redirect('/?error=oidc_email_exists');
+            }
+
             // JIT provision new user
             const isAdmin = isFirstUser(db) ||
               (oidcConfig.adminGroup !== '' && claims.groups.includes(oidcConfig.adminGroup));

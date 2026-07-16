@@ -11,6 +11,7 @@ function resolveOidcError(code: string, t: TFunc): string {
   switch (code) {
     case 'oidc_email_not_verified': return t('login.oidcEmailNotVerified');
     case 'oidc_account_inactive':   return t('login.oidcAccountInactive');
+    case 'oidc_email_exists':       return t('login.oidcEmailExists');
     case 'oidc_disabled':           return t('login.oidcDisabled');
     default:                        return t('login.oidcError');
   }
