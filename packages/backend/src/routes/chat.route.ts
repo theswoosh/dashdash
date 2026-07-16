@@ -12,6 +12,10 @@ import {
   insertMessage,
   findMessageById,
   searchMessages,
+  canAccessChannel,
+  listChannelMembers,
+  addChannelMember,
+  removeChannelMember,
 } from '../db/chat.db.js';
 import { findUserById } from '../db/users.db.js';
 
@@ -118,6 +122,9 @@ export function createChatRoutes(db: Db): FastifyPluginAsync {
         if (!findChannelById(db, request.params.id)) {
           return reply.code(404).send({ error: 'Channel not found' });
         }
+        if (!canAccessChannel(db, request.params.id, request.userId, request.userRole)) {
+          return reply.code(403).send({ error: 'Not a member of this channel' });
+        }
         const rawLimit = Number(request.query.limit);
         const limit = Number.isInteger(rawLimit) && rawLimit > 0
           ? Math.min(rawLimit, MAX_PAGE_SIZE)
@@ -134,6 +141,9 @@ export function createChatRoutes(db: Db): FastifyPluginAsync {
     fastify.post<{ Params: { id: string } }>('/chat/channels/:id/messages', async (request, reply) => {
       if (!findChannelById(db, request.params.id)) {
         return reply.code(404).send({ error: 'Channel not found' });
+      }
+      if (!canAccessChannel(db, request.params.id, request.userId, request.userRole)) {
+        return reply.code(403).send({ error: 'Not a member of this channel' });
       }
       const parsed = PostMessageBodySchema.safeParse(request.body);
       if (!parsed.success) {
@@ -158,6 +168,9 @@ export function createChatRoutes(db: Db): FastifyPluginAsync {
         if (!findChannelById(db, request.params.id)) {
           return reply.code(404).send({ error: 'Channel not found' });
         }
+        if (!canAccessChannel(db, request.params.id, request.userId, request.userRole)) {
+          return reply.code(403).send({ error: 'Not a member of this channel' });
+        }
         const query = (request.query.q ?? '').trim();
         if (!query) return { messages: [] };
         const rawLimit = Number(request.query.limit);
@@ -167,5 +180,38 @@ export function createChatRoutes(db: Db): FastifyPluginAsync {
         return { messages: searchMessages(db, request.params.id, query, limit) };
       },
     );
+
+    // GET /api/chat/channels/:id/members
+    fastify.get<{ Params: { id: string } }>('/chat/channels/:id/members', async (request, reply) => {
+      if (!findChannelById(db, request.params.id)) return reply.code(404).send({ error: 'Channel not found' });
+      return { members: listChannelMembers(db, request.params.id) };
+    });
+
+    const MemberBodySchema = z.object({ userId: z.string().min(1) });
+
+    // POST /api/chat/channels/:id/members
+    fastify.post<{ Params: { id: string } }>('/chat/channels/:id/members', async (request, reply) => {
+      const channel = findChannelById(db, request.params.id);
+      if (!channel) return reply.code(404).send({ error: 'Channel not found' });
+      if (!canManageChannel(channel.createdBy, request.userId, request.userRole)) {
+        return reply.code(403).send({ error: 'Only the channel creator or an admin can manage members' });
+      }
+      const parsed = MemberBodySchema.safeParse(request.body);
+      if (!parsed.success) return reply.code(400).send({ error: 'Invalid member payload' });
+      if (!findUserById(db, parsed.data.userId)) return reply.code(404).send({ error: 'Unknown user' });
+      addChannelMember(db, channel.id, parsed.data.userId);
+      return { members: listChannelMembers(db, channel.id) };
+    });
+
+    // DELETE /api/chat/channels/:id/members/:userId
+    fastify.delete<{ Params: { id: string; userId: string } }>('/chat/channels/:id/members/:userId', async (request, reply) => {
+      const channel = findChannelById(db, request.params.id);
+      if (!channel) return reply.code(404).send({ error: 'Channel not found' });
+      if (!canManageChannel(channel.createdBy, request.userId, request.userRole)) {
+        return reply.code(403).send({ error: 'Only the channel creator or an admin can manage members' });
+      }
+      removeChannelMember(db, channel.id, request.params.userId);
+      return { members: listChannelMembers(db, channel.id) };
+    });
   };
 }

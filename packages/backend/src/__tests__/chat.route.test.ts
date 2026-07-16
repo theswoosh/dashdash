@@ -429,4 +429,45 @@ describe('chat routes', () => {
       spy.mockRestore();
     });
   });
+
+  describe('channel membership (ACL)', () => {
+    it('an open channel (no members added) stays accessible to any user', async () => {
+      const cookie = await loginAsUser();
+      const channel = (await createChannel(cookie, 'open-chan')).json() as { channel: { id: string } };
+      const other = await loginAsUser('second@test.local', 'Second');
+      const res = await postMessage(other, channel.channel.id, 'hi');
+      expect(res.statusCode).toBe(201);
+    });
+
+    it('adding a member restricts the channel to members + admins', async () => {
+      const owner = await loginAsUser('owner@test.local', 'Owner');
+      const channel = (await createChannel(owner, 'restricted-chan')).json() as { channel: { id: string } };
+      await server.inject({
+        method: 'POST', url: `/api/chat/channels/${channel.channel.id}/members`,
+        headers: { cookie: owner }, payload: { userId: (await import('../db/users.db.js')).findUserByEmail(db, 'owner@test.local')!.id },
+      });
+      const outsider = await loginAsUser('outsider@test.local', 'Outsider');
+      const blocked = await postMessage(outsider, channel.channel.id, 'nope');
+      expect(blocked.statusCode).toBe(403);
+    });
+
+    it('admin can always post regardless of membership', async () => {
+      const owner = await loginAsUser('owner2@test.local', 'Owner2');
+      const channel = (await createChannel(owner, 'restricted-chan-2')).json() as { channel: { id: string } };
+      const admin = await loginAsAdmin(server);
+      const res = await postMessage(admin, channel.channel.id, 'admin override');
+      expect(res.statusCode).toBe(201);
+    });
+
+    it('only creator or admin can add/remove members', async () => {
+      const owner = await loginAsUser('owner3@test.local', 'Owner3');
+      const channel = (await createChannel(owner, 'restricted-chan-3')).json() as { channel: { id: string } };
+      const rando = await loginAsUser('rando@test.local', 'Rando');
+      const res = await server.inject({
+        method: 'POST', url: `/api/chat/channels/${channel.channel.id}/members`,
+        headers: { cookie: rando }, payload: { userId: 'whoever' },
+      });
+      expect(res.statusCode).toBe(403);
+    });
+  });
 });
