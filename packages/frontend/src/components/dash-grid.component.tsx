@@ -51,7 +51,7 @@ export function DashGrid() {
     }))
   );
 
-  const { services, hasConfigErrors, reload: reloadServices } = useServices();
+  const { services, hasConfigErrors, isLoading: isServicesLoading, reload: reloadServices } = useServices();
   const widgetTemplates = useWidgetTemplates();
   const gridConfig = useGridConfig();
 
@@ -550,9 +550,12 @@ export function DashGrid() {
   );
 
   if (rootServices.length === 0 && !editMode) {
+    // While services are still loading, an empty list means "unknown", not
+    // "unconfigured" — render the bare container so the no-services hint
+    // doesn't flash on every login before the first response arrives.
     return (
       <div className="dash-grid-container dash-grid-empty">
-        <p>{t('dashGrid.noServices')}</p>
+        {!isServicesLoading && <p>{t('dashGrid.noServices')}</p>}
       </div>
     );
   }
