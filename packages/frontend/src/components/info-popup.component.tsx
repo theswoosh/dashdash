@@ -2,17 +2,11 @@ import { X } from 'lucide-react';
 import useSWR from 'swr';
 import { useUIStore } from '../store/uiStore';
 import { useT } from '../i18n';
+import { useUpdateCheck } from '../hooks/use-update-check.hook';
 import './info-popup.css';
 
 const healthFetcher = (url: string) =>
   fetch(url).then(res => res.json()) as Promise<{ version?: string }>;
-
-interface UpdateCheck {
-  updateAvailable: boolean;
-  latestVersion: string | null;
-  releaseUrl: string | null;
-}
-const updateFetcher = (url: string) => fetch(url).then(res => res.json()) as Promise<UpdateCheck>;
 
 export function InfoPopup() {
   const t = useT();
@@ -25,9 +19,7 @@ export function InfoPopup() {
     revalidateOnFocus: false,
   });
 
-  const { data: updateCheck } = useSWR(isInfoOpen ? '/api/update-check' : null, updateFetcher, {
-    revalidateOnFocus: false,
-  });
+  const { updateAvailable, latestVersion, releaseUrl } = useUpdateCheck();
 
   if (!isInfoOpen) return null;
 
@@ -44,19 +36,27 @@ export function InfoPopup() {
         <div className="info-body">
           <div className="info-row">
             <span className="info-row-label">{t('info.version')}</span>
-            <span className="info-row-value">{health?.version ?? '—'}</span>
+            <a
+              className={`info-link${updateAvailable ? ' info-version-update' : ''}`}
+              href={releaseUrl ?? 'https://github.com/theswoosh/dashdash/releases'}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {health?.version ?? '—'}
+              {updateAvailable && ` → ${latestVersion}`}
+            </a>
           </div>
 
-          {updateCheck?.updateAvailable && (
+          {updateAvailable && (
             <div className="info-row">
               <span className="info-row-label">{t('info.updateAvailable')}</span>
               <a
                 className="info-link"
-                href={updateCheck.releaseUrl ?? 'https://github.com/theswoosh/dashdash/releases'}
+                href={releaseUrl ?? 'https://github.com/theswoosh/dashdash/releases'}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                {updateCheck.latestVersion}
+                {latestVersion}
               </a>
             </div>
           )}

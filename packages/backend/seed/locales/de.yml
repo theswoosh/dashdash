@@ -304,6 +304,7 @@ info:
   title: "Über dashdash"
   version: "Version"
   updateAvailable: "Update verfügbar"
+  updateTooltip: "Neue Version verfügbar"
   developedBy: "Entwickelt von"
   license: "Lizenz"
   support: "Projekt unterstützen"

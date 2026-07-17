@@ -89,6 +89,11 @@
   text-decoration: underline;
 }
 
+.info-version-update {
+  color: var(--accent, rgba(255, 255, 255, 0.7));
+  font-weight: 600;
+}
+
 .info-kofi-btn {
   display: inline-flex;
   align-items: center;
