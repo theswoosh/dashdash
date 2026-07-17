@@ -1,13 +1,9 @@
 name: Publish docs to GitHub Pages
 
-# NOTE 2026-07-17: GitHub Pages is not available for this private repo on the
-# current plan (API: 422 "Your current plan does not support GitHub Pages").
-# Manual trigger only until that changes — once Pages is enabled (plan upgrade,
-# public repo, or a separate public docs repo), restore the push trigger:
-#   push:
-#     branches: [main]
-#     paths: ['docs/**', '.github/workflows/pages.yml']
 on:
+  push:
+    branches: [main]
+    paths: ['docs/**', '.github/workflows/pages.yml']
   workflow_dispatch:
 
 permissions:
