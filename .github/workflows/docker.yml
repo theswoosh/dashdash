@@ -11,7 +11,33 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  # Never publish an image from a commit whose CI failed (2026-07-16 a red
+  # E2E job still shipped :latest). CI doesn't run on tags, but tags point
+  # at commits already CI'd on main, so the check-run lookup resolves there
+  # too; a never-CI'd SHA fails safe after the timeout.
+  wait-for-ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      checks: read
+    steps:
+      - name: Wait for the CI quality-gates check on this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for i in $(seq 1 60); do
+            status=$(gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/check-runs?check_name=Automated%20quality%20gates" \
+              --jq '.check_runs[0] | "\(.status) \(.conclusion)"' 2>/dev/null || echo "none none")
+            case "$status" in
+              "completed success") echo "CI green"; exit 0 ;;
+              "completed "*) echo "CI concluded: $status"; exit 1 ;;
+              *) echo "waiting ($status)"; sleep 15 ;;
+            esac
+          done
+          echo "CI did not complete within 15 min"; exit 1
+
   build-and-push:
+    needs: wait-for-ci
     runs-on: ubuntu-latest
     # Multi-arch QEMU builds normally take 4-8 min; a runner stall on
     # 2026-07-16 ran 60+ min (default cap is 6h). Cancel runaways early.
