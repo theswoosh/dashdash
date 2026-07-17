@@ -78,9 +78,13 @@ All configuration lives in the `/config` volume:
 
 Annotated examples are in `config/*.yml.example`.
 
-Healthchecks against private/LAN IP ranges are blocked by default (SSRF
-protection) — set `allowPrivateNetworks: true` in `settings.yml` if you're
-monitoring hosts on your own network.
+Healthchecks against private/LAN IP ranges are allowed by default
+(`allowPrivateNetworks: true`) — dashdash's primary use case is monitoring
+hosts on your own network. On multi-user or internet-exposed deployments,
+set `allowPrivateNetworks: false` in `settings.yml` to re-enable the SSRF
+guard: it blocks server-side probes of RFC-1918/loopback/link-local
+targets, including DNS rebinding (a public hostname resolving to a private
+IP).
 
 ### API credentials
 

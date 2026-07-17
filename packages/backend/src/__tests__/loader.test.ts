@@ -59,4 +59,19 @@ theme: light
     expect(settings.theme).toBe('light');
     expect(settings.grid.cellSize).toBe(10);  // zod default still applies
   });
+
+  it('defaults allowPrivateNetworks to true when omitted', async () => {
+    const emptyDir = mkdtempSync(join(tmpdir(), 'dashdash-no-apn-'));
+    const settings = await loadSettings(emptyDir);
+    expect(settings.allowPrivateNetworks).toBe(true);
+    rmSync(emptyDir, { recursive: true });
+  });
+
+  it('respects an explicit allowPrivateNetworks: false in settings.yml', async () => {
+    writeFileSync(join(tmpDir, 'settings.yml'), `
+allowPrivateNetworks: false
+`);
+    const settings = await loadSettings(tmpDir);
+    expect(settings.allowPrivateNetworks).toBe(false);
+  });
 });

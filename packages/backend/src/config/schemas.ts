@@ -199,7 +199,7 @@ export const SettingsSchema = z.object({
   mail: MailConfigSchema,
   searchEngines: SearchEnginesSchema.default([]),
   holdToDeleteMs: z.number().int().positive().max(30000).default(1000).catch(1000),
-  allowPrivateNetworks: z.boolean().default(false),
+  allowPrivateNetworks: z.boolean().default(true),
 });
 
 export const IntegrationSchema = z.object({
