@@ -140,7 +140,7 @@ export function LoginPage({ initialView = 'login', initialError = '' }: LoginPag
   }
 
   return (
-    <div className="login-backdrop">
+    <div className="chrome login-backdrop">
       <div className="login-card">
         <div className="login-header">
           <span className="login-logo">dashdash</span>

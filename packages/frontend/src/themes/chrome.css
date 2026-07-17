@@ -1,0 +1,55 @@
+/* Chrome theme — functional-surface styling (login, config, modals). */
+/* Independent of board themes. Only --chrome-accent and --chrome-radius     */
+/* fall back to board vars (--accent, --radius) so the board can influence   */
+/* those two knobs; everything else is fixed per palette.                   */
+
+.chrome {
+  --chrome-bg: #14161a;
+  --chrome-bg-raised: #1b1e24;
+  --chrome-fg: #e5e8ec;
+  --chrome-fg-muted: #98a1ae;
+  --chrome-border: #2b3038;
+  --chrome-accent: var(--accent, #6fa8dc);
+  --chrome-radius: var(--radius, 8px);
+  --chrome-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --chrome-input-bg: #101318;
+  --chrome-danger: #e5484d;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: light) {
+  .chrome {
+    --chrome-bg: #ffffff;
+    --chrome-bg-raised: #f7f8fa;
+    --chrome-fg: #16181d;
+    --chrome-fg-muted: #5b6472;
+    --chrome-border: #e0e3e8;
+    --chrome-accent: var(--accent, #1d5fa8);
+    --chrome-input-bg: #ffffff;
+    --chrome-danger: #d33d42;
+  }
+}
+
+[data-chrome='dark'].chrome,
+[data-chrome='dark'] .chrome {
+  --chrome-bg: #14161a;
+  --chrome-bg-raised: #1b1e24;
+  --chrome-fg: #e5e8ec;
+  --chrome-fg-muted: #98a1ae;
+  --chrome-border: #2b3038;
+  --chrome-accent: var(--accent, #6fa8dc);
+  --chrome-input-bg: #101318;
+  --chrome-danger: #e5484d;
+}
+
+[data-chrome='light'].chrome,
+[data-chrome='light'] .chrome {
+  --chrome-bg: #ffffff;
+  --chrome-bg-raised: #f7f8fa;
+  --chrome-fg: #16181d;
+  --chrome-fg-muted: #5b6472;
+  --chrome-border: #e0e3e8;
+  --chrome-accent: var(--accent, #1d5fa8);
+  --chrome-input-bg: #ffffff;
+  --chrome-danger: #d33d42;
+}
