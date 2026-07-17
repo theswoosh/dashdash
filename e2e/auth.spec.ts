@@ -24,14 +24,13 @@ test.beforeAll(async () => {
 });
 
 test('rate limit locks out after 5 failed attempts, correct password still 429', async ({ page }) => {
-  // Registration is rate-limited to 3/hour per IP and shared across the whole
-  // e2e run — tolerate "already exists" (409) or "too many registrations"
-  // (429) so this test is re-runnable; only the login assertions below matter.
-  const regRes = await page.request.post('/api/auth/register', {
-    data: { email: RATE_LIMIT_EMAIL, password: RATE_LIMIT_PASSWORD, name: 'Rate Limit E2E' },
-  });
-  expect([201, 409, 429]).toContain(regRes.status());
-
+  // Deliberately NO registration here: the register endpoint allows only
+  // 3/hour/IP shared across the whole E2E run, and dashboard.spec.ts needs
+  // all three slots (admin, ui-user, ACL outsider). The login rate limit is
+  // checked before user lookup and keyed by email (auth.route.ts), so the
+  // lockout behaves identically for a nonexistent account. The
+  // correct-password-during-lockout semantics against a real account were
+  // verified manually in the 2026-07-16 auth round.
   for (let i = 0; i < 5; i++) {
     const res = await page.request.post('/api/auth/login', {
       data: { email: RATE_LIMIT_EMAIL, password: 'definitely-wrong' },

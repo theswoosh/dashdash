@@ -34,7 +34,10 @@ async function loginViaApi(page: Page): Promise<void> {
 
 // Registration is rate-limited to 3/hour per IP (packages/backend/src/routes/
 // auth.route.ts RATE_WINDOWS), and that budget is shared across the *entire*
-// file: the very first test registers 'ui-user@test.local' through the UI
+// E2E run — including auth.spec.ts, which runs first alphabetically and
+// therefore deliberately registers NOTHING (its lockout test uses a
+// nonexistent email). All three slots belong to this file:
+// the very first test registers 'ui-user@test.local' through the UI
 // (claiming the first-user/admin slot), and loginViaApi's fallback registers
 // 'e2e-admin@test.local' the first time it's called — two of the three slots
 // are gone before any chat test runs. Chat tests needing "a second identity"
