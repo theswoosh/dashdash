@@ -6,10 +6,10 @@ weight: 40
 The notepad widget is a free-text scratchpad you can drop anywhere on a
 board — shopping lists, reminders, anything you'd stick on a sticky note.
 
-## Per-board notes
+## Per-widget notes
 
-Notepad content belongs to the widget instance, so different notepads on
-different boards hold entirely separate text.
+Notepad content belongs to the widget instance — place several notepads
+and each holds its own text.
 
 ## Markdown
 

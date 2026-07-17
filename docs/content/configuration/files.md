@@ -3,10 +3,10 @@ title: Config Files
 weight: 10
 ---
 
-Everything about your dashdash install lives in the `config/` folder, as
-plain YAML you can edit by hand. Annotated example files ship alongside the
-real ones (`config/*.yml.example`) — copy them in to get started, then edit
-freely.
+Everything about your dashdash install lives in the `config/` volume as
+plain YAML — diffable, versionable, hand-editable. On first start the
+container seeds missing files from annotated examples, so there's always a
+working baseline to edit from.
 
 ## settings.yml
 
@@ -17,7 +17,7 @@ network addresses (`allowPrivateNetworks`, on by default for homelab use).
 
 ```yaml
 title: "Home"
-theme: glass
+theme: liquid-glass
 allowPrivateNetworks: true
 searchEngines:
   - id: duckduckgo

@@ -2,10 +2,18 @@
 title: dashdash
 ---
 
-dashdash is a self-hosted dashboard for your homelab. Drag, drop, and resize
-widgets onto a board, edit everything live, and keep the config in plain
-YAML you can version yourself. Add local accounts or hook up your existing
-SSO/OIDC provider so the whole household or team gets its own board.
+dashdash is a self-hosted dashboard for your homelab: one board for your
+services, live-editable, backed by plain YAML you can diff and version.
+Drag-and-drop and hand-edited config stay in sync — use whichever fits the
+moment. Multi-user from the start, with local accounts or your existing
+OIDC provider (Keycloak, Authentik, Authelia, ...).
 
-Start with [getting started]({{< relref "/getting-started/" >}}) to install it, or jump
-straight to [widgets]({{< relref "/widgets/" >}}) to see what you can put on a board.
+- **Single container.** One image, two volumes, port 3000. Config is
+  seeded on first start.
+- **Healthchecks that state their reason** — a red tile tells you
+  *timeout* vs *connection refused* vs *DNS failure*, not just "down".
+- **No cloud, no telemetry, no external calls from the browser** — API
+  credentials stay server-side.
+
+Start with [getting started]({{< relref "/getting-started/" >}}), or jump to
+[widgets]({{< relref "/widgets/" >}}) to see what goes on a board.

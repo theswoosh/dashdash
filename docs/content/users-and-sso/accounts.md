@@ -19,7 +19,7 @@ starts as a regular user.
 
 There are two roles: regular user and admin. Admins can manage other
 accounts, search engines, and configuration validation from the admin
-panel; regular users can manage their own profile and boards.
+panel; regular users manage their own profile and layout.
 
 ## Your profile
 

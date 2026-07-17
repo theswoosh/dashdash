@@ -68,8 +68,9 @@ to it.
 
 ## Display options
 
-- **Layout size** — `tiny` shows just the status dot; the default full
-  layout also shows the service name and latency.
+- **Layout size** — `tiny` collapses the widget to a fixed-height bar
+  with the status dot and name; the default full layout adds latency and
+  the larger icon.
 - **Show name** — choose whether the name appears above or below the
   status, or not at all. If you've set an internal URL for the service,
   the name becomes a link to it.

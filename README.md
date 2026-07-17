@@ -21,7 +21,7 @@ Configuration is plain YAML you can edit by hand, and a drag-and-drop UI that st
 - **Drag-and-drop grid** — arrange and resize widgets however you like; each user keeps their own layout
 - **Live YAML config** — edit `services.yml` and the board updates instantly, no restart
 - **Healthchecks that explain themselves** — a red tile tells you why a service is down (timeout, DNS, connection refused, ...), not just that it is
-- **Themes** — Liquid Glass, Classic, and ASCII out of the box; ship your own with a single CSS file
+- **Themes** — Liquid Glass, Classic, ASCII, and Atom out of the box; ship your own with a single CSS file
 - **Chat widget** — a built-in chat for the household, with channels, markdown, and its own skins
 - **Notepad** — quick notes per board, markdown optional
 - **Stats widget** — CPU, RAM, disk, and temperature with configurable warning thresholds
@@ -46,13 +46,10 @@ services:
 ```
 
 ```bash
-# Copy example configs, then start
-cp config/settings.yml.example config/settings.yml
-cp config/services.yml.example config/services.yml
 docker compose up -d
 ```
 
-Open `http://localhost:3000` and register — the first account created becomes the admin.
+Open `http://localhost:3000` and register — the first account created becomes the admin. Config files are seeded into `./config` on first start from annotated examples; edit them anytime.
 
 All configuration lives in the `/config` volume (annotated examples in `config/*.yml.example`): `settings.yml` (theme, background, grid defaults, mail, auth), `services.yml` (widget instances), `integrations.yml` (named API sources). API credentials go in environment variables, never in config files — `BOARD_INTEGRATION_<ID_UPPERCASE>_KEY=your-api-key`, see `.env.example`.
 

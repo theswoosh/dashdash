@@ -50,8 +50,8 @@ bottom-left so it never covers the resize handle.
 
 ## Tiny layout
 
-Some widgets — most commonly healthchecks — support a "tiny" size: a
-single fixed-height bar showing just a status dot and a name. When you
-resize a widget down to its minimum height, it locks into this tiny mode
-and keeps that fixed height as you resize it wider or narrower. Resize it
-taller again to bring back the full layout.
+Some widgets — most prominently healthchecks — offer a "tiny" layout in
+their settings: a single fixed-height bar with the status dot and name.
+A widget set to tiny pins to that bar height — you can resize it wider or
+narrower, but not taller, until you switch the layout size back in its
+settings.

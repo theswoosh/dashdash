@@ -3,8 +3,8 @@ title: Your First Board
 weight: 20
 ---
 
-After you register and log in, dashdash opens on your board — a grid of
-widgets you can rearrange freely. Here's a quick tour.
+After login you land on the board — a grid of widgets you can rearrange
+freely. The essentials:
 
 ## The topbar
 
@@ -18,7 +18,7 @@ The config panel is where everything not on the grid itself lives:
 
 - Your profile — name, email, password, chat color
 - Theme picker
-- Board management — create, rename, switch boards
+- Board settings — name, wallpaper, background
 - Admin tools, if you're an admin — users, search engines, config validation
 - An info button showing the running version and an update indicator
 
