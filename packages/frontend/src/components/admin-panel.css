@@ -11,15 +11,15 @@
 }
 
 .admin-panel {
-  background: var(--modal-bg, rgba(14, 14, 20, 0.97));
-  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.1));
+  background: var(--chrome-bg-raised);
+  border: 1px solid var(--chrome-border);
   border-radius: 14px;
   width: 100%;
   max-width: 640px;
   max-height: 80vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--chrome-shadow);
   overflow: hidden;
 }
 
@@ -28,20 +28,20 @@
   align-items: center;
   justify-content: space-between;
   padding: 18px 24px;
-  border-bottom: 1px solid var(--card-border, rgba(255, 255, 255, 0.08));
+  border-bottom: 1px solid var(--chrome-border);
 }
 
 .admin-title {
   font-size: 1rem;
   font-weight: 700;
-  color: var(--text-primary, #fff);
+  color: var(--chrome-fg);
   margin: 0;
 }
 
 .admin-close {
   background: none;
   border: none;
-  color: var(--text-muted, rgba(255, 255, 255, 0.45));
+  color: var(--chrome-fg-muted);
   cursor: pointer;
   padding: 4px;
   display: flex;
@@ -51,8 +51,8 @@
 }
 
 .admin-close:hover {
-  color: var(--text-primary, #fff);
-  background: rgba(255, 255, 255, 0.07);
+  color: var(--chrome-fg);
+  background: color-mix(in srgb, var(--chrome-fg) 7%, transparent);
 }
 
 .admin-body {
@@ -71,16 +71,16 @@
 .admin-section-label {
   font-size: 0.78rem;
   font-weight: 600;
-  color: var(--text-muted, rgba(255, 255, 255, 0.45));
+  color: var(--chrome-fg-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
 
 .admin-error {
-  background: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: color-mix(in srgb, var(--chrome-danger) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--chrome-danger) 30%, transparent);
   border-radius: 6px;
-  color: #fca5a5;
+  color: var(--chrome-danger);
   font-size: 0.8rem;
   padding: 7px 12px;
   margin: 0 0 12px;
@@ -94,7 +94,7 @@
 }
 
 .admin-loading {
-  color: var(--text-muted, rgba(255, 255, 255, 0.4));
+  color: var(--chrome-fg-muted);
   font-size: 0.85rem;
 }
 
@@ -104,8 +104,8 @@
   gap: 12px;
   padding: 10px 12px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: color-mix(in srgb, var(--chrome-fg) 3%, transparent);
+  border: 1px solid color-mix(in srgb, var(--chrome-fg) 5%, transparent);
 }
 
 .admin-user-row--inactive {
@@ -123,7 +123,7 @@
 .admin-user-name {
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--text-primary, #fff);
+  color: var(--chrome-fg);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -131,7 +131,7 @@
 
 .admin-user-email {
   font-size: 0.75rem;
-  color: var(--text-muted, rgba(255, 255, 255, 0.45));
+  color: var(--chrome-fg-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -151,21 +151,21 @@
   letter-spacing: 0.04em;
   padding: 2px 7px;
   border-radius: 100px;
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text-muted, rgba(255, 255, 255, 0.5));
+  background: color-mix(in srgb, var(--chrome-fg) 8%, transparent);
+  color: var(--chrome-fg-muted);
 }
 
 .admin-role-badge--admin {
-  background: rgba(139, 92, 246, 0.2);
-  color: #c4b5fd;
+  background: color-mix(in srgb, var(--chrome-accent) 20%, transparent);
+  color: var(--chrome-accent);
 }
 
 .admin-disabled-badge {
   font-size: 0.68rem;
   padding: 2px 7px;
   border-radius: 100px;
-  background: rgba(239, 68, 68, 0.15);
-  color: #fca5a5;
+  background: color-mix(in srgb, var(--chrome-danger) 15%, transparent);
+  color: var(--chrome-danger);
 }
 
 .admin-user-actions {
@@ -178,7 +178,7 @@
 .admin-icon-btn {
   background: none;
   border: none;
-  color: var(--text-muted, rgba(255, 255, 255, 0.35));
+  color: var(--chrome-fg-muted);
   cursor: pointer;
   padding: 5px;
   border-radius: 5px;
@@ -188,13 +188,13 @@
 }
 
 .admin-icon-btn:hover {
-  color: var(--text-primary, #fff);
-  background: rgba(255, 255, 255, 0.07);
+  color: var(--chrome-fg);
+  background: color-mix(in srgb, var(--chrome-fg) 7%, transparent);
 }
 
 .admin-icon-btn--danger:hover {
-  color: #fca5a5;
-  background: rgba(239, 68, 68, 0.1);
+  color: var(--chrome-danger);
+  background: color-mix(in srgb, var(--chrome-danger) 10%, transparent);
 }
 
 /* Buttons */
@@ -207,14 +207,14 @@
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
-  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.15));
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-primary, #fff);
+  border: 1px solid var(--chrome-border);
+  background: color-mix(in srgb, var(--chrome-fg) 10%, transparent);
+  color: var(--chrome-fg);
   transition: background 0.15s;
 }
 
 .admin-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.16);
+  background: color-mix(in srgb, var(--chrome-fg) 16%, transparent);
 }
 
 .admin-btn:disabled {
@@ -230,18 +230,18 @@
 .admin-btn--ghost {
   background: none;
   border-color: transparent;
-  color: var(--text-muted, rgba(255, 255, 255, 0.5));
+  color: var(--chrome-fg-muted);
 }
 
 .admin-btn--ghost:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-primary, #fff);
+  background: color-mix(in srgb, var(--chrome-fg) 5%, transparent);
+  color: var(--chrome-fg);
 }
 
 /* Add form */
 .admin-add-form {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: color-mix(in srgb, var(--chrome-fg) 3%, transparent);
+  border: 1px solid color-mix(in srgb, var(--chrome-fg) 7%, transparent);
   border-radius: 10px;
   padding: 16px;
   margin-bottom: 16px;
@@ -253,7 +253,7 @@
 .admin-add-title {
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--text-primary, #fff);
+  color: var(--chrome-fg);
   margin: 0 0 4px;
 }
 
@@ -272,15 +272,15 @@
 .admin-label {
   font-size: 0.74rem;
   font-weight: 500;
-  color: var(--text-muted, rgba(255, 255, 255, 0.45));
+  color: var(--chrome-fg-muted);
 }
 
 .admin-input {
   padding: 7px 10px;
-  background: var(--input-bg, rgba(255, 255, 255, 0.06));
-  border: 1px solid var(--input-border, rgba(255, 255, 255, 0.1));
+  background: var(--chrome-input-bg);
+  border: 1px solid var(--chrome-border);
   border-radius: 6px;
-  color: var(--text-primary, #fff);
+  color: var(--chrome-fg);
   font-size: 0.82rem;
   outline: none;
   transition: border-color 0.15s;
@@ -289,7 +289,7 @@
 }
 
 .admin-input:focus {
-  border-color: var(--accent, rgba(255, 255, 255, 0.3));
+  border-color: var(--chrome-accent);
 }
 
 .admin-select {
@@ -308,7 +308,7 @@
 .admin-tabs {
   display: flex;
   gap: 0;
-  border-bottom: 1px solid var(--card-border, rgba(255, 255, 255, 0.08));
+  border-bottom: 1px solid var(--chrome-border);
   padding: 0 24px;
 }
 
@@ -316,7 +316,7 @@
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
-  color: var(--text-muted, rgba(255, 255, 255, 0.45));
+  color: var(--chrome-fg-muted);
   cursor: pointer;
   font-size: 0.85rem;
   font-weight: 500;
@@ -326,12 +326,12 @@
 }
 
 .admin-tab:hover {
-  color: var(--text-primary, #fff);
+  color: var(--chrome-fg);
 }
 
 .admin-tab--active {
-  color: var(--text-primary, #fff);
-  border-bottom-color: var(--accent, rgba(255, 255, 255, 0.7));
+  color: var(--chrome-fg);
+  border-bottom-color: var(--chrome-accent);
 }
 
 /* Search engine list */
@@ -347,8 +347,8 @@
   gap: 12px;
   padding: 10px 12px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: color-mix(in srgb, var(--chrome-fg) 3%, transparent);
+  border: 1px solid color-mix(in srgb, var(--chrome-fg) 5%, transparent);
 }
 
 .admin-engine-row:has(.admin-add-form--inline) {
@@ -362,8 +362,8 @@
 .admin-add-form--inline {
   margin: 0;
   padding: 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--chrome-fg) 3%, transparent);
+  border: 1px solid color-mix(in srgb, var(--chrome-fg) 8%, transparent);
   border-radius: 8px;
 }
 
@@ -378,12 +378,12 @@
 .admin-engine-label {
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--text-primary, #fff);
+  color: var(--chrome-fg);
 }
 
 .admin-engine-meta {
   font-size: 0.72rem;
-  color: var(--text-muted, rgba(255, 255, 255, 0.4));
+  color: var(--chrome-fg-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -403,8 +403,8 @@
   gap: 8px;
   padding: 8px 12px;
   border-radius: 7px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: color-mix(in srgb, var(--chrome-fg) 3%, transparent);
+  border: 1px solid color-mix(in srgb, var(--chrome-fg) 5%, transparent);
   font-size: 0.8rem;
 }
 
@@ -420,8 +420,8 @@
 }
 
 .admin-issue-badge--error {
-  background: rgba(239, 68, 68, 0.2);
-  color: #fca5a5;
+  background: color-mix(in srgb, var(--chrome-danger) 20%, transparent);
+  color: var(--chrome-danger);
 }
 
 .admin-issue-badge--warning {
@@ -431,7 +431,7 @@
 
 .admin-issue-file {
   font-size: 0.72rem;
-  color: var(--text-muted, rgba(255, 255, 255, 0.45));
+  color: var(--chrome-fg-muted);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -439,7 +439,7 @@
 .admin-issue-field {
   font-family: monospace;
   font-size: 0.75rem;
-  color: var(--text-primary, #fff);
+  color: var(--chrome-fg);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -447,7 +447,7 @@
 
 .admin-issue-msg {
   font-size: 0.8rem;
-  color: var(--text-muted, rgba(255, 255, 255, 0.7));
+  color: color-mix(in srgb, var(--chrome-fg-muted) 90%, var(--chrome-fg) 10%);
   white-space: normal;
   overflow-wrap: anywhere;
 }

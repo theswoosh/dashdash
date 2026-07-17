@@ -32,7 +32,7 @@ export function ConfigPanel() {
     <>
       {editMode && (
         <button
-          className="config-panel-collapse-btn"
+          className="chrome config-panel-collapse-btn"
           style={{ right: isCollapsed ? '0' : '300px' }}
           onClick={() => setIsCollapsed(v => !v)}
           aria-label={isCollapsed ? t('config.expandPanel') : t('config.collapsePanel')}
@@ -42,7 +42,7 @@ export function ConfigPanel() {
         </button>
       )}
       <aside
-        className={`config-panel${editMode ? ' config-panel--open' : ''}${isCollapsed ? ' config-panel--collapsed' : ''}`}
+        className={`chrome config-panel${editMode ? ' config-panel--open' : ''}${isCollapsed ? ' config-panel--collapsed' : ''}`}
         aria-label="Configuration"
       >
         <nav className="config-panel-tabs" aria-label="Config sections">

@@ -6,8 +6,8 @@
   right: 0;
   bottom: 0;
   width: 300px;
-  background: var(--topbar-bg, rgba(15, 15, 20, 0.92));
-  border-left: 1px solid var(--border-color);
+  background: var(--chrome-bg-raised);
+  border-left: 1px solid var(--chrome-border);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   transform: translateX(100%);
@@ -36,28 +36,28 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--topbar-bg, rgba(15, 15, 20, 0.92));
-  border: 1px solid var(--border-color);
+  background: var(--chrome-bg-raised);
+  border: 1px solid var(--chrome-border);
   border-right: none;
   border-radius: 8px 0 0 8px;
-  color: var(--text-muted);
+  color: var(--chrome-fg-muted);
   cursor: pointer;
   padding: 0;
   box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
-  transition: right 0.25s cubic-bezier(0.4, 0, 0.2, 1), color var(--transition), background var(--transition);
+  transition: right 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 150ms ease, background 150ms ease;
   z-index: 51;
 }
 
 .config-panel-collapse-btn:hover {
-  color: var(--text-primary);
-  background: var(--bg-elevated);
+  color: var(--chrome-fg);
+  background: var(--chrome-bg);
 }
 
 /* ── Tab bar ─────────────────────────────────────────────────────────────── */
 
 .config-panel-tabs {
   display: flex;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--chrome-border);
   flex-shrink: 0;
 }
 
@@ -70,18 +70,17 @@
   border: none;
   border-bottom: 2px solid transparent;
   cursor: pointer;
-  color: var(--text-muted);
-  transition: color var(--transition), border-color var(--transition);
-  font-family: var(--font);
+  color: var(--chrome-fg-muted);
+  transition: color 150ms ease, border-color 150ms ease;
 }
 
 .config-tab-btn:hover {
-  color: var(--text-primary);
+  color: var(--chrome-fg);
 }
 
 .config-tab-btn--active {
-  color: var(--text-primary);
-  border-bottom-color: var(--accent);
+  color: var(--chrome-fg);
+  border-bottom-color: var(--chrome-accent);
 }
 
 /* ── Tab body ─────────────────────────────────────────────────────────────── */
@@ -97,9 +96,9 @@
 
 .config-tab-hint {
   font-size: 11px;
-  color: var(--text-faint);
+  color: var(--chrome-fg-muted);
   padding: 10px 12px 8px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--chrome-border);
 }
 
 .config-item-list {
@@ -114,16 +113,16 @@
   align-items: flex-start;
   gap: 10px;
   padding: 10px;
-  border-radius: var(--radius, 8px);
+  border-radius: var(--chrome-radius);
   cursor: grab;
   border: 1px solid transparent;
-  transition: background var(--transition), border-color var(--transition);
+  transition: background 150ms ease, border-color 150ms ease;
   user-select: none;
 }
 
 .config-panel-item:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: var(--border-color);
+  background: color-mix(in srgb, var(--chrome-fg) 6%, transparent);
+  border-color: var(--chrome-border);
 }
 
 .config-panel-item:active {
@@ -137,8 +136,8 @@
   width: 32px;
   height: 32px;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--accent);
+  background: color-mix(in srgb, var(--chrome-fg) 6%, transparent);
+  color: var(--chrome-accent);
   flex-shrink: 0;
   margin-top: 1px;
 }
@@ -160,11 +159,11 @@
   flex-shrink: 0;
   border: none;
   background: transparent;
-  color: var(--text-faint);
+  color: var(--chrome-fg-muted);
   border-radius: 6px;
   cursor: pointer;
   opacity: 0;
-  transition: opacity var(--transition), background var(--transition), color var(--transition);
+  transition: opacity 150ms ease, background 150ms ease, color 150ms ease;
 }
 
 .config-panel-item:hover .config-panel-item__config,
@@ -173,19 +172,19 @@
 }
 
 .config-panel-item__config:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-primary);
+  background: color-mix(in srgb, var(--chrome-fg) 10%, transparent);
+  color: var(--chrome-fg);
 }
 
 .config-panel-item__label {
   font-size: 13px;
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--chrome-fg);
 }
 
 .config-panel-item__desc {
   font-size: 11px;
-  color: var(--text-faint);
+  color: var(--chrome-fg-muted);
   line-height: 1.4;
 }
 
@@ -207,32 +206,31 @@
 .config-option-label {
   font-size: 12px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--chrome-fg);
 }
 
 .config-option-input {
   padding: 7px 10px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+  border-radius: 6px;
+  border: 1px solid var(--chrome-border);
+  background: var(--chrome-input-bg);
+  color: var(--chrome-fg);
   font-size: 13px;
-  font-family: var(--font);
   outline: none;
-  transition: border-color var(--transition);
+  transition: border-color 150ms ease;
 }
 
 .config-option-input:focus {
-  border-color: var(--accent);
+  border-color: var(--chrome-accent);
 }
 
 .config-option-input::placeholder {
-  color: var(--text-faint);
+  color: var(--chrome-fg-muted);
 }
 
 .config-option-hint {
   font-size: 11px;
-  color: var(--text-faint);
+  color: var(--chrome-fg-muted);
 }
 
 /* ── Background upload ───────────────────────────────────────────────────── */
@@ -249,15 +247,15 @@
   height: 20px;
   border-radius: 10px;
   border: none;
-  background: var(--border-color);
+  background: var(--chrome-border);
   cursor: pointer;
   padding: 0;
-  transition: background var(--transition);
+  transition: background 150ms ease;
   flex-shrink: 0;
 }
 
 .bg-toggle--on {
-  background: var(--accent);
+  background: var(--chrome-accent);
 }
 
 .bg-toggle:disabled {
@@ -273,7 +271,7 @@
   height: 14px;
   border-radius: 50%;
   background: #fff;
-  transition: transform var(--transition);
+  transition: transform 150ms ease;
 }
 
 .bg-toggle--on .bg-toggle__thumb {
@@ -288,16 +286,16 @@
   width: 100%;
   padding: 0;
   background: none;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--chrome-border);
+  border-radius: 6px;
   cursor: pointer;
   overflow: hidden;
-  transition: border-color var(--transition);
+  transition: border-color 150ms ease;
   text-align: left;
 }
 
 .wp-open-btn:hover {
-  border-color: var(--accent);
+  border-color: var(--chrome-accent);
 }
 
 .wp-open-thumb {
@@ -314,16 +312,15 @@
   justify-content: center;
   width: 64px;
   height: 36px;
-  background: var(--bg-secondary);
-  color: var(--text-faint);
+  background: var(--chrome-input-bg);
+  color: var(--chrome-fg-muted);
   flex-shrink: 0;
 }
 
 .wp-open-label {
   padding: 0 10px;
-  color: var(--text-muted);
+  color: var(--chrome-fg-muted);
   font-size: 12px;
-  font-family: var(--font);
 }
 
 .config-option-group--coming-soon {
@@ -335,7 +332,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--text-faint);
+  color: var(--chrome-fg-muted);
   margin-bottom: 2px;
 }
 
@@ -350,14 +347,14 @@
 
 .config-coming-soon-list li {
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--chrome-fg-muted);
 }
 
 /* ── Indented sub-options ────────────────────────────────────────────────── */
 
 .config-option-indent {
   padding-left: 12px;
-  border-left: 2px solid var(--border-color);
+  border-left: 2px solid var(--chrome-border);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -367,15 +364,14 @@
 
 .config-option-select {
   padding: 7px 28px 7px 10px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+  border-radius: 6px;
+  border: 1px solid var(--chrome-border);
+  background: var(--chrome-input-bg);
+  color: var(--chrome-fg);
   font-size: 13px;
-  font-family: var(--font);
   outline: none;
   cursor: pointer;
-  transition: border-color var(--transition);
+  transition: border-color 150ms ease;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
@@ -383,13 +379,13 @@
 }
 
 .config-option-select:focus {
-  border-color: var(--accent);
+  border-color: var(--chrome-accent);
 }
 
-/* option elements require a solid background — transparent inherits system white on liquid-glass */
+/* option elements require a solid background — transparent inherits system white */
 .config-option-select option {
-  background-color: var(--bg-dropdown, #0e0e16);
-  color: var(--text-primary);
+  background-color: var(--chrome-input-bg);
+  color: var(--chrome-fg);
 }
 
 /* ── Themes tab ──────────────────────────────────────────────────────────── */
@@ -407,26 +403,27 @@
   align-items: flex-start;
   gap: 6px;
   padding: 10px;
-  border-radius: var(--radius-sm);
+  border-radius: 6px;
   border: 2px solid transparent;
-  background: var(--bg-secondary);
+  background: var(--chrome-input-bg);
   cursor: pointer;
-  transition: border-color var(--transition), background var(--transition);
+  transition: border-color 150ms ease, background 150ms ease;
   text-align: left;
   width: 100%;
 }
 
 .config-theme-option:hover {
-  background: var(--bg-elevated);
-  border-color: var(--border-color);
+  background: var(--chrome-bg);
+  border-color: var(--chrome-border);
 }
 
 .config-theme-option--active {
-  border-color: var(--accent);
-  background: var(--bg-elevated);
+  border-color: var(--chrome-accent);
+  background: var(--chrome-bg);
 }
 
-/* Mini preview — vars scoped via data-theme-preview dual selector */
+/* Mini preview — swatch colors preview the BOARD theme itself (not chrome),
+   so these stay on board-theme vars via the data-theme-preview scope. */
 .config-theme-preview {
   width: 100%;
   aspect-ratio: 16 / 8;
@@ -472,18 +469,18 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  color: var(--text-primary);
+  color: var(--chrome-fg);
 }
 
 .config-theme-name {
   font-size: 13px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--chrome-fg);
 }
 
 .config-theme-desc {
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--chrome-fg-muted);
   line-height: 1.4;
 }
 
@@ -491,7 +488,7 @@
 
 .cp-user-section {
   flex-shrink: 0;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid var(--chrome-border);
   padding: 10px 12px 12px;
   display: flex;
   flex-direction: column;
@@ -501,7 +498,7 @@
 .cp-user-name {
   font-size: 12px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--chrome-fg);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -518,19 +515,18 @@
   align-items: center;
   gap: 4px;
   padding: 4px 9px;
-  border-radius: var(--radius-sm, 5px);
-  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  border: 1px solid var(--chrome-border);
   background: none;
-  color: var(--text-muted);
+  color: var(--chrome-fg-muted);
   font-size: 11px;
-  font-family: var(--font);
   cursor: pointer;
-  transition: color var(--transition), background var(--transition), border-color var(--transition);
+  transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
 }
 
 .cp-user-btn:hover {
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.06);
+  color: var(--chrome-fg);
+  background: color-mix(in srgb, var(--chrome-fg) 6%, transparent);
 }
 
 .cp-user-btn--info {
@@ -544,13 +540,11 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--chrome-accent);
 }
 
 .cp-user-btn--danger:hover {
-  color: #fca5a5;
-  border-color: rgba(239, 68, 68, 0.3);
-  background: rgba(239, 68, 68, 0.08);
+  color: var(--chrome-danger);
+  border-color: color-mix(in srgb, var(--chrome-danger) 30%, transparent);
+  background: color-mix(in srgb, var(--chrome-danger) 8%, transparent);
 }
-
-

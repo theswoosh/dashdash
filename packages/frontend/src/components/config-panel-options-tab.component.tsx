@@ -94,6 +94,7 @@ export function OptionsTab() {
         <BoardIconPicker
           value={headerIcon}
           onChange={icon => savePreferences({ headerIcon: icon })}
+          chrome
         />
         <span className="config-option-hint">{t('config.boardIconHint')}</span>
       </div>

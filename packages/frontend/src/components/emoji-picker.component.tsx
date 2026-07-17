@@ -119,6 +119,7 @@ export function EmojiPopup({
   onClose,
   footer,
   anchorRect,
+  chrome,
 }: {
   readonly value?: string;
   readonly onSelect: (emoji: string) => void;
@@ -126,6 +127,8 @@ export function EmojiPopup({
   readonly footer?: ReactNode;
   /** Anchor the panel below this rect (no overlay backdrop) instead of a centered dialog. */
   readonly anchorRect?: DOMRect | undefined;
+  /** Portal root renders inside the chrome-themed config panel rather than a board surface. */
+  readonly chrome?: boolean | undefined;
 }) {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState(RECENT_KEY);
@@ -204,7 +207,7 @@ export function EmojiPopup({
   const panel = (
       <div
         ref={panelRef}
-        className={`icon-picker__panel${isAnchored ? ' icon-picker__panel--anchored' : ''}`}
+        className={`${chrome ? 'chrome ' : ''}icon-picker__panel${isAnchored ? ' icon-picker__panel--anchored' : ''}`}
         style={anchoredStyle}
         role="dialog"
         aria-label="Emoji picker"
@@ -276,7 +279,7 @@ export function EmojiPopup({
 
   return createPortal(
     <>
-      <div className="icon-picker__overlay" onClick={onClose} aria-hidden="true" />
+      <div className={`${chrome ? 'chrome ' : ''}icon-picker__overlay`} onClick={onClose} aria-hidden="true" />
       {panel}
     </>,
     document.body,
@@ -288,9 +291,11 @@ export function EmojiPopup({
 export function BoardIconPicker({
   value,
   onChange,
+  chrome,
 }: {
   readonly value: string;
   readonly onChange: (icon: string) => void;
+  readonly chrome?: boolean | undefined;
 }) {
   const t = useT();
   const [isOpen, setIsOpen] = useState(false);
@@ -335,6 +340,7 @@ export function BoardIconPicker({
           value={value}
           onSelect={selectEmoji}
           onClose={closePanel}
+          chrome={chrome}
           footer={
             <div className="icon-picker__custom">
               <input

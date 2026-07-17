@@ -18,7 +18,7 @@ export function AdminPanel() {
   if (!isAdminPanelOpen) return null;
 
   return (
-    <div className="admin-overlay" onClick={() => setAdminPanelOpen(false)}>
+    <div className="chrome admin-overlay" onClick={() => setAdminPanelOpen(false)}>
       <div className="admin-panel" onClick={e => e.stopPropagation()}>
         <div className="admin-header">
           <h2 className="admin-title">{t('admin.adminPanel')}</h2>
