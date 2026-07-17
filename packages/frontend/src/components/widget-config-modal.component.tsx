@@ -25,6 +25,17 @@ interface LinkRow {
   fg?: string | undefined;
 }
 
+const REASON_I18N_KEY = {
+  'blocked-private': 'widgetConfig.healthcheck.reason.blockedPrivate',
+  'dns-failure': 'widgetConfig.healthcheck.reason.dnsFailure',
+  timeout: 'widgetConfig.healthcheck.reason.timeout',
+  'connection-refused': 'widgetConfig.healthcheck.reason.connectionRefused',
+  unreachable: 'widgetConfig.healthcheck.reason.unreachable',
+  'invalid-host': 'widgetConfig.healthcheck.reason.invalidHost',
+  'no-url': 'widgetConfig.healthcheck.reason.noUrl',
+  'icmp-unavailable': 'widgetConfig.healthcheck.reason.icmpUnavailable',
+} as const;
+
 function isLinkRow(x: unknown): x is LinkRow {
   return typeof x === 'object' && x !== null
     && typeof (x as Record<string, unknown>)['label'] === 'string'
@@ -584,7 +595,7 @@ export function WidgetConfigModal() {
           port: options['port'],
         }),
       });
-      const healthcheckResult = await res.json() as { status: string; latencyMs?: number; error?: string; resolvedIp?: string };
+      const healthcheckResult = await res.json() as { status: string; latencyMs?: number; error?: string; resolvedIp?: string; reason?: keyof typeof REASON_I18N_KEY };
       if (healthcheckResult.status === 'up') {
         setTestResult('ok');
         // Show latency and the resolved IP so a surprising success (e.g. a
@@ -596,7 +607,8 @@ export function WidgetConfigModal() {
         setTestDetail(parts.join(' · '));
       } else {
         setTestResult('fail');
-        setTestDetail(healthcheckResult.error ?? '');
+        const reasonText = healthcheckResult.reason ? t(REASON_I18N_KEY[healthcheckResult.reason]) : undefined;
+        setTestDetail(reasonText ?? healthcheckResult.error ?? '');
       }
     } catch {
       setTestResult('fail'); // network error during healthcheck test

@@ -65,12 +65,12 @@ beforeEach(() => {
 describe('runHealthcheck — empty URL', () => {
   it('returns unknown (not down) for empty string — target is optional', async () => {
     const result = await runHealthcheck({ url: '' });
-    expect(result).toEqual({ status: 'unknown', error: 'No URL configured', latencyMs: 0 });
+    expect(result).toEqual({ status: 'unknown', error: 'No URL configured', reason: 'no-url', latencyMs: 0 });
   });
 
   it('returns unknown (not down) for whitespace-only string', async () => {
     const result = await runHealthcheck({ url: '   ' });
-    expect(result).toEqual({ status: 'unknown', error: 'No URL configured', latencyMs: 0 });
+    expect(result).toEqual({ status: 'unknown', error: 'No URL configured', reason: 'no-url', latencyMs: 0 });
   });
 });
 
@@ -89,7 +89,7 @@ describe('runHealthcheck — invalid hostname', () => {
   for (const { label, url } of cases) {
     it(`blocks ${label}: "${url}"`, async () => {
       const result = await runHealthcheck({ url });
-      expect(result).toEqual({ status: 'down', error: 'Invalid host', latencyMs: 0 });
+      expect(result).toEqual({ status: 'down', error: 'Invalid host', reason: 'invalid-host', latencyMs: 0 });
     });
   }
 
@@ -119,6 +119,7 @@ describe('runHealthcheck — SSRF via direct IP', () => {
       expect(result).toEqual({
         status: 'down',
         error: 'Private or reserved addresses are not allowed',
+        reason: 'blocked-private',
         latencyMs: 0,
       });
     });
@@ -141,6 +142,7 @@ describe('runHealthcheck — SSRF via DNS', () => {
     expect(result).toEqual({
       status: 'down',
       error: 'Private or reserved addresses are not allowed',
+      reason: 'blocked-private',
       latencyMs: 0,
     });
     expect(mockResolve4).toHaveBeenCalledWith('internal.corp');
@@ -154,6 +156,7 @@ describe('runHealthcheck — SSRF via DNS', () => {
     expect(result).toEqual({
       status: 'down',
       error: 'Private or reserved addresses are not allowed',
+      reason: 'blocked-private',
       latencyMs: 0,
     });
   });
@@ -201,6 +204,7 @@ describe('runHealthcheck — valid host, TCP path', () => {
     const result = await runHealthcheck({ url: 'http://example.com/' });
     expect(result.status).toBe('down');
     expect(result.error).toBe('unreachable');
+    expect(result.reason).toBe('unreachable');
   });
 });
 
@@ -259,14 +263,14 @@ describe('runHealthcheck — ICMP ping path', () => {
     mockExecFile.mockImplementation((_f: string, _a: string[], cb: (e: unknown, o: string, s: string) => void) =>
       cb(Object.assign(new Error('exit 1'), { code: 1 }), '', ''));
     const result = await runHealthcheck({ url: PING_URL });
-    expect(result).toMatchObject({ status: 'down', error: 'unreachable' });
+    expect(result).toMatchObject({ status: 'down', error: 'unreachable', reason: 'unreachable' });
   });
 
   it('returns unknown/ICMP unavailable when ping lacks permission', async () => {
     mockExecFile.mockImplementation((_f: string, _a: string[], cb: (e: unknown, o: string, s: string) => void) =>
       cb(Object.assign(new Error('exit 1'), { code: 1 }), '', 'ping: permission denied (are you root?)'));
     const result = await runHealthcheck({ url: PING_URL });
-    expect(result).toMatchObject({ status: 'unknown', error: 'ICMP unavailable' });
+    expect(result).toMatchObject({ status: 'unknown', error: 'ICMP unavailable', reason: 'icmp-unavailable' });
   });
 
   it('returns unknown when the ping binary is missing (ENOENT)', async () => {
@@ -334,10 +338,11 @@ describe('runHealthcheckSwr — stale-while-revalidate', () => {
 
   it('answers no-I/O cases directly, never pending', () => {
     expect(runHealthcheckSwr({ url: '' }).status).toBe('unknown');
-    expect(runHealthcheckSwr({ url: '; rm -rf /' })).toMatchObject({ status: 'down', error: 'Invalid host' });
+    expect(runHealthcheckSwr({ url: '; rm -rf /' })).toMatchObject({ status: 'down', error: 'Invalid host', reason: 'invalid-host' });
     expect(runHealthcheckSwr({ url: 'http://10.0.0.1/' })).toMatchObject({
       status: 'down',
       error: 'Private or reserved addresses are not allowed',
+      reason: 'blocked-private',
     });
     expect(mockExecFile).not.toHaveBeenCalled();
   });
@@ -364,5 +369,56 @@ describe('runHealthcheck — cache never crosses allowPrivateNetworks contexts',
     const unprivileged = await runHealthcheck({ url: '10.0.0.1' });
     expect(unprivileged.status).toBe('down');
     expect(unprivileged.error).toMatch(/Private or reserved/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 8. reason field — mapping per branch
+// ---------------------------------------------------------------------------
+describe('runHealthcheck — reason field mapping', () => {
+  it('127.0.0.1 unused port → connection-refused', async () => {
+    mockSocket.connect.mockImplementation(() => {
+      setTimeout(() => {
+        for (const cb of mockSocketHandlers['error'] ?? []) {
+          cb(Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:9'), { code: 'ECONNREFUSED' }));
+        }
+      }, 0);
+    });
+
+    const result = await runHealthcheck({ url: '127.0.0.1', port: 9, allowPrivateNetworks: true });
+    expect(result.status).toBe('down');
+    expect(result.reason).toBe('connection-refused');
+  });
+
+  it('black-hole 10.255.255.1 with low timeout → timeout', async () => {
+    mockSocket.connect.mockImplementation(() => {
+      setTimeout(() => {
+        for (const cb of mockSocketHandlers['timeout'] ?? []) cb();
+      }, 0);
+    });
+
+    const result = await runHealthcheck({
+      url: '10.255.255.1',
+      port: 80,
+      timeoutMs: 50,
+      allowPrivateNetworks: true,
+    });
+    expect(result.status).toBe('down');
+    expect(result.reason).toBe('timeout');
+  });
+
+  it('nonexistent hostname → dns-failure', async () => {
+    mockResolve4.mockResolvedValue([]);
+
+    const result = await runHealthcheck({ url: 'no-such-host.invalid' });
+    expect(result.status).toBe('down');
+    expect(result.reason).toBe('dns-failure');
+    expect(result.error).toBe('DNS resolution failed');
+  });
+
+  it('private IP with allowPrivateNetworks: false → blocked-private', async () => {
+    const result = await runHealthcheck({ url: '192.168.1.1', allowPrivateNetworks: false });
+    expect(result.status).toBe('down');
+    expect(result.reason).toBe('blocked-private');
   });
 });

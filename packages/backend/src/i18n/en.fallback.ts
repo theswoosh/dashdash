@@ -97,6 +97,18 @@ export const EN_FALLBACK: Record<string, unknown> = {
     bookmarkColors: 'Bookmark colors',
     copyColor: 'Copy color settings',
     pasteColor: 'Paste color settings',
+    healthcheck: {
+      reason: {
+        blockedPrivate: 'Blocked: private address (allowPrivateNetworks is off)',
+        dnsFailure: 'DNS lookup failed',
+        timeout: 'Timed out',
+        connectionRefused: 'Connection refused',
+        unreachable: 'Unreachable',
+        invalidHost: 'Invalid host',
+        noUrl: 'No URL configured',
+        icmpUnavailable: 'ICMP unavailable in this environment',
+      },
+    },
     chat: {
       skin: 'Skin',
       pollingInterval: 'Refresh interval (seconds, 0 = off)',

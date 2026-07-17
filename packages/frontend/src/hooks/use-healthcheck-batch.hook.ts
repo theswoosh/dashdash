@@ -9,6 +9,7 @@ interface CheckResult {
   status: 'up' | 'down' | 'unknown' | 'pending';
   latencyMs: number;
   error?: string;
+  reason?: 'blocked-private' | 'dns-failure' | 'timeout' | 'connection-refused' | 'unreachable' | 'invalid-host' | 'no-url' | 'icmp-unavailable';
 }
 
 interface BatchResponse {

@@ -91,6 +91,16 @@ widgetConfig:
   bookmarkColors: "Lesezeichen-Farben"
   copyColor: "Farbeinstellungen kopieren"
   pasteColor: "Farbeinstellungen einfügen"
+  healthcheck:
+    reason:
+      blockedPrivate: "Blockiert: private Adresse (allowPrivateNetworks ist aus)"
+      dnsFailure: "DNS-Auflösung fehlgeschlagen"
+      timeout: "Zeitüberschreitung"
+      connectionRefused: "Verbindung abgelehnt"
+      unreachable: "Nicht erreichbar"
+      invalidHost: "Ungültiger Host"
+      noUrl: "Keine URL konfiguriert"
+      icmpUnavailable: "ICMP in dieser Umgebung nicht verfügbar"
   chat:
     skin: "Design"
     pollingInterval: "Aktualisierungsintervall (Sekunden, 0 = aus)"

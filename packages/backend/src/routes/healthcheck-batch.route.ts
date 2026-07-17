@@ -34,7 +34,7 @@ export const createHealthcheckBatchRoutes = (opts: HealthcheckBatchRouteOptions)
         const entries = requestedIds.map((id): [string, CheckResult] => {
           const service = services.find(s => s.id === id);
           if (!service || service.widget !== 'healthcheck') {
-            return [id, { status: 'down', error: 'not found', latencyMs: 0 }];
+            return [id, { status: 'down', error: 'not found', reason: 'invalid-host', latencyMs: 0 }];
           }
           if (service.options?.['ping'] === false) {
             return [id, { status: 'up', latencyMs: 0 }];

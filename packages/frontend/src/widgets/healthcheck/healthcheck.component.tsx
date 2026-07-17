@@ -2,11 +2,24 @@ import type { CSSProperties } from 'react';
 import type { WidgetProps } from '@dashdash/types';
 import { WidgetError } from '../shared/widget-error.component';
 import { AppIcon, hasServiceIcon, toAbsoluteUrl } from '../shared/app-icon.component';
+import { useT } from '../../i18n';
 import './HealthcheckWidget.css';
 
 type HealthcheckLayoutSize = 'tiny' | 'normal' | 'big';
 type ShowName = 'hidden' | 'above' | 'below';
 type HealthcheckFontSize = 'S' | 'M' | 'L' | 'XL';
+type PingReason = 'blocked-private' | 'dns-failure' | 'timeout' | 'connection-refused' | 'unreachable' | 'invalid-host' | 'no-url' | 'icmp-unavailable';
+
+const REASON_I18N_KEY: Record<PingReason, string> = {
+  'blocked-private': 'widgetConfig.healthcheck.reason.blockedPrivate',
+  'dns-failure': 'widgetConfig.healthcheck.reason.dnsFailure',
+  timeout: 'widgetConfig.healthcheck.reason.timeout',
+  'connection-refused': 'widgetConfig.healthcheck.reason.connectionRefused',
+  unreachable: 'widgetConfig.healthcheck.reason.unreachable',
+  'invalid-host': 'widgetConfig.healthcheck.reason.invalidHost',
+  'no-url': 'widgetConfig.healthcheck.reason.noUrl',
+  'icmp-unavailable': 'widgetConfig.healthcheck.reason.icmpUnavailable',
+};
 
 const FONT_SCALE_BY_SIZE: Record<HealthcheckFontSize, number> = {
   S: 0.85,
@@ -15,11 +28,12 @@ const FONT_SCALE_BY_SIZE: Record<HealthcheckFontSize, number> = {
   XL: 1.55,
 };
 
-function isPingData(x: unknown): x is { status: 'up' | 'down' | 'unknown' | 'pending' } {
+function isPingData(x: unknown): x is { status: 'up' | 'down' | 'unknown' | 'pending'; reason?: PingReason } {
   return typeof x === 'object' && x !== null && 'status' in x;
 }
 
 export function HealthcheckWidget({ options, data, error, loading }: WidgetProps) {
+  const t = useT();
   // No loading gate: icon/name/description are static config and paint
   // immediately — only the ping status arrives async ('pending' shadow state).
   if (error) return <WidgetError message={error} />;
@@ -43,6 +57,7 @@ export function HealthcheckWidget({ options, data, error, loading }: WidgetProps
   const isPingEnabled = options['ping'] !== false;
   const isDown        = isPingEnabled && isPingData(data) && data.status === 'down';
   const isPending     = isPingEnabled && (loading || (isPingData(data) && data.status === 'pending'));
+  const downReason    = isDown && isPingData(data) && data.reason ? data.reason : undefined;
 
   // Tiny layout: icon is rendered in the widget-card header (see widget-card.component.tsx).
   if (layoutSize === 'tiny') {
@@ -115,6 +130,7 @@ export function HealthcheckWidget({ options, data, error, loading }: WidgetProps
       {showName === 'above' && nameEl()}
       {iconArea}
       {showName === 'below' && nameEl()}
+      {downReason && <span className="healthcheck-widget__reason">{t(REASON_I18N_KEY[downReason])}</span>}
     </div>
   );
 }

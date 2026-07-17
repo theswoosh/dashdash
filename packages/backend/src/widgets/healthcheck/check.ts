@@ -50,6 +50,7 @@ export interface CheckResult {
   status: 'up' | 'down' | 'unknown' | 'pending';
   latencyMs: number;
   error?: string | undefined;
+  reason?: 'blocked-private' | 'dns-failure' | 'timeout' | 'connection-refused' | 'unreachable' | 'invalid-host' | 'no-url' | 'icmp-unavailable' | undefined;
   // The IP the probe actually hit after DNS resolution — surfaced in the UI
   // so a surprising result (e.g. a router resolving garbage names to itself)
   // is visible instead of a mysterious green.
@@ -102,10 +103,10 @@ function pingHost(host: string, timeoutMs: number): Promise<CheckResult> {
       if (isIcmpUnavailable(err, String(stderr ?? ''))) {
         // Can't ping from this container — report unknown, not down. Use a
         // port/URL (TCP check) for a definitive result in restricted setups.
-        resolve({ status: 'unknown', error: 'ICMP unavailable', latencyMs });
+        resolve({ status: 'unknown', error: 'ICMP unavailable', reason: 'icmp-unavailable', latencyMs });
         return;
       }
-      resolve({ status: 'down', error: 'unreachable', latencyMs });
+      resolve({ status: 'down', error: 'unreachable', reason: 'unreachable', latencyMs });
     });
   });
 }
@@ -124,8 +125,13 @@ function tcpCheck(host: string, port: number, timeoutMs: number): Promise<CheckR
     };
     socket.setTimeout(timeoutMs);
     socket.connect(port, host, () => done({ status: 'up', latencyMs: Date.now() - start }));
-    socket.on('error', () => done({ status: 'down', error: 'unreachable', latencyMs: Date.now() - start }));
-    socket.on('timeout', () => done({ status: 'down', error: 'timeout', latencyMs: Date.now() - start }));
+    socket.on('error', (err: NodeJS.ErrnoException) => done({
+      status: 'down',
+      error: 'unreachable',
+      reason: err.code === 'ECONNREFUSED' ? 'connection-refused' : 'unreachable',
+      latencyMs: Date.now() - start,
+    }));
+    socket.on('timeout', () => done({ status: 'down', error: 'timeout', reason: 'timeout', latencyMs: Date.now() - start }));
   });
 }
 
@@ -167,17 +173,17 @@ function prepareTarget(opts: CheckOptions): CheckResult | ProbeTarget {
   if (!urlInput?.trim()) {
     // Target is optional — an unconfigured widget is 'unknown' (grey dot),
     // not 'down': nothing was checked, so nothing is known to be broken.
-    return { status: 'unknown', error: 'No URL configured', latencyMs: 0 };
+    return { status: 'unknown', error: 'No URL configured', reason: 'no-url', latencyMs: 0 };
   }
 
   const trimmed = urlInput.trim();
   const host = extractHost(trimmed);
 
   if (!isIP(host) && (!SAFE_HOST_RE.test(host) || host.length > MAX_HOSTNAME_LENGTH)) {
-    return { status: 'down', error: 'Invalid host', latencyMs: 0 };
+    return { status: 'down', error: 'Invalid host', reason: 'invalid-host', latencyMs: 0 };
   }
   if (isIP(host) && !opts.allowPrivateNetworks && isPrivateIp(host)) {
-    return { status: 'down', error: 'Private or reserved addresses are not allowed', latencyMs: 0 };
+    return { status: 'down', error: 'Private or reserved addresses are not allowed', reason: 'blocked-private', latencyMs: 0 };
   }
 
   // Compute effective port before DNS so the cache key is stable. The key
@@ -198,11 +204,11 @@ async function probeTarget({ host, effectivePort, timeoutMs, allowPrivateNetwork
   } else {
     const addresses = await dns.resolve4(host).catch(() => [] as string[]);
     if (addresses.length === 0) {
-      return { status: 'down', error: 'Invalid host', latencyMs: 0 };
+      return { status: 'down', error: 'DNS resolution failed', reason: 'dns-failure', latencyMs: 0 };
     }
     const allowed = allowPrivateNetworks ? addresses : addresses.filter(ip => !isPrivateIp(ip));
     if (allowed.length === 0) {
-      return { status: 'down', error: 'Private or reserved addresses are not allowed', latencyMs: 0 };
+      return { status: 'down', error: 'Private or reserved addresses are not allowed', reason: 'blocked-private', latencyMs: 0 };
     }
     targetIp = allowed[0]!;
   }

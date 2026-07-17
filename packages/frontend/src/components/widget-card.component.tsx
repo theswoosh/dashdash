@@ -99,10 +99,24 @@ interface Props {
   dragHandleClassName?: string | undefined;
 }
 
+type PingReason = 'blocked-private' | 'dns-failure' | 'timeout' | 'connection-refused' | 'unreachable' | 'invalid-host' | 'no-url' | 'icmp-unavailable';
+
+const REASON_I18N_KEY: Record<PingReason, string> = {
+  'blocked-private': 'widgetConfig.healthcheck.reason.blockedPrivate',
+  'dns-failure': 'widgetConfig.healthcheck.reason.dnsFailure',
+  timeout: 'widgetConfig.healthcheck.reason.timeout',
+  'connection-refused': 'widgetConfig.healthcheck.reason.connectionRefused',
+  unreachable: 'widgetConfig.healthcheck.reason.unreachable',
+  'invalid-host': 'widgetConfig.healthcheck.reason.invalidHost',
+  'no-url': 'widgetConfig.healthcheck.reason.noUrl',
+  'icmp-unavailable': 'widgetConfig.healthcheck.reason.icmpUnavailable',
+};
+
 interface PingStatus {
   status: 'up' | 'down' | 'unknown' | 'pending';
   latencyMs?: number | undefined;
   error?: string | undefined;
+  reason?: PingReason | undefined;
 }
 
 function isPingStatus(x: unknown): x is PingStatus {
@@ -111,8 +125,9 @@ function isPingStatus(x: unknown): x is PingStatus {
   return status === 'up' || status === 'down' || status === 'unknown' || status === 'pending';
 }
 
-function buildPingTooltip(ping: PingStatus): string {
+function buildPingTooltip(ping: PingStatus, t: (key: string) => string): string {
   if (ping.status === 'up') return ping.latencyMs !== undefined ? `${ping.latencyMs}ms` : 'Up';
+  if (ping.reason) return t(REASON_I18N_KEY[ping.reason]);
   return ping.error ?? 'Offline';
 }
 
@@ -253,7 +268,7 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
             title={pingDotState === 'pending'
               ? t('widgetCard.checking')
               : pingData
-              ? buildPingTooltip(pingData)
+              ? buildPingTooltip(pingData, t)
               : (hasConfiguredUrl ? t('widgetCard.checking') : t('widgetCard.noHostConfigured'))}
             aria-label={pingDotState === 'up'
               ? t('widgetCard.up')

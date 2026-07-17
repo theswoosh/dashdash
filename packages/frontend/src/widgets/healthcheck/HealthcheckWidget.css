@@ -75,6 +75,19 @@
   color: #fca5a5;
 }
 
+/* ───────────────────────────── Down reason ─────────────────────────── */
+
+.healthcheck-widget__reason {
+  font-size: calc(clamp(9px, 5.5cqi, 16px) * var(--hc-font-scale, 1));
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 2px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
 /* ───────────────────────────── Normal layout ───────────────────────── */
 
 .healthcheck-widget--normal {
