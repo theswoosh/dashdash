@@ -1,0 +1,55 @@
+name: Publish docs to GitHub Pages
+
+# NOTE 2026-07-17: GitHub Pages is not available for this private repo on the
+# current plan (API: 422 "Your current plan does not support GitHub Pages").
+# Manual trigger only until that changes — once Pages is enabled (plan upgrade,
+# public repo, or a separate public docs repo), restore the push trigger:
+#   push:
+#     branches: [main]
+#     paths: ['docs/**', '.github/workflows/pages.yml']
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      HUGO_VERSION: 0.145.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Hugo (extended)
+        run: |
+          curl -sSL "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz" \
+            | tar -xz -C /usr/local/bin hugo
+
+      - name: Build site
+        run: hugo --minify -s docs -d "$RUNNER_TEMP/site"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
