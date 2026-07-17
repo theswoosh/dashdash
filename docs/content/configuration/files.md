@@ -25,6 +25,22 @@ searchEngines:
     url: https://duckduckgo.com/?q={query}
 ```
 
+### Themes only style the board
+
+The four built-in themes (`liquid-glass`, `classic`, `ascii`, `atom`) style
+the **board** — widget cards, the topbar, the background canvas. Functional
+"chrome" surfaces (login/reset-password, the config side-panel, the admin
+panel, and every modal/popup/picker) use dashdash's own built-in styling
+instead of the board theme, and only pick up two things from it: the accent
+color and the corner radius.
+
+> **Changed 2026-07-17:** before this date, some of those chrome surfaces
+> partly inherited board-theme colors and radii (this is what caused the
+> ASCII-theme modal legibility issues some users hit). That inheritance is
+> gone now except for the accent-color/corner-radius pair above — if you
+> were relying on a theme choice to change modal or admin-panel appearance
+> beyond that, it no longer does.
+
 ## services.yml
 
 Every widget on a board — its type, position and size on the grid, and its
