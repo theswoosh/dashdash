@@ -91,6 +91,16 @@ widgetConfig:
   bookmarkColors: "Lesezeichen-Farben"
   copyColor: "Farbeinstellungen kopieren"
   pasteColor: "Farbeinstellungen einfügen"
+  colors:
+    themeTab: "Theme-Farben"
+    customTab: "Eigene"
+    token:
+      accent: "Akzent"
+      muted: "Gedämpft"
+      surface1: "Fläche 1"
+      surface2: "Fläche 2"
+      warn: "Warnung"
+      danger: "Gefahr"
   healthcheck:
     reason:
       blockedPrivate: "Blockiert: private Adresse (allowPrivateNetworks ist aus)"

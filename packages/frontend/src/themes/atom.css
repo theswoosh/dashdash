@@ -14,6 +14,11 @@
   --accent-hover: #2ecc58;
   --accent-fg: #020802;
   --danger: #ff4444;
+  --tone-muted: rgba(57, 255, 110, 0.55);
+  --tone-surface-1: rgba(57, 255, 110, 0.08);
+  --tone-surface-2: rgba(57, 255, 110, 0.02);
+  --tone-warn: #ffb000;
+  --tone-danger: #ff4444;
   --radius: 0px;
   --radius-sm: 0px;
   --shadow: 0 0 16px rgba(57, 255, 110, 0.18), 0 0 4px rgba(57, 255, 110, 0.10);

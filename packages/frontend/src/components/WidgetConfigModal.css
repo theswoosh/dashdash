@@ -436,6 +436,54 @@
   cursor: default;
 }
 
+.config-color-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.config-color-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.config-color-tab {
+  font-size: 11px;
+  padding: 3px 8px;
+  border: 1px solid var(--chrome-border);
+  border-radius: 4px;
+  background: var(--chrome-input-bg);
+  color: var(--chrome-fg-muted);
+  cursor: pointer;
+  transition: color 150ms ease, background 150ms ease;
+}
+
+.config-color-tab--active {
+  color: var(--chrome-fg);
+  background: var(--chrome-accent);
+}
+
+.config-color-swatches {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.config-color-swatch {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 6px;
+  border: 1px solid var(--chrome-border);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.config-color-swatch--active {
+  outline: 2px solid var(--chrome-accent);
+  outline-offset: 1px;
+}
+
 .config-field-info {
   font-size: 12px;
   color: var(--chrome-fg-muted);

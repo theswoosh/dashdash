@@ -94,6 +94,18 @@ export const EN_FALLBACK: Record<string, unknown> = {
     bookmarkColors: 'Bookmark colors',
     copyColor: 'Copy color settings',
     pasteColor: 'Paste color settings',
+    colors: {
+      themeTab: 'Theme colors',
+      customTab: 'Custom',
+      token: {
+        accent: 'Accent',
+        muted: 'Muted',
+        surface1: 'Surface 1',
+        surface2: 'Surface 2',
+        warn: 'Warning',
+        danger: 'Danger',
+      },
+    },
     healthcheck: {
       reason: {
         blockedPrivate: 'Blocked: private address (allowPrivateNetworks is off)',

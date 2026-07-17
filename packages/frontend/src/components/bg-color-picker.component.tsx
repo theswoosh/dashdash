@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useT } from '../i18n';
+import { COLOR_TOKENS, parseTokenValue, tokenCssVar, tokenI18nKey, type ColorToken } from '../utils/color-tokens';
 
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 
@@ -43,14 +44,29 @@ interface BgColorPickerProps {
   readonly hasValue: boolean;
   readonly onChange: (hex: string, alpha: number) => void;
   readonly onReset: () => void;
+  /** Raw current option value (hex/rgba/`token:<name>`/undefined). Only
+   * needed to drive the "Theme colors" tab — omit to keep the picker as a
+   * Custom-only color editor (e.g. per-bookmark link colors). */
+  readonly rawValue?: string | null | undefined;
+  readonly onSelectToken?: ((token: ColorToken) => void) | undefined;
 }
 
-export function BgColorPicker({ hex, alpha, hasValue, onChange, onReset }: BgColorPickerProps) {
+export function BgColorPicker({ hex, alpha, hasValue, onChange, onReset, rawValue, onSelectToken }: BgColorPickerProps) {
   const t = useT();
   const [hexDraft, setHexDraft] = useState(hex);
+  const supportsTokens = onSelectToken !== undefined;
+  const currentToken = supportsTokens ? parseTokenValue(rawValue) : null;
+  const [tab, setTab] = useState<'theme' | 'custom'>(currentToken ? 'theme' : 'custom');
 
   // Sync draft when parent hex changes (e.g. reset, widget switch)
   useEffect(() => { setHexDraft(hex); }, [hex]);
+
+  // Re-sync the active tab when the underlying value changes from outside
+  // (widget switch, reset, clipboard paste) — not on purely-local tab clicks.
+  useEffect(() => {
+    if (supportsTokens) setTab(parseTokenValue(rawValue) ? 'theme' : 'custom');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rawValue]);
 
   function handleHexChange(raw: string) {
     // Auto-prepend # if missing
@@ -67,7 +83,7 @@ export function BgColorPicker({ hex, alpha, hasValue, onChange, onReset }: BgCol
     }
   }
 
-  return (
+  const customPicker = (
     <div className="config-bg-picker">
       <input
         type="color"
@@ -128,6 +144,57 @@ export function BgColorPicker({ hex, alpha, hasValue, onChange, onReset }: BgCol
       >
         {t('common.reset')}
       </button>
+    </div>
+  );
+
+  if (!supportsTokens) return customPicker;
+
+  return (
+    <div className="config-color-picker">
+      <div className="config-color-tabs" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'theme'}
+          className={`config-color-tab${tab === 'theme' ? ' config-color-tab--active' : ''}`}
+          onClick={() => setTab('theme')}
+        >
+          {t('widgetConfig.colors.themeTab')}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'custom'}
+          className={`config-color-tab${tab === 'custom' ? ' config-color-tab--active' : ''}`}
+          onClick={() => setTab('custom')}
+        >
+          {t('widgetConfig.colors.customTab')}
+        </button>
+      </div>
+      {tab === 'theme' ? (
+        <div className="config-color-swatches">
+          {COLOR_TOKENS.map(token => (
+            <button
+              key={token}
+              type="button"
+              className={`config-color-swatch${currentToken === token ? ' config-color-swatch--active' : ''}`}
+              style={{ background: `var(${tokenCssVar(token)})` }}
+              onClick={() => onSelectToken?.(token)}
+              title={t(tokenI18nKey(token))}
+              aria-label={t(tokenI18nKey(token))}
+              aria-pressed={currentToken === token}
+            />
+          ))}
+          <button
+            className="config-reset-link"
+            onClick={onReset}
+            type="button"
+            disabled={!hasValue}
+          >
+            {t('common.reset')}
+          </button>
+        </div>
+      ) : customPicker}
     </div>
   );
 }

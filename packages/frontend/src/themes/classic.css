@@ -14,6 +14,11 @@
   --accent-hover: #48485c;
   --accent-fg: #ffffff;
   --danger: #dc2626;
+  --tone-muted: #8a8a8a;
+  --tone-surface-1: #f5f5f5;
+  --tone-surface-2: #eaeaea;
+  --tone-warn: #d97706;
+  --tone-danger: #dc2626;
   --radius: 12px;
   --radius-sm: 6px;
   --shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.06);

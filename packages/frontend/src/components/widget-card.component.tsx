@@ -3,6 +3,7 @@ import { GripVertical, Settings, X, RefreshCw, Trash2 } from 'lucide-react';
 import { mutate as swrMutate } from 'swr';
 import type { ServiceConfig } from '@dashdash/types';
 import { useThemeCard } from '../themes/registry';
+import { resolveColorOptionValue } from '../utils/color-tokens';
 import { getWidget } from '../widgets/registry';
 import { useWidgetData } from '../hooks/use-widget-data.hook';
 import { useHealthcheckBatch } from '../hooks/use-healthcheck-batch.hook';
@@ -168,8 +169,8 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
     ? 'unknown'
     : pingData.status;
   const isHeaderHidden = service.options?.['hideHeader'] === true && !isTinyLayout;
-  const bgColor = typeof service.options?.['bg_color'] === 'string' ? service.options['bg_color'] : undefined;
-  const fontColor = typeof service.options?.['font_color'] === 'string' ? service.options['font_color'] : undefined;
+  const bgColor = resolveColorOptionValue(typeof service.options?.['bg_color'] === 'string' ? service.options['bg_color'] : undefined);
+  const fontColor = resolveColorOptionValue(typeof service.options?.['font_color'] === 'string' ? service.options['font_color'] : undefined);
   const tinyIconValue = isTinyLayout && service.icon && hasServiceIcon(service.icon) ? service.icon : null;
   const tinyInternalUrl = isTinyLayout && typeof service.options?.['internalUrl'] === 'string' ? service.options['internalUrl'] : null;
   const tinyDescription = isTinyLayout && typeof service.options?.['description'] === 'string' ? service.options['description'] : undefined;

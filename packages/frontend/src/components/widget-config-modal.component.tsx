@@ -10,6 +10,7 @@ import { getTemplate } from '../widgets/catalog';
 import type { ConfigField } from '../widgets/catalog';
 import { ServiceIconPicker } from './service-icon-picker.component';
 import { BgColorPicker, parseRgba, buildRgba, DEFAULT_BG_HEX, DEFAULT_BG_ALPHA, DEFAULT_FG_HEX, DEFAULT_FG_ALPHA } from './bg-color-picker.component';
+import { makeTokenValue, type ColorToken } from '../utils/color-tokens';
 import { getThemeColorDefaults } from '../utils/theme-color-defaults';
 import { WidgetTitleField } from './widget-title-field.component';
 import { toAbsoluteUrl } from '../widgets/shared/app-icon.component';
@@ -510,6 +511,14 @@ export function WidgetConfigModal() {
     handleOptionChange('font_color', null);
   }, [handleOptionChange]);
 
+  const selectBgToken = useCallback((token: ColorToken) => {
+    handleOptionChange('bg_color', makeTokenValue(token));
+  }, [handleOptionChange]);
+
+  const selectFontToken = useCallback((token: ColorToken) => {
+    handleOptionChange('font_color', makeTokenValue(token));
+  }, [handleOptionChange]);
+
   const colorClipboard = useUIStore(s => s.colorClipboard);
   const setColorClipboard = useUIStore(s => s.setColorClipboard);
   const copyColorsToClipboard = useCallback(() => {
@@ -685,6 +694,8 @@ export function WidgetConfigModal() {
               hasValue={options['bg_color'] != null}
               onChange={updateBgColor}
               onReset={resetBgColor}
+              rawValue={typeof options['bg_color'] === 'string' ? options['bg_color'] : null}
+              onSelectToken={selectBgToken}
             />
           </div>
           <div className="config-field">
@@ -695,6 +706,8 @@ export function WidgetConfigModal() {
               hasValue={options['font_color'] != null}
               onChange={updateFontColor}
               onReset={resetFontColor}
+              rawValue={typeof options['font_color'] === 'string' ? options['font_color'] : null}
+              onSelectToken={selectFontToken}
             />
           </div>
         </div>
