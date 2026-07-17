@@ -27,7 +27,6 @@ Configuration is plain YAML you can edit by hand, and a drag-and-drop UI that st
 - **Stats widget** — CPU, RAM, disk, and temperature with configurable warning thresholds
 - **Service icons** — recognise every app at a glance from a built-in icon library
 - **Frames** — group related services together on the grid
-- **Multiple boards** — organise widgets across several boards and switch between them
 - **Multi-user with SSO** — local accounts, or single sign-on via any OIDC provider (Authentik, Keycloak, ...)
 - **Update indicator** — lights up in the UI when a new release is available
 - **Credentials never reach the browser** — API keys stay server-side; the frontend never sees them

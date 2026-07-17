@@ -22,4 +22,4 @@ disableKinds = ['taxonomy', 'term', 'rss', 'sitemap']
 [params]
   description = 'Documentation for dashdash, a self-hosted homelab dashboard.'
   githubRepo = 'https://github.com/theswoosh/dashdash'
-  kofi = 'https://ko-fi.com/theswoosh'
+  kofi = 'https://ko-fi.com/welikecoffee'
