@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="{{ .Site.LanguageCode | default "en" }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }} · {{ .Site.Title }}{{ end }}</title>
+  <meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Params.description }}{{ end }}">
+  <link rel="stylesheet" href="{{ "css/docs.css" | relURL }}">
+</head>
+<body>
+  {{ partial "header.html" . }}
+  <div class="site-body">
+    <details class="sidebar">
+      <summary>Menu</summary>
+      {{ partial "sidebar.html" . }}
+    </details>
+    <main class="site-main">
+      {{ block "main" . }}{{ end }}
+    </main>
+  </div>
+  {{ partial "footer.html" . }}
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var stored = localStorage.getItem('dashdash-docs-theme');
+      if (stored) root.setAttribute('data-theme', stored);
+      var toggle = document.getElementById('theme-toggle');
+      if (!toggle) return;
+      toggle.addEventListener('click', function () {
+        var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+        root.setAttribute('data-theme', next);
+        localStorage.setItem('dashdash-docs-theme', next);
+      });
+    })();
+  </script>
+</body>
+</html>

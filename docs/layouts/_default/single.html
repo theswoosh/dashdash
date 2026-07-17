@@ -1,0 +1,16 @@
+{{ define "main" }}
+<article class="page">
+  <h1>{{ .Title }}</h1>
+  <div class="page-content">
+    {{ .Content }}
+  </div>
+  {{ $prev := .PrevInSection }}
+  {{ $next := .NextInSection }}
+  {{ if or $prev $next }}
+  <nav class="page-pager">
+    {{ with $prev }}<a class="pager-prev" href="{{ .RelPermalink }}">&laquo; {{ .Title }}</a>{{ end }}
+    {{ with $next }}<a class="pager-next" href="{{ .RelPermalink }}">{{ .Title }} &raquo;</a>{{ end }}
+  </nav>
+  {{ end }}
+</article>
+{{ end }}

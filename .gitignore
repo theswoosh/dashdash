@@ -23,7 +23,6 @@ config/uploads/
 _dev/
 todo.md
 DEV.md
-docs/
 opt_dashdash.md
 
 # Private keys and certificates

@@ -1,0 +1,25 @@
+baseURL = 'https://theswoosh.github.io/dashdash/'
+languageCode = 'en-us'
+title = 'dashdash docs'
+enableGitInfo = false
+enableRobotsTXT = true
+
+disableKinds = ['taxonomy', 'term', 'rss', 'sitemap']
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = false
+  [markup.tableOfContents]
+    startLevel = 2
+    endLevel = 3
+
+[outputs]
+  home = ['html']
+  section = ['html']
+  page = ['html']
+
+[params]
+  description = 'Documentation for dashdash, a self-hosted homelab dashboard.'
+  githubRepo = 'https://github.com/theswoosh/dashdash'
+  kofi = 'https://ko-fi.com/theswoosh'
