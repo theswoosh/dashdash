@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import type { ServiceConfig } from '@dashdash/types';
@@ -103,6 +103,73 @@ describe('Healthcheck — description tooltip', () => {
     };
     wrap(<WidgetCard service={tiny} editMode={false} />);
     await waitFor(() => expect(screen.getByText('Jellyfin')).toHaveAttribute('title', 'Media server'));
+  });
+});
+
+describe('WidgetCard — theme-safe custom colors (M1 guard)', () => {
+  // The active theme's surfaces are cached (module-level, keyed by theme id)
+  // the first time WidgetCard reads them for a given id — so each case below
+  // uses a DIFFERENT real theme id (the only ones the registry resolves to)
+  // to get a fresh getComputedStyle read instead of a stale cached one.
+  const varsSet: string[] = [];
+  function setThemeVar(name: string, value: string) {
+    document.documentElement.style.setProperty(name, value);
+    varsSet.push(name);
+  }
+
+  afterEach(() => {
+    for (const name of varsSet.splice(0)) document.documentElement.style.removeProperty(name);
+  });
+
+  it('applies custom colors unchanged on a legacy board (no color_theme)', () => {
+    const service: ServiceConfig = {
+      ...clockService,
+      id: 'legacy-colors',
+      options: { ...clockService.options, bg_color: '#ff0000', font_color: '#00ff00' },
+    };
+    const { container } = wrap(<WidgetCard service={service} editMode={false} />, 'classic');
+    const card = container.querySelector('.classic-card') as HTMLElement;
+    expect(card.style.getPropertyValue('--card-bg')).toBe('#ff0000');
+    expect(card.style.getPropertyValue('--card-fg')).toBe('#00ff00');
+  });
+
+  it('applies custom colors unchanged when authored under the active theme', () => {
+    setThemeVar('--card-bg', '#000000');
+    setThemeVar('--text-primary', '#000000');
+    const service: ServiceConfig = {
+      ...clockService,
+      id: 'same-theme-colors',
+      options: { ...clockService.options, font_color: '#000000', color_theme: 'ascii' },
+    };
+    const { container } = wrap(<WidgetCard service={service} editMode={false} />, 'ascii');
+    const card = container.querySelector('.ascii-card') as HTMLElement;
+    expect(card.style.getPropertyValue('--card-fg')).toBe('#000000');
+  });
+
+  it('drops a font_color that fails contrast under a different theme', () => {
+    setThemeVar('--card-bg', '#ffffff');
+    setThemeVar('--text-primary', '#ffffff');
+    const service: ServiceConfig = {
+      ...clockService,
+      id: 'diff-theme-fail',
+      options: { ...clockService.options, font_color: '#fefefe', color_theme: 'classic' },
+    };
+    const { container } = wrap(<WidgetCard service={service} editMode={false} />, 'atom');
+    const card = container.querySelector('.atom-card') as HTMLElement;
+    expect(card.style.getPropertyValue('--card-fg')).toBe('');
+  });
+
+  it('keeps a font_color that passes contrast under a different theme', () => {
+    setThemeVar('--card-bg', '#ffffff');
+    setThemeVar('--text-primary', '#ffffff');
+    const service: ServiceConfig = {
+      ...clockService,
+      id: 'diff-theme-pass',
+      options: { ...clockService.options, font_color: '#000000', color_theme: 'classic' },
+    };
+    const { container } = wrap(<WidgetCard service={service} editMode={false} />, 'liquid-glass');
+    const card = container.querySelector('.liquid-card') as HTMLElement;
+    expect(card.style.getPropertyValue('--card-fg')).toBe('#000000');
   });
 });
 

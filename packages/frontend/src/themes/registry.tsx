@@ -105,3 +105,8 @@ export function useThemeCard(): ComponentType<CardProps> {
   return useContext(ThemeContext).Card;
 }
 
+/** Returns the currently active theme's id (matches the data-theme attribute). */
+export function useThemeId(): string {
+  return useContext(ThemeContext).theme.id;
+}
+

@@ -10,8 +10,10 @@ import { getTemplate } from '../widgets/catalog';
 import type { ConfigField } from '../widgets/catalog';
 import { ServiceIconPicker } from './service-icon-picker.component';
 import { BgColorPicker, parseRgba, buildRgba, DEFAULT_BG_HEX, DEFAULT_BG_ALPHA, DEFAULT_FG_HEX, DEFAULT_FG_ALPHA } from './bg-color-picker.component';
-import { makeTokenValue, type ColorToken } from '../utils/color-tokens';
+import { makeTokenValue, parseTokenValue, type ColorToken } from '../utils/color-tokens';
 import { getThemeColorDefaults } from '../utils/theme-color-defaults';
+import { guardCustomColors } from '../utils/color-contrast';
+import { useThemeId } from '../themes/registry';
 import { WidgetTitleField } from './widget-title-field.component';
 import { toAbsoluteUrl } from '../widgets/shared/app-icon.component';
 import { TimezonePicker } from './timezone-picker.component';
@@ -375,6 +377,7 @@ function FieldInput({
 
 export function WidgetConfigModal() {
   const t = useT();
+  const activeThemeId = useThemeId();
   const configTarget = useUIStore(s => s.configTarget);
   const setConfigTarget = useUIStore(s => s.setConfigTarget);
   const { services, reload: reloadServices } = useServices();
@@ -476,14 +479,22 @@ export function WidgetConfigModal() {
     // Editing the check target invalidates a previous Test outcome — a stale
     // green checkmark next to a new target reads as a fake success.
     if (key === 'url' || key === 'port') setTestResult('idle');
-    setOptions(prev => ({ ...prev, [key]: val }));
+    setOptions(prev => {
+      const next = { ...prev, [key]: val };
+      // Stamp the authoring theme whenever a color is set to a free hex/rgba
+      // value (never for token: values — those are theme-relative already).
+      if ((key === 'bg_color' || key === 'font_color') && typeof val === 'string' && parseTokenValue(val) === null) {
+        next['color_theme'] = activeThemeId;
+      }
+      return next;
+    });
     setFieldErrors(prev => {
       if (!(key in prev)) return prev;
       const next = { ...prev };
       delete next[key];
       return next;
     });
-  }, []);
+  }, [activeThemeId]);
 
   const updateBgColor = useCallback((hex: string, alpha: number) => {
     setBgHex(hex);
@@ -588,6 +599,29 @@ export function WidgetConfigModal() {
 
   const isHealthcheck = service.widget === 'healthcheck';
   const isTinyLayout = options['layoutSize'] === 'tiny';
+
+  // Whether the M1 contrast guard is currently hiding a color under THIS
+  // active theme — drives the muted "hidden under this theme" hint below.
+  const colorThemeVal = typeof options['color_theme'] === 'string' ? options['color_theme'] : undefined;
+  const rawBgVal = typeof options['bg_color'] === 'string' ? options['bg_color'] : undefined;
+  const rawFontVal = typeof options['font_color'] === 'string' ? options['font_color'] : undefined;
+  const suppressedForTheme = (() => {
+    if (colorThemeVal === undefined || colorThemeVal === activeThemeId) return false;
+    const customBg = rawBgVal !== undefined && parseTokenValue(rawBgVal) === null ? rawBgVal : undefined;
+    const customFont = rawFontVal !== undefined && parseTokenValue(rawFontVal) === null ? rawFontVal : undefined;
+    if (customBg === undefined && customFont === undefined) return false;
+    const themeDefaults = getThemeColorDefaults();
+    const result = guardCustomColors({
+      authoredTheme: colorThemeVal,
+      activeTheme: activeThemeId,
+      bgColor: customBg,
+      fontColor: customFont,
+      themeCardBg: buildRgba(themeDefaults.bg.hex, themeDefaults.bg.alpha),
+      themeTextColor: buildRgba(themeDefaults.fg.hex, themeDefaults.fg.alpha),
+    });
+    return result.bgSuppressed || result.fontSuppressed;
+  })();
+
   const configFields = (template?.configFields ?? []).filter(
     f => !(isTinyLayout && f.key === 'pingIndicator'),
   );
@@ -710,6 +744,9 @@ export function WidgetConfigModal() {
               onSelectToken={selectFontToken}
             />
           </div>
+          {suppressedForTheme && (
+            <p className="config-field-info">{t('widgetConfig.colors.suppressedForTheme')}</p>
+          )}
         </div>
         <div className="modal-footer">
           {isHealthcheck && (

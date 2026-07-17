@@ -2,8 +2,9 @@ import { useState, useRef, useEffect, useMemo, memo, Suspense } from 'react';
 import { GripVertical, Settings, X, RefreshCw, Trash2 } from 'lucide-react';
 import { mutate as swrMutate } from 'swr';
 import type { ServiceConfig } from '@dashdash/types';
-import { useThemeCard } from '../themes/registry';
-import { resolveColorOptionValue } from '../utils/color-tokens';
+import { useThemeCard, useThemeId } from '../themes/registry';
+import { resolveColorOptionValue, parseTokenValue } from '../utils/color-tokens';
+import { guardCustomColors } from '../utils/color-contrast';
 import { getWidget } from '../widgets/registry';
 import { useWidgetData } from '../hooks/use-widget-data.hook';
 import { useHealthcheckBatch } from '../hooks/use-healthcheck-batch.hook';
@@ -16,6 +17,28 @@ import { WidgetSkeleton } from '../widgets/shared/widget-skeleton.component';
 import { WidgetError } from '../widgets/shared/widget-error.component';
 import { WidgetErrorBoundary } from '../widgets/shared/widget-error-boundary.component';
 import './WidgetCard.css';
+
+interface ThemeSurfaces { cardBg: string; textColor: string }
+
+// Keyed by theme id — a theme's --card-bg/--text-primary are constant for
+// its lifetime, so once read for a given id the cache never goes stale.
+const themeSurfaceCache = new Map<string, ThemeSurfaces>();
+
+function getThemeSurfaces(themeId: string): ThemeSurfaces {
+  const cached = themeSurfaceCache.get(themeId);
+  if (cached) return cached;
+  const style = getComputedStyle(document.documentElement);
+  const cardBg = style.getPropertyValue('--card-bg').trim();
+  const textColor = style.getPropertyValue('--card-fg').trim() || style.getPropertyValue('--text-primary').trim();
+  const surfaces: ThemeSurfaces = { cardBg, textColor };
+  // Only cache when the DOM already carries this theme — during a theme
+  // switch the computed style may still belong to the previous data-theme,
+  // and caching that would poison this id's entry until reload.
+  if (document.documentElement.getAttribute('data-theme') === themeId) {
+    themeSurfaceCache.set(themeId, surfaces);
+  }
+  return surfaces;
+}
 
 function HoldClearNotepadButton({ serviceId, holdToDeleteMs }: { serviceId: string; holdToDeleteMs: number }) {
   const t = useT();
@@ -169,8 +192,34 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
     ? 'unknown'
     : pingData.status;
   const isHeaderHidden = service.options?.['hideHeader'] === true && !isTinyLayout;
-  const bgColor = resolveColorOptionValue(typeof service.options?.['bg_color'] === 'string' ? service.options['bg_color'] : undefined);
-  const fontColor = resolveColorOptionValue(typeof service.options?.['font_color'] === 'string' ? service.options['font_color'] : undefined);
+  const activeThemeId = useThemeId();
+  const rawBgColor = typeof service.options?.['bg_color'] === 'string' ? service.options['bg_color'] : undefined;
+  const rawFontColor = typeof service.options?.['font_color'] === 'string' ? service.options['font_color'] : undefined;
+  const bgIsToken = rawBgColor !== undefined && parseTokenValue(rawBgColor) !== null;
+  const fontIsToken = rawFontColor !== undefined && parseTokenValue(rawFontColor) !== null;
+  const colorTheme = typeof service.options?.['color_theme'] === 'string' ? service.options['color_theme'] : undefined;
+  // Tokens bypass the guard entirely (theme-relative by construction, M2).
+  // Custom hex/rgba colors are contrast-checked against the active theme
+  // when authored under a different theme — see color-contrast.ts.
+  const guardedCustomColors = useMemo(() => {
+    const customBg = bgIsToken ? undefined : rawBgColor;
+    const customFont = fontIsToken ? undefined : rawFontColor;
+    if (customBg === undefined && customFont === undefined) {
+      return { bgColor: customBg, fontColor: customFont };
+    }
+    const surfaces = getThemeSurfaces(activeThemeId);
+    const result = guardCustomColors({
+      authoredTheme: colorTheme,
+      activeTheme: activeThemeId,
+      bgColor: customBg,
+      fontColor: customFont,
+      themeCardBg: surfaces.cardBg,
+      themeTextColor: surfaces.textColor,
+    });
+    return { bgColor: result.bgColor, fontColor: result.fontColor };
+  }, [rawBgColor, rawFontColor, bgIsToken, fontIsToken, colorTheme, activeThemeId]);
+  const bgColor = bgIsToken ? resolveColorOptionValue(rawBgColor) : guardedCustomColors.bgColor;
+  const fontColor = fontIsToken ? resolveColorOptionValue(rawFontColor) : guardedCustomColors.fontColor;
   const tinyIconValue = isTinyLayout && service.icon && hasServiceIcon(service.icon) ? service.icon : null;
   const tinyInternalUrl = isTinyLayout && typeof service.options?.['internalUrl'] === 'string' ? service.options['internalUrl'] : null;
   const tinyDescription = isTinyLayout && typeof service.options?.['description'] === 'string' ? service.options['description'] : undefined;

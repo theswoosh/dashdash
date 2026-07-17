@@ -100,6 +100,7 @@ export const EN_FALLBACK: Record<string, unknown> = {
     colors: {
       themeTab: 'Theme colors',
       customTab: 'Custom',
+      suppressedForTheme: 'Custom color hidden under this theme (contrast too low). Re-pick it here to use it in this theme.',
       token: {
         accent: 'Accent',
         muted: 'Muted',
