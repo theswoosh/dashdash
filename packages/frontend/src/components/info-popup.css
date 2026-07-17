@@ -11,12 +11,12 @@
 }
 
 .info-panel {
-  background: var(--modal-bg, rgba(14, 14, 20, 0.97));
-  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.1));
-  border-radius: 14px;
+  background: var(--chrome-bg-raised);
+  border: 1px solid var(--chrome-border);
+  border-radius: var(--chrome-radius);
   width: 100%;
   max-width: 360px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--chrome-shadow);
   overflow: hidden;
 }
 
@@ -25,19 +25,19 @@
   align-items: center;
   justify-content: space-between;
   padding: 18px 24px;
-  border-bottom: 1px solid var(--card-border, rgba(255, 255, 255, 0.08));
+  border-bottom: 1px solid var(--chrome-border);
 }
 
 .info-title {
   font-size: 1rem;
   font-weight: 700;
-  color: var(--text-primary, #fff);
+  color: var(--chrome-fg);
 }
 
 .info-close {
   background: none;
   border: none;
-  color: var(--text-muted, rgba(255, 255, 255, 0.45));
+  color: var(--chrome-fg-muted);
   cursor: pointer;
   padding: 4px;
   display: flex;
@@ -47,8 +47,8 @@
 }
 
 .info-close:hover {
-  color: var(--text-primary, #fff);
-  background: rgba(255, 255, 255, 0.07);
+  color: var(--chrome-fg);
+  background: color-mix(in srgb, var(--chrome-fg) 7%, transparent);
 }
 
 .info-body {
@@ -67,18 +67,18 @@
 .info-row-label {
   font-size: 0.72rem;
   font-weight: 600;
-  color: var(--text-muted, rgba(255, 255, 255, 0.4));
+  color: var(--chrome-fg-muted);
   text-transform: uppercase;
   letter-spacing: 0.07em;
 }
 
 .info-row-value {
   font-size: 0.875rem;
-  color: var(--text-primary, #fff);
+  color: var(--chrome-fg);
 }
 
 .info-link {
-  color: var(--accent, rgba(255, 255, 255, 0.7));
+  color: var(--chrome-fg-muted);
   text-decoration: none;
   font-size: 0.875rem;
   transition: opacity 0.15s;
@@ -90,7 +90,7 @@
 }
 
 .info-version-update {
-  color: var(--accent, rgba(255, 255, 255, 0.7));
+  color: var(--chrome-accent);
   font-weight: 600;
 }
 

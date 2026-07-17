@@ -12,9 +12,9 @@
 }
 
 .modal {
-  background: var(--modal-bg, rgba(18, 18, 24, 0.96));
-  border: 1px solid var(--border-color);
-  border-radius: calc(var(--radius) * 1.5);
+  background: var(--chrome-bg-raised);
+  border: 1px solid var(--chrome-border);
+  border-radius: calc(var(--chrome-radius) * 1.5);
   width: 100%;
   max-width: 440px;
   max-height: 90vh;
@@ -32,14 +32,14 @@
   display: flex;
   align-items: center;
   padding: 16px 20px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--chrome-border);
   gap: 8px;
 }
 
 .modal-title {
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--chrome-fg);
   flex: 1;
 }
 
@@ -51,16 +51,16 @@
   height: 28px;
   border: none;
   background: transparent;
-  color: var(--text-muted);
+  color: var(--chrome-fg-muted);
   cursor: pointer;
   border-radius: 6px;
   padding: 0;
-  transition: background var(--transition), color var(--transition);
+  transition: background 150ms ease, color 150ms ease;
 }
 
 .modal-close:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-primary);
+  background: color-mix(in srgb, var(--chrome-fg) 10%, transparent);
+  color: var(--chrome-fg);
 }
 
 .modal-body {
@@ -74,28 +74,28 @@
 
 .modal-yaml-note {
   font-size: 12px;
-  color: var(--text-muted);
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border-color);
+  color: var(--chrome-fg-muted);
+  background: color-mix(in srgb, var(--chrome-fg) 4%, transparent);
+  border: 1px solid var(--chrome-border);
   border-radius: 6px;
   padding: 10px 12px;
   margin: 0;
 }
 
 .modal-yaml-note code {
-  font-family: var(--font-mono);
-  color: var(--accent);
+  font-family: ui-monospace, 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  color: var(--chrome-accent);
 }
 
 .modal-no-fields {
   font-size: 13px;
-  color: var(--text-faint);
+  color: var(--chrome-fg-muted);
   margin: 0;
 }
 
 .modal-footer {
   padding: 14px 20px;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid var(--chrome-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -120,13 +120,13 @@
 }
 
 .modal-test-result--fail {
-  color: #ef4444;
+  color: var(--chrome-danger);
 }
 
 .modal-test-detail {
   font-size: 11px;
-  color: var(--text-muted);
-  font-family: var(--font-mono);
+  color: var(--chrome-fg-muted);
+  font-family: ui-monospace, 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -172,12 +172,12 @@
 }
 
 .wtc-size-label {
-  color: var(--text-faint);
+  color: var(--chrome-fg-muted);
   font-size: 11px;
 }
 
 .wtc-size-x {
-  color: var(--text-faint);
+  color: var(--chrome-fg-muted);
   font-size: 13px;
   flex-shrink: 0;
   align-self: flex-end;
@@ -189,7 +189,7 @@
 }
 
 .wtc-threshold-metric {
-  color: var(--text-muted);
+  color: var(--chrome-fg-muted);
   font-size: 12px;
   width: 44px;
   flex-shrink: 0;
@@ -206,13 +206,13 @@
 
 .config-field--checkbox span {
   font-size: 13px;
-  color: var(--text-primary);
+  color: var(--chrome-fg);
 }
 
 .config-label {
   font-size: 12px;
   font-weight: 500;
-  color: var(--text-muted);
+  color: var(--chrome-fg-muted);
   display: flex;
   justify-content: space-between;
   align-items: baseline;
@@ -230,47 +230,47 @@
   width: 22px;
   height: 22px;
   padding: 0;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--chrome-border);
   border-radius: 5px;
   background: transparent;
-  color: var(--text-muted);
+  color: var(--chrome-fg-muted);
   cursor: pointer;
-  transition: background var(--transition), color var(--transition);
+  transition: background 150ms ease, color 150ms ease;
 }
 
 .color-clipboard-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text-primary);
+  background: color-mix(in srgb, var(--chrome-fg) 8%, transparent);
+  color: var(--chrome-fg);
 }
 
 .config-label__counter {
   font-size: 11px;
   font-weight: 400;
-  color: var(--text-faint);
+  color: var(--chrome-fg-muted);
 }
 
 .config-separator {
   border: none;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid var(--chrome-border);
   margin: 2px 0;
 }
 
 .config-input {
   padding: 8px 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border-color);
+  background: var(--chrome-input-bg);
+  border: 1px solid var(--chrome-border);
   border-radius: 6px;
-  color: var(--text-primary);
+  color: var(--chrome-fg);
   font-size: 13px;
   font-family: inherit;
   outline: none;
-  transition: border-color var(--transition);
+  transition: border-color 150ms ease;
   width: 100%;
   box-sizing: border-box;
 }
 
 .config-input:focus {
-  border-color: var(--accent);
+  border-color: var(--chrome-accent);
 }
 
 .config-input:disabled {
@@ -281,7 +281,7 @@
 .config-textarea {
   resize: vertical;
   min-height: 54px;
-  font-family: var(--font-mono);
+  font-family: ui-monospace, 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
 }
 
 .config-select {
@@ -297,8 +297,8 @@
 
 /* option elements require a solid background — transparent inherits system white */
 .config-select option {
-  background-color: var(--bg-dropdown, #111118);
-  color: var(--text-primary);
+  background-color: var(--chrome-bg-raised);
+  color: var(--chrome-fg);
 }
 
 /* Buttons */
@@ -309,23 +309,23 @@
   font-weight: 500;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: all var(--transition);
+  transition: all 150ms ease;
 }
 
 .modal-btn--secondary {
   background: transparent;
-  border-color: var(--border-color);
-  color: var(--text-muted);
+  border-color: var(--chrome-border);
+  color: var(--chrome-fg-muted);
 }
 
 .modal-btn--secondary:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text-primary);
+  background: color-mix(in srgb, var(--chrome-fg) 6%, transparent);
+  color: var(--chrome-fg);
 }
 
 .modal-btn--primary {
-  background: var(--accent);
-  color: #fff;
+  background: var(--chrome-accent);
+  color: var(--chrome-fg);
 }
 
 .modal-btn--primary:hover:not(:disabled) {
@@ -348,9 +348,9 @@
   width: 36px;
   height: 36px;
   padding: 2px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--chrome-border);
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--chrome-input-bg);
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -371,22 +371,22 @@
   font-family: monospace;
   font-size: 12px;
   padding: 3px 5px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--chrome-border);
   border-radius: 4px;
-  background: var(--input-bg, rgba(255, 255, 255, 0.05));
-  color: var(--text-color);
+  background: var(--chrome-input-bg);
+  color: var(--chrome-fg);
   text-align: center;
 }
 
 .config-hex-input:focus {
-  outline: 1px solid var(--accent);
+  outline: 1px solid var(--chrome-accent);
 }
 
 .config-alpha-slider {
   flex: 1;
   min-width: 0;
   height: 4px;
-  accent-color: var(--accent);
+  accent-color: var(--chrome-accent);
   cursor: pointer;
 }
 
@@ -395,22 +395,22 @@
   flex-shrink: 0;
   font-size: 12px;
   padding: 4px 4px 4px 8px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--chrome-border);
   border-radius: 4px;
-  background: var(--input-bg, rgba(255, 255, 255, 0.05));
-  color: var(--text-primary);
+  background: var(--chrome-input-bg);
+  color: var(--chrome-fg);
   text-align: right;
 }
 
 .config-alpha-input:focus {
-  outline: 1px solid var(--accent);
+  outline: 1px solid var(--chrome-accent);
 }
 
 .config-bg-preview {
   width: 28px;
   height: 28px;
   border-radius: 6px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--chrome-border);
   flex-shrink: 0;
 }
 
@@ -419,16 +419,16 @@
   border: none;
   padding: 0;
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--chrome-fg-muted);
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 2px;
-  transition: color var(--transition), opacity var(--transition);
+  transition: color 150ms ease, opacity 150ms ease;
   flex-shrink: 0;
 }
 
 .config-reset-link:hover:not(:disabled) {
-  color: var(--text-color);
+  color: var(--chrome-fg);
 }
 
 .config-reset-link:disabled {
@@ -438,14 +438,14 @@
 
 .config-field-info {
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--chrome-fg-muted);
   margin: 4px 0 8px;
   line-height: 1.5;
 }
 
 .config-field-error {
   font-size: 11px;
-  color: #ef4444;
+  color: var(--chrome-danger);
   margin: 2px 0 0;
 }
 
@@ -478,9 +478,9 @@
   gap: 6px;
   padding: 8px 10px;
   margin: 0 0 4px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--chrome-border);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
+  background: color-mix(in srgb, var(--chrome-fg) 3%, transparent);
 }
 
 .links-editor__color-panel-head {
@@ -490,8 +490,8 @@
 }
 
 .links-editor__color-btn--active {
-  color: var(--accent);
-  border-color: var(--accent);
+  color: var(--chrome-accent);
+  border-color: var(--chrome-accent);
 }
 
 .links-editor__color-btn {
@@ -502,45 +502,45 @@
   height: 22px;
   padding: 0;
   flex-shrink: 0;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--chrome-border);
   border-radius: 5px;
   background: transparent;
-  color: var(--text-muted);
+  color: var(--chrome-fg-muted);
   cursor: pointer;
-  transition: background var(--transition), color var(--transition);
+  transition: background 150ms ease, color 150ms ease;
 }
 
 .links-editor__color-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text-primary);
+  background: color-mix(in srgb, var(--chrome-fg) 8%, transparent);
+  color: var(--chrome-fg);
 }
 
 .links-editor__remove {
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--color-muted, #888);
+  color: var(--chrome-fg-muted);
   font-size: 1.2rem;
   line-height: 1;
   padding: 0 0.25rem;
 }
 .links-editor__remove:hover {
-  color: var(--color-error, #c0392b);
+  color: var(--chrome-danger);
 }
 .links-editor__add {
   background: none;
-  border: 1px dashed var(--color-muted, #888);
+  border: 1px dashed var(--chrome-fg-muted);
   border-radius: 4px;
   cursor: pointer;
-  color: var(--color-muted, #888);
+  color: var(--chrome-fg-muted);
   padding: 0.3rem 0.6rem;
   font-size: 0.8rem;
   width: 100%;
   margin-top: 0.2rem;
 }
 .links-editor__add:hover {
-  color: var(--color-text, #fff);
-  border-color: var(--color-text, #fff);
+  color: var(--chrome-fg);
+  border-color: var(--chrome-fg);
 }
 
 /* ── Channels editor (chat widget) ─────────────────────────────────── */
@@ -569,7 +569,7 @@
 }
 .channels-editor__meta {
   font-size: 0.7rem;
-  color: var(--color-muted, #888);
+  color: var(--chrome-fg-muted);
   white-space: nowrap;
 }
 .channels-editor__name-input {
@@ -584,13 +584,13 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--color-muted, #888);
+  color: var(--chrome-fg-muted);
   font-size: 0.85rem;
   padding: 0 0.25rem;
   flex-shrink: 0;
 }
 .channels-editor__btn:hover:not(:disabled) {
-  color: var(--color-text, #fff);
+  color: var(--chrome-fg);
 }
 .channels-editor__btn:disabled {
   opacity: 0.4;
@@ -598,7 +598,7 @@
 }
 .channels-editor__btn--delete:hover,
 .channels-editor__btn--holding {
-  color: var(--color-error, #c0392b);
+  color: var(--chrome-danger);
 }
 .channels-editor__btn--holding {
   animation: channels-editor-hold-pulse 0.8s linear;
@@ -610,6 +610,6 @@
 }
 .channels-editor__error {
   font-size: 0.75rem;
-  color: var(--color-error, #c0392b);
+  color: var(--chrome-danger);
   margin: 0;
 }

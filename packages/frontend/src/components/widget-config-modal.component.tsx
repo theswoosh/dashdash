@@ -617,7 +617,7 @@ export function WidgetConfigModal() {
   };
 
   return (
-    <div className="modal-backdrop" onClick={() => setConfigTarget(null)}>
+    <div className="chrome modal-backdrop" onClick={() => setConfigTarget(null)}>
       <div ref={modalRef} className="modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={t('widgetConfig.configure', { title: service.title })}>
         <div className="modal-header">
           <span className="modal-title">{t('widgetConfig.configure', { title: service.title })}</span>

@@ -13,10 +13,10 @@
 }
 
 .wp-modal {
-  background: var(--bg-dropdown, #0e0e16);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  background: var(--chrome-bg-raised);
+  border: 1px solid var(--chrome-border);
+  border-radius: var(--chrome-radius);
+  box-shadow: var(--chrome-shadow);
   display: flex;
   flex-direction: column;
   max-width: 90vw;
@@ -31,31 +31,31 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--chrome-border);
   flex-shrink: 0;
 }
 
 .wp-title {
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--chrome-fg);
 }
 
 .wp-close {
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--text-muted);
+  color: var(--chrome-fg-muted);
   padding: 4px;
-  border-radius: var(--radius-sm);
+  border-radius: calc(var(--chrome-radius) * 0.75);
   display: flex;
   align-items: center;
-  transition: color var(--transition), background var(--transition);
+  transition: color 150ms ease, background 150ms ease;
 }
 
 .wp-close:hover {
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.08);
+  color: var(--chrome-fg);
+  background: color-mix(in srgb, var(--chrome-fg) 8%, transparent);
 }
 
 /* ── Grid ───────────────────────────────────────────────────────────────── */
@@ -74,42 +74,41 @@
   position: relative;
   width: 140px;
   height: 88px;
-  border-radius: var(--radius-sm);
+  border-radius: calc(var(--chrome-radius) * 0.75);
   overflow: hidden;
   border: 2px solid transparent;
-  transition: border-color var(--transition);
+  transition: border-color 150ms ease;
   box-sizing: border-box;
 }
 
 .wp-slot--active {
-  border-color: var(--accent) !important;
+  border-color: var(--chrome-accent) !important;
 }
 
 /* ── "None" slot ────────────────────────────────────────────────────────── */
 
 .wp-slot--none {
-  background: var(--bg-secondary);
-  border-color: var(--border-color);
+  background: var(--chrome-input-bg);
+  border-color: var(--chrome-border);
   border-style: dashed;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 3px;
-  color: var(--text-muted);
+  color: var(--chrome-fg-muted);
   cursor: pointer;
-  font-family: var(--font);
 }
 
 .wp-slot--none:hover {
-  border-color: var(--accent);
-  color: var(--text-primary);
+  border-color: var(--chrome-accent);
+  color: var(--chrome-fg);
 }
 
 .wp-slot--none.wp-slot--active {
   border-style: solid;
-  background: rgba(138, 138, 154, 0.10);
-  color: var(--text-primary);
+  background: color-mix(in srgb, var(--chrome-fg) 10%, transparent);
+  color: var(--chrome-fg);
 }
 
 .wp-slot-label {
@@ -121,7 +120,7 @@
 /* ── Image slot ─────────────────────────────────────────────────────────── */
 
 .wp-slot--image {
-  background: var(--bg-secondary);
+  background: var(--chrome-input-bg);
 }
 
 .wp-thumb-btn {
@@ -144,28 +143,27 @@
 /* ── Upload slot ────────────────────────────────────────────────────────── */
 
 .wp-slot--upload {
-  background: var(--bg-secondary);
-  border-color: var(--border-color);
+  background: var(--chrome-input-bg);
+  border-color: var(--chrome-border);
   border-style: dashed;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-faint);
+  color: var(--chrome-fg-muted);
   cursor: pointer;
-  font-family: var(--font);
 }
 
 .wp-slot--upload:hover {
-  border-color: var(--accent);
-  color: var(--text-muted);
-  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--chrome-accent);
+  color: var(--chrome-fg-muted);
+  background: color-mix(in srgb, var(--chrome-fg) 4%, transparent);
 }
 
 /* ── Padding slots (visual fill) ────────────────────────────────────────── */
 
 .wp-slot--empty {
-  background: var(--bg-secondary);
-  border-color: var(--border-color);
+  background: var(--chrome-input-bg);
+  border-color: var(--chrome-border);
   border-style: solid;
   opacity: 0.25;
   cursor: default;
@@ -181,11 +179,11 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--chrome-accent);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--accent-fg, #fff);
+  color: var(--chrome-fg);
   pointer-events: none;
 }
 
@@ -207,7 +205,7 @@
   cursor: pointer;
   opacity: 0;
   overflow: hidden;
-  transition: opacity var(--transition), background var(--transition);
+  transition: opacity 150ms ease, background 150ms ease;
 }
 
 .wp-slot--image:hover .wp-delete {
@@ -215,7 +213,7 @@
 }
 
 .wp-delete:hover {
-  background: rgba(239, 68, 68, 0.90);
+  background: color-mix(in srgb, var(--chrome-danger) 90%, transparent);
 }
 
 /* Hold-to-delete fill — same pattern as .widget-delete-btn__fill */
@@ -223,7 +221,7 @@
   position: absolute;
   inset: 0 auto 0 0;
   width: 0%;
-  background: #ef4444;
+  background: var(--chrome-danger);
   pointer-events: none;
 }
 

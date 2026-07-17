@@ -109,7 +109,7 @@ export function WallpaperPickerModal({
   const imageSlots = Array.from({ length: MAX_WALLPAPERS }, (_, slotIndex) => slotIndex);
 
   return createPortal(
-    <div className="wp-overlay" onClick={onClose}>
+    <div className="chrome wp-overlay" onClick={onClose}>
       <div
         ref={modalRef}
         className="wp-modal"

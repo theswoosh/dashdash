@@ -177,7 +177,7 @@ export function ProfilePopup() {
   const pwMatch = confirmPassword.length > 0 && newPassword === confirmPassword;
 
   return (
-    <div className="profile-overlay" onClick={close}>
+    <div className="chrome profile-overlay" onClick={close}>
       <div className="profile-panel" onClick={e => e.stopPropagation()}>
         <div className="profile-header">
           <span className="profile-title">{t('userMenu.editProfile')}</span>

@@ -188,7 +188,7 @@ export function WidgetTemplateConfigModal({ type, onClose }: WidgetTemplateConfi
   // Portal to <body>: the config panel's transform/backdrop-filter creates a
   // containing block that would re-anchor this fixed-position modal to the panel.
   return createPortal(
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="chrome modal-backdrop" onClick={onClose}>
       <div
         className="modal modal--sm"
         onClick={e => e.stopPropagation()}

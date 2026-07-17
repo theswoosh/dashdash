@@ -15,16 +15,16 @@
   margin: 0;
   padding: 4px;
   list-style: none;
-  background: var(--bg-dropdown, #111118);
-  border: 1px solid var(--border-color);
+  background: var(--chrome-bg-raised);
+  border: 1px solid var(--chrome-border);
   border-radius: 8px;
-  box-shadow: var(--shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.4));
+  box-shadow: var(--chrome-shadow);
 }
 
 .tz-picker__option {
   padding: 6px 8px;
   font-size: 13px;
-  color: var(--text-primary);
+  color: var(--chrome-fg);
   border-radius: 5px;
   cursor: pointer;
   white-space: nowrap;
@@ -33,11 +33,11 @@
 }
 
 .tz-picker__option--active {
-  background: rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--chrome-fg) 8%, transparent);
 }
 
 .tz-picker__option--selected {
-  color: var(--accent);
+  color: var(--chrome-accent);
 }
 
 .tz-picker__option {
@@ -47,7 +47,7 @@
 }
 
 .tz-picker__offset {
-  color: var(--text-faint);
+  color: var(--chrome-fg-muted);
   font-size: 12px;
   flex-shrink: 0;
 }

@@ -62,7 +62,7 @@ export function ClockConfigModal({ format, showSeconds, timezone, settingsTimezo
   }, [onClose]);
 
   return createPortal(
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="chrome modal-backdrop" onClick={onClose}>
       <div
         ref={modalRef}
         className="modal modal--sm"

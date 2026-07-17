@@ -24,7 +24,7 @@ export function InfoPopup() {
   if (!isInfoOpen) return null;
 
   return (
-    <div className="info-overlay" onClick={() => setInfoOpen(false)}>
+    <div className="chrome info-overlay" onClick={() => setInfoOpen(false)}>
       <div className="info-panel" onClick={e => e.stopPropagation()}>
         <div className="info-header">
           <span className="info-title">{t('info.title')}</span>
