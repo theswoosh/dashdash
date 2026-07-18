@@ -13,7 +13,7 @@ import { BgColorPicker, parseRgba, buildRgba, DEFAULT_BG_HEX, DEFAULT_BG_ALPHA, 
 import { makeTokenValue, parseTokenValue, type ColorToken } from '../utils/color-tokens';
 import { getThemeColorDefaults } from '../utils/theme-color-defaults';
 import { guardCustomColors } from '../utils/color-contrast';
-import { useThemeId } from '../themes/registry';
+import { useThemeId, getTheme } from '../themes/registry';
 import { WidgetTitleField } from './widget-title-field.component';
 import { toAbsoluteUrl } from '../widgets/shared/app-icon.component';
 import { TimezonePicker } from './timezone-picker.component';
@@ -626,6 +626,11 @@ export function WidgetConfigModal() {
     f => !(isTinyLayout && f.key === 'pingIndicator'),
   );
 
+  // Liquid-glass/ascii/atom cards ARE their background — the per-widget bg
+  // picker never applies under them (widget-card.component.tsx suppresses
+  // it at render time too). Font color stays customizable everywhere.
+  const bgLockedByTheme = !getTheme(activeThemeId).allowsWidgetBg;
+
   const runHealthcheckTest = async () => {
     setTestResult('loading');
     setTestDetail('');
@@ -696,42 +701,46 @@ export function WidgetConfigModal() {
           )}
 
           <hr className="config-separator" />
-          <div className="config-field">
-            <label className="config-label">
-              {t('widgetConfig.widgetBackground')}
-              <span className="color-clipboard-actions">
-                <button
-                  type="button"
-                  className="color-clipboard-btn"
-                  onClick={copyColorsToClipboard}
-                  title={t('widgetConfig.copyColor')}
-                  aria-label={t('widgetConfig.copyColor')}
-                >
-                  <Copy size={13} />
-                </button>
-                {colorClipboard !== null && (
+          {bgLockedByTheme ? (
+            <p className="config-field-info">{t('widgetConfig.colors.bgLockedByTheme')}</p>
+          ) : (
+            <div className="config-field">
+              <label className="config-label">
+                {t('widgetConfig.widgetBackground')}
+                <span className="color-clipboard-actions">
                   <button
                     type="button"
                     className="color-clipboard-btn"
-                    onClick={applyColorClipboard}
-                    title={t('widgetConfig.pasteColor')}
-                    aria-label={t('widgetConfig.pasteColor')}
+                    onClick={copyColorsToClipboard}
+                    title={t('widgetConfig.copyColor')}
+                    aria-label={t('widgetConfig.copyColor')}
                   >
-                    <ClipboardPaste size={13} />
+                    <Copy size={13} />
                   </button>
-                )}
-              </span>
-            </label>
-            <BgColorPicker
-              hex={bgHex}
-              alpha={bgAlpha}
-              hasValue={options['bg_color'] != null}
-              onChange={updateBgColor}
-              onReset={resetBgColor}
-              rawValue={typeof options['bg_color'] === 'string' ? options['bg_color'] : null}
-              onSelectToken={selectBgToken}
-            />
-          </div>
+                  {colorClipboard !== null && (
+                    <button
+                      type="button"
+                      className="color-clipboard-btn"
+                      onClick={applyColorClipboard}
+                      title={t('widgetConfig.pasteColor')}
+                      aria-label={t('widgetConfig.pasteColor')}
+                    >
+                      <ClipboardPaste size={13} />
+                    </button>
+                  )}
+                </span>
+              </label>
+              <BgColorPicker
+                hex={bgHex}
+                alpha={bgAlpha}
+                hasValue={options['bg_color'] != null}
+                onChange={updateBgColor}
+                onReset={resetBgColor}
+                rawValue={typeof options['bg_color'] === 'string' ? options['bg_color'] : null}
+                onSelectToken={selectBgToken}
+              />
+            </div>
+          )}
           <div className="config-field">
             <label className="config-label">{t('widgetConfig.fontColor')}</label>
             <BgColorPicker

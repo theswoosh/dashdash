@@ -101,6 +101,7 @@ export const EN_FALLBACK: Record<string, unknown> = {
       themeTab: 'Theme colors',
       customTab: 'Custom',
       suppressedForTheme: 'Custom color hidden under this theme (contrast too low). Re-pick it here to use it in this theme.',
+      bgLockedByTheme: 'Background is set by the current theme',
       token: {
         accent: 'Accent',
         muted: 'Muted',

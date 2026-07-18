@@ -173,6 +173,62 @@ describe('WidgetCard — theme-safe custom colors (M1 guard)', () => {
   });
 });
 
+describe('WidgetCard — widget bg locked under glass/ascii/atom themes', () => {
+  it('drops a custom hex bg_color under atom (locked theme)', () => {
+    const service: ServiceConfig = {
+      ...clockService,
+      id: 'locked-hex-bg',
+      options: { ...clockService.options, bg_color: '#ff0000' },
+    };
+    const { container } = wrap(<WidgetCard service={service} editMode={false} />, 'atom');
+    const card = container.querySelector('.atom-card') as HTMLElement;
+    expect(card.style.getPropertyValue('--card-bg')).toBe('');
+  });
+
+  it('drops a token bg_color under atom (locked theme)', () => {
+    const service: ServiceConfig = {
+      ...clockService,
+      id: 'locked-token-bg',
+      options: { ...clockService.options, bg_color: 'token:accent' },
+    };
+    const { container } = wrap(<WidgetCard service={service} editMode={false} />, 'atom');
+    const card = container.querySelector('.atom-card') as HTMLElement;
+    expect(card.style.getPropertyValue('--card-bg')).toBe('');
+  });
+
+  it('still applies font_color under atom (locked theme) while bg is dropped', () => {
+    const service: ServiceConfig = {
+      ...clockService,
+      id: 'locked-bg-font-still-works',
+      options: { ...clockService.options, bg_color: '#ff0000', font_color: 'token:accent' },
+    };
+    const { container } = wrap(<WidgetCard service={service} editMode={false} />, 'atom');
+    const card = container.querySelector('.atom-card') as HTMLElement;
+    expect(card.style.getPropertyValue('--card-bg')).toBe('');
+    expect(card.style.getPropertyValue('--card-fg')).toBe('var(--accent)');
+  });
+
+  it('applies both hex and token bg_color under classic (unlocked theme)', () => {
+    const hexService: ServiceConfig = {
+      ...clockService,
+      id: 'unlocked-hex-bg',
+      options: { ...clockService.options, bg_color: '#ff0000' },
+    };
+    const { container: hexContainer } = wrap(<WidgetCard service={hexService} editMode={false} />, 'classic');
+    const hexCard = hexContainer.querySelector('.classic-card') as HTMLElement;
+    expect(hexCard.style.getPropertyValue('--card-bg')).toBe('#ff0000');
+
+    const tokenService: ServiceConfig = {
+      ...clockService,
+      id: 'unlocked-token-bg',
+      options: { ...clockService.options, bg_color: 'token:accent' },
+    };
+    const { container: tokenContainer } = wrap(<WidgetCard service={tokenService} editMode={false} />, 'classic');
+    const tokenCard = tokenContainer.querySelector('.classic-card') as HTMLElement;
+    expect(tokenCard.style.getPropertyValue('--card-bg')).toBe('var(--accent)');
+  });
+});
+
 describe('WidgetCard — hidden header in edit mode', () => {
   const hidden: ServiceConfig = {
     ...clockService,

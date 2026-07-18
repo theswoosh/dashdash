@@ -37,6 +37,9 @@ interface ThemeDefinition {
   Icon: LucideIcon;
   /** Card component rendered by WidgetCard for this theme. */
   Card: ComponentType<CardProps>;
+  /** Whether per-widget background overrides (hex or token) render under this
+   * theme. Themes whose cards are their background (glass/CRT/terminal) lock it. */
+  allowsWidgetBg: boolean;
 }
 
 export const THEMES: ThemeDefinition[] = [
@@ -48,6 +51,7 @@ export const THEMES: ThemeDefinition[] = [
     descriptionKey: 'themes.liquidGlass.description',
     Icon: Droplets,
     Card: LiquidCard,
+    allowsWidgetBg: false,
   },
   {
     id: 'classic',
@@ -57,6 +61,7 @@ export const THEMES: ThemeDefinition[] = [
     descriptionKey: 'themes.classic.description',
     Icon: LayoutDashboard,
     Card: ClassicCard,
+    allowsWidgetBg: true,
   },
   {
     id: 'ascii',
@@ -66,6 +71,7 @@ export const THEMES: ThemeDefinition[] = [
     descriptionKey: 'themes.ascii.description',
     Icon: Terminal,
     Card: AsciiCard,
+    allowsWidgetBg: false,
   },
   {
     id: 'atom',
@@ -75,6 +81,7 @@ export const THEMES: ThemeDefinition[] = [
     descriptionKey: 'themes.atom.description',
     Icon: Radiation,
     Card: AtomCard,
+    allowsWidgetBg: false,
   },
 ];
 

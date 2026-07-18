@@ -25,6 +25,11 @@ describe('THEMES', () => {
     const ids = THEMES.map(t => t.id);
     expect(new Set(ids).size).toBe(ids.length);
   });
+
+  it('only classic (Color) allows per-widget background overrides', () => {
+    const allowed = THEMES.filter(t => t.allowsWidgetBg).map(t => t.id);
+    expect(allowed).toEqual(['classic']);
+  });
 });
 
 describe('getTheme', () => {

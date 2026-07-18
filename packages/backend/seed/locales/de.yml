@@ -95,6 +95,7 @@ widgetConfig:
     themeTab: "Theme-Farben"
     customTab: "Eigene"
     suppressedForTheme: "Eigene Farbe wird unter diesem Theme ausgeblendet (zu wenig Kontrast). Neu wählen, um sie für dieses Theme zu nutzen."
+    bgLockedByTheme: "Der Hintergrund wird vom aktuellen Theme bestimmt"
     token:
       accent: "Akzent"
       muted: "Gedämpft"
