@@ -1,13 +1,13 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Ban, Plus, Check } from 'lucide-react';
-import type { WallpaperEntry } from '../hooks/use-board.hook';
+import { X, Ban, Plus, Check, Sparkles } from 'lucide-react';
+import type { WallpaperEntry, BuiltinWallpaperEntry } from '../hooks/use-board.hook';
 import { useBehavior } from '../hooks/use-behavior.hook';
 import { useHoldAction } from '../hooks/use-hold-action.hook';
 import { useT } from '../i18n';
 import './wallpaper-picker.css';
 
-const MAX_WALLPAPERS = 8; // 3×3 grid − 1 reserved slot for "no background"
+const MAX_WALLPAPERS = 6; // 3×3 grid − 2 reserved slots ("theme default" + "no background")
 
 function HoldDeleteWallpaperButton({ wallpaperId, holdToDeleteMs, onDelete }: {
   wallpaperId: string;
@@ -39,6 +39,7 @@ function HoldDeleteWallpaperButton({ wallpaperId, holdToDeleteMs, onDelete }: {
 interface Props {
   boardId: string;
   wallpapers: readonly WallpaperEntry[];
+  builtinWallpapers: readonly BuiltinWallpaperEntry[];
   activeWallpaperId: string | null;
   onSetActive: (id: string | null) => void;
   onUpload: (file: File) => void;
@@ -49,6 +50,7 @@ interface Props {
 export function WallpaperPickerModal({
   boardId,
   wallpapers,
+  builtinWallpapers,
   activeWallpaperId,
   onSetActive,
   onUpload,
@@ -105,7 +107,8 @@ export function WallpaperPickerModal({
     if (file) onUpload(file);
   };
 
-  const isNoBgActive = activeWallpaperId === null;
+  const isThemeDefaultActive = activeWallpaperId === null;
+  const isNoBgActive = activeWallpaperId === 'none';
   const imageSlots = Array.from({ length: MAX_WALLPAPERS }, (_, slotIndex) => slotIndex);
 
   return createPortal(
@@ -126,10 +129,26 @@ export function WallpaperPickerModal({
         </div>
 
         <div className="wp-grid">
-          {/* Slot 0: No background */}
+          {/* Slot 0: Theme default */}
+          <button
+            className={`wp-slot wp-slot--theme-default${isThemeDefaultActive ? ' wp-slot--active' : ''}`}
+            onClick={() => onSetActive(null)}
+            title={t('wallpaper.themeDefault')}
+            aria-pressed={isThemeDefaultActive}
+          >
+            <Sparkles size={22} />
+            <span className="wp-slot-label">{t('wallpaper.themeDefault')}</span>
+            {isThemeDefaultActive && (
+              <span className="wp-check" aria-hidden="true">
+                <Check size={10} />
+              </span>
+            )}
+          </button>
+
+          {/* Slot 1: No background */}
           <button
             className={`wp-slot wp-slot--none${isNoBgActive ? ' wp-slot--active' : ''}`}
-            onClick={() => onSetActive(null)}
+            onClick={() => onSetActive('none')}
             title={t('wallpaper.noBackground')}
             aria-pressed={isNoBgActive}
           >
@@ -142,7 +161,7 @@ export function WallpaperPickerModal({
             )}
           </button>
 
-          {/* Slots 1–8: image → upload → empty */}
+          {/* Slots 2–7: image → upload → empty */}
           {imageSlots.map(slotIndex => {
             const wallpaper = wallpapers[slotIndex];
 
@@ -202,6 +221,38 @@ export function WallpaperPickerModal({
             );
           })}
         </div>
+
+        {builtinWallpapers.length > 0 && (
+          <div className="wp-section">
+            <span className="wp-section-label">{t('wallpaper.builtin')}</span>
+            <div className="wp-grid">
+              {builtinWallpapers.map(builtinWallpaper => {
+                const id = `builtin:${builtinWallpaper.file}`;
+                const isActive = id === activeWallpaperId;
+                return (
+                  <div
+                    key={builtinWallpaper.file}
+                    className={`wp-slot wp-slot--image${isActive ? ' wp-slot--active' : ''}`}
+                  >
+                    <button
+                      className="wp-thumb-btn"
+                      onClick={() => onSetActive(id)}
+                      aria-pressed={isActive}
+                      title={t('wallpaper.setAsWallpaper')}
+                    >
+                      <img src={builtinWallpaper.url} alt="" className="wp-thumb" />
+                    </button>
+                    {isActive && (
+                      <span className="wp-check" aria-hidden="true">
+                        <Check size={10} />
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <input
           ref={uploadInputRef}

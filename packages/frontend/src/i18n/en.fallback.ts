@@ -229,6 +229,8 @@ export const EN_FALLBACK: Record<string, unknown> = {
     upload: 'Upload new wallpaper',
     deleteWallpaper: 'Delete wallpaper',
     setAsWallpaper: 'Set as wallpaper',
+    builtin: 'Built-in',
+    themeDefault: 'Theme default',
   },
   widgetCard: {
     crashed: 'Widget crashed',

@@ -1,4 +1,5 @@
 import useSWR from 'swr';
+import { usePreferences, DEFAULT_THEME } from './use-preferences.hook';
 
 interface BoardMeta {
   id: string;
@@ -13,6 +14,12 @@ export interface WallpaperEntry {
   uploadedAt: string;
 }
 
+export interface BuiltinWallpaperEntry {
+  name: string;
+  file: string;
+  url: string;
+}
+
 async function fetchBoardMeta(url: string): Promise<BoardMeta | null> {
   const res = await fetch(url);
   if (!res.ok) return null;
@@ -25,7 +32,17 @@ async function fetchWallpapers(url: string): Promise<WallpaperEntry[]> {
   return (await res.json()) as WallpaperEntry[];
 }
 
+async function fetchBuiltinWallpapers(url: string): Promise<BuiltinWallpaperEntry[]> {
+  const res = await fetch(url);
+  if (!res.ok) return [];
+  const body = (await res.json()) as { wallpapers: BuiltinWallpaperEntry[] };
+  return body.wallpapers;
+}
+
 export function useBoard() {
+  const { preferences } = usePreferences();
+  const activeThemeId = preferences?.theme ?? DEFAULT_THEME;
+
   const { data: board, mutate: mutateBoard } = useSWR<BoardMeta | null>(
     '/api/boards/default',
     fetchBoardMeta,
@@ -38,11 +55,27 @@ export function useBoard() {
     { revalidateOnFocus: false },
   );
 
+  const { data: builtinWallpapers = [] } = useSWR<BuiltinWallpaperEntry[]>(
+    '/api/wallpapers/builtin',
+    fetchBuiltinWallpapers,
+    { revalidateOnFocus: false },
+  );
+
   // Each wallpaper has its own stable URL, so switching IDs naturally busts the cache.
-  const backgroundUrl =
-    board?.activeWallpaperId
-      ? `/api/boards/${board.id}/wallpapers/${board.activeWallpaperId}`
-      : null;
+  const activeWallpaperId = board?.activeWallpaperId ?? null;
+  let backgroundUrl: string | null = null;
+  if (activeWallpaperId?.startsWith('builtin:')) {
+    const file = activeWallpaperId.slice('builtin:'.length);
+    backgroundUrl = `/api/wallpapers/builtin/${file}`;
+  } else if (activeWallpaperId === 'none') {
+    backgroundUrl = null;
+  } else if (activeWallpaperId) {
+    backgroundUrl = `/api/boards/${board!.id}/wallpapers/${activeWallpaperId}`;
+  } else {
+    // null/absent → theme default: use the built-in wallpaper matching the active theme, if any.
+    const themeDefault = builtinWallpapers.find(w => w.name === activeThemeId);
+    backgroundUrl = themeDefault?.url ?? null;
+  }
 
   const setActiveWallpaper = async (wallpaperId: string | null): Promise<void> => {
     if (!board) return;
@@ -77,5 +110,5 @@ export function useBoard() {
     await Promise.all([mutateWallpapers(), mutateBoard()]);
   };
 
-  return { board, backgroundUrl, wallpapers, setActiveWallpaper, uploadWallpaper, deleteWallpaper };
+  return { board, backgroundUrl, wallpapers, builtinWallpapers, setActiveWallpaper, uploadWallpaper, deleteWallpaper };
 }

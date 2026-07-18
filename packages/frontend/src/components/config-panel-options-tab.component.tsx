@@ -11,7 +11,7 @@ import { BoardIconPicker } from './emoji-picker.component';
 
 function WallpaperButton() {
   const t = useT();
-  const { board, wallpapers, setActiveWallpaper, uploadWallpaper, deleteWallpaper } = useBoard();
+  const { board, backgroundUrl, wallpapers, builtinWallpapers, setActiveWallpaper, uploadWallpaper, deleteWallpaper } = useBoard();
   const [showPicker, setShowPicker] = useState(false);
 
   if (!board) return null;
@@ -21,12 +21,12 @@ function WallpaperButton() {
       <div className="config-option-group">
         <label className="config-option-label">{t('config.wallpaper')}</label>
         <button className="wp-open-btn" onClick={() => setShowPicker(true)} aria-label={t('wallpaper.library')}>
-          {board.activeWallpaperId
-            ? <img src={`/api/boards/${board.id}/background`} alt="" className="wp-open-thumb" />
+          {backgroundUrl
+            ? <img src={backgroundUrl} alt="" className="wp-open-thumb" />
             : <span className="wp-open-none"><Image size={16} /></span>
           }
           <span className="wp-open-label">
-            {board.activeWallpaperId ? t('config.wallpaperChange') : t('config.wallpaperNone')}
+            {backgroundUrl ? t('config.wallpaperChange') : t('config.wallpaperNone')}
           </span>
         </button>
       </div>
@@ -35,6 +35,7 @@ function WallpaperButton() {
         <WallpaperPickerModal
           boardId={board.id}
           wallpapers={wallpapers}
+          builtinWallpapers={builtinWallpapers}
           activeWallpaperId={board.activeWallpaperId}
           onSetActive={id => void setActiveWallpaper(id)}
           onUpload={file => void uploadWallpaper(file)}

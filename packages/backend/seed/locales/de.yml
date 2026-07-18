@@ -220,6 +220,8 @@ wallpaper:
   upload: "Neues Hintergrundbild hochladen"
   deleteWallpaper: "Hintergrundbild löschen"
   setAsWallpaper: "Als Hintergrundbild setzen"
+  builtin: "Mitgeliefert"
+  themeDefault: "Theme-Standard"
 
 widgetCard:
   crashed: "Widget abgestürzt"
