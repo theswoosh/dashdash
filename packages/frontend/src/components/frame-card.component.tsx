@@ -5,7 +5,7 @@ import type { Layout, LayoutItem } from 'react-grid-layout';
 import { GripVertical, Settings, X } from 'lucide-react';
 import type { ServiceConfig } from '@dashdash/types';
 import { useUIStore } from '../store/uiStore';
-import { useThemeCard, useThemeId, getTheme } from '../themes/registry';
+import { useThemeCard, useAllowsWidgetBg } from '../themes/registry';
 import { useBehavior } from '../hooks/use-behavior.hook';
 import { useT } from '../i18n';
 import { WidgetCard } from './widget-card.component';
@@ -78,7 +78,6 @@ interface Props {
 export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig, renderConfig, frameLayout, onDelete, onChildReparent, onChildLayoutSync, reloadServices }: Props) {
   const t = useT();
   const Card = useThemeCard();
-  const activeThemeId = useThemeId();
   const { holdToDeleteMs } = useBehavior();
   const setConfigTarget = useUIStore(s => s.setConfigTarget);
   const children = useMemo(() => service.children ?? [], [service.children]);
@@ -328,7 +327,7 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
   // Liquid-glass/ascii/atom cards ARE their background (glass, terminal, CRT)
   // — a frame's custom backdrop never renders under those themes, same as
   // widget-card's per-widget bg override (see widget-card.component.tsx).
-  const allowsWidgetBg = getTheme(activeThemeId).allowsWidgetBg;
+  const allowsWidgetBg = useAllowsWidgetBg();
   const bgColor = allowsWidgetBg ? resolveColorOptionValue(rawBgColor) : undefined;
   // A frame's colors are a backdrop for ITS OWN chrome only — never published
   // as the inheritable --card-bg/--card-fg vars, which would bleed into every

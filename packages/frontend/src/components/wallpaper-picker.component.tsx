@@ -161,7 +161,7 @@ export function WallpaperPickerModal({
             )}
           </button>
 
-          {/* Slots 2–7: image → upload → empty */}
+          {/* Slots 2–9 (MAX_WALLPAPERS = 8 uploads): image → upload → empty */}
           {imageSlots.map(slotIndex => {
             const wallpaper = wallpapers[slotIndex];
 

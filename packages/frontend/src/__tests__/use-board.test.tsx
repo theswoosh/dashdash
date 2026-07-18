@@ -100,6 +100,26 @@ describe('useBoard — background resolution matrix', () => {
     expect(result.current.backgroundUrl).toBe(`/api/boards/${BOARD_ID}/wallpapers/upload-xyz`);
   });
 
+  it('does not resolve a theme-default wallpaper before preferences have loaded (avoids a cold-load flash)', async () => {
+    global.fetch = mockFetch({
+      activeWallpaperId: null,
+      theme: 'ascii',
+      builtin: [
+        { name: 'liquid-glass', file: 'liquid-glass_bg.png', url: '/api/wallpapers/builtin/liquid-glass_bg.png' },
+        { name: 'ascii', file: 'ascii_bg.png', url: '/api/wallpapers/builtin/ascii_bg.png' },
+      ],
+    }) as unknown as typeof fetch;
+
+    const { result } = renderHook(() => useBoard(), { wrapper: isolatedCacheWrapper });
+
+    // Before the /api/preferences request resolves, preferences carries only
+    // fallback data (defaults to 'liquid-glass') — must not flash that
+    // theme's default wallpaper while the real (ascii) theme is still loading.
+    expect(result.current.backgroundUrl).toBeNull();
+
+    await waitFor(() => expect(result.current.backgroundUrl).toBe('/api/wallpapers/builtin/ascii_bg.png'));
+  });
+
   it('empty builtin manifest degrades gracefully for theme default (no crash, no bg)', async () => {
     global.fetch = mockFetch({ activeWallpaperId: null, theme: 'classic', builtin: [] }) as unknown as typeof fetch;
 

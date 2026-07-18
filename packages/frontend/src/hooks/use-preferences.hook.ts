@@ -32,7 +32,7 @@ const fallbackTheme = (() => { try { return localStorage.getItem(STORAGE_KEY_THE
 const fetcher = (url: string) => fetch(url).then(r => r.json()) as Promise<Preferences>;
 
 export function usePreferences() {
-  const { data, mutate } = useSWR<Preferences>('/api/preferences', fetcher, {
+  const { data, mutate, isLoading } = useSWR<Preferences>('/api/preferences', fetcher, {
     revalidateOnFocus: false,
     fallbackData: { ...DEFAULT_PREFERENCES, theme: fallbackTheme },
   });
@@ -93,6 +93,11 @@ export function usePreferences() {
 
   return {
     preferences: data,
+    // True only while the real /api/preferences request is still in flight —
+    // ignores fallbackData, so a client that hasn't fetched yet (e.g. a
+    // stale/default theme from localStorage) can be distinguished from one
+    // that has confirmed its actual preferences.
+    isLoading,
     savePreferences,
   };
 }

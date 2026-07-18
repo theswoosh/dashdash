@@ -40,7 +40,7 @@ async function fetchBuiltinWallpapers(url: string): Promise<BuiltinWallpaperEntr
 }
 
 export function useBoard() {
-  const { preferences } = usePreferences();
+  const { preferences, isLoading: preferencesLoading } = usePreferences();
   const activeThemeId = preferences?.theme ?? DEFAULT_THEME;
 
   const { data: board, mutate: mutateBoard } = useSWR<BoardMeta | null>(
@@ -71,8 +71,11 @@ export function useBoard() {
     backgroundUrl = null;
   } else if (activeWallpaperId) {
     backgroundUrl = `/api/boards/${board!.id}/wallpapers/${activeWallpaperId}`;
-  } else {
+  } else if (!preferencesLoading) {
     // null/absent → theme default: use the built-in wallpaper matching the active theme, if any.
+    // Gated on preferences having actually resolved — resolving against the
+    // (possibly stale/default) fallback theme here would flash the wrong
+    // theme's wallpaper for an instant on cold load.
     const themeDefault = builtinWallpapers.find(w => w.name === activeThemeId);
     backgroundUrl = themeDefault?.url ?? null;
   }

@@ -58,7 +58,9 @@ export function createBoardRoutes(db: Db, configDir: string): FastifyPluginAsync
       };
     });
 
-    // PATCH /api/boards/:id — set active wallpaper (null = no background)
+    // PATCH /api/boards/:id — set the active wallpaper. activeWallpaperId is
+    // one of: an upload id, `builtin:<file>`, the literal 'none' (explicitly
+    // no background), or null (theme default).
     fastify.patch<{ Params: { id: string }; Body: { activeWallpaperId?: string | null } }>(
       '/boards/:id',
       {
@@ -88,13 +90,16 @@ export function createBoardRoutes(db: Db, configDir: string): FastifyPluginAsync
               if (!owned) return reply.code(400).send({ error: 'Invalid wallpaper id' });
             }
           }
-          setActiveWallpaperId(db, req.userId, board.id, value ?? null);
+          setActiveWallpaperId(db, req.userId, board.id, value);
         }
         return { ok: true };
       },
     );
 
-    // GET /api/boards/:id/background — serve the active wallpaper file
+    // GET /api/boards/:id/background — serve the active wallpaper file, but
+    // ONLY for a user-uploaded active. Builtins, 'none', and the theme default
+    // (null) all resolve client-side instead (see use-board.hook.ts) — this
+    // endpoint 404s for all of them rather than trying to serve anything.
     fastify.get<{ Params: { id: string } }>(
       '/boards/:id/background',
       async (req, reply) => {
@@ -103,9 +108,6 @@ export function createBoardRoutes(db: Db, configDir: string): FastifyPluginAsync
 
         const activeId = getActiveWallpaperId(db, req.userId, board.id);
         if (!activeId) return reply.code(404).send({ error: 'No active wallpaper' });
-        // Built-ins are served from /api/wallpapers/builtin/:file directly by the
-        // frontend, and 'none' means explicitly no background — neither is an
-        // upload id, so don't try to resolve them against user_wallpapers.
         if (activeId === 'none' || activeId.startsWith('builtin:')) {
           return reply.code(404).send({ error: 'No active wallpaper' });
         }

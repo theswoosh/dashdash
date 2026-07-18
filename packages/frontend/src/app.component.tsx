@@ -6,7 +6,7 @@ import './themes/atom.css';
 import './themes/base.css';
 import './themes/chrome.css';
 import { useUIStore } from './store/uiStore';
-import { usePreferences } from './hooks/use-preferences.hook';
+import { usePreferences, DEFAULT_THEME } from './hooks/use-preferences.hook';
 import { useBoard } from './hooks/use-board.hook';
 import { useAuth } from './hooks/use-auth.hook';
 import { useSettings } from './hooks/use-settings.hook';
@@ -36,7 +36,7 @@ export function App() {
 
   const { user, isLoading: isAuthLoading } = useAuth();
   const { preferences } = usePreferences();
-  const theme = preferences?.theme ?? 'liquid-glass';
+  const theme = preferences?.theme ?? DEFAULT_THEME;
   const { backgroundUrl } = useBoard();
   const settings = useSettings();
   const { languages, translations } = useLocales();

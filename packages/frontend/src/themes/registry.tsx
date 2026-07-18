@@ -117,3 +117,9 @@ export function useThemeId(): string {
   return useContext(ThemeContext).theme.id;
 }
 
+/** Whether per-widget background overrides (hex or token) render under the
+ * active theme. Themes whose cards are their background (glass/CRT/terminal) lock it. */
+export function useAllowsWidgetBg(): boolean {
+  return useContext(ThemeContext).theme.allowsWidgetBg;
+}
+

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo, memo, Suspense } from 'react';
 import { GripVertical, Settings, X, RefreshCw, Trash2 } from 'lucide-react';
 import { mutate as swrMutate } from 'swr';
 import type { ServiceConfig } from '@dashdash/types';
-import { useThemeCard, useThemeId, getTheme } from '../themes/registry';
+import { useThemeCard, useThemeId, useAllowsWidgetBg } from '../themes/registry';
 import { resolveColorOptionValue, parseTokenValue } from '../utils/color-tokens';
 import { guardCustomColors } from '../utils/color-contrast';
 import { getWidget } from '../widgets/registry';
@@ -221,7 +221,7 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
   // Liquid-glass/ascii/atom cards ARE their background (glass, terminal, CRT)
   // — a per-widget bg override never renders under those themes, regardless
   // of whether it's a token or a contrast-guarded hex. Font color is unaffected.
-  const allowsWidgetBg = getTheme(activeThemeId).allowsWidgetBg;
+  const allowsWidgetBg = useAllowsWidgetBg();
   const bgColor = !allowsWidgetBg
     ? undefined
     : bgIsToken ? resolveColorOptionValue(rawBgColor) : guardedCustomColors.bgColor;

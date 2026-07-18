@@ -36,12 +36,23 @@ function listBuiltinWallpapers(configDir: string): BuiltinWallpaper[] {
     return [];
   }
 
-  const wallpapers: BuiltinWallpaper[] = [];
+  // Prefer webp > png > jpg/jpeg when the same theme name has multiple files
+  // on disk (e.g. upgraded seed assets left the old extension behind) — avoids
+  // duplicate manifest entries / duplicate picker tiles for one theme.
+  const EXT_PRIORITY: Record<string, number> = { webp: 0, png: 1, jpg: 2, jpeg: 2 };
+  const bestByName = new Map<string, BuiltinWallpaper>();
+  const priorityByName = new Map<string, number>();
   for (const file of files) {
     const match = BUILTIN_WALLPAPER_RE.exec(file);
     if (!match) continue;
-    wallpapers.push({ name: match[1]!, file, url: `/api/wallpapers/builtin/${file}` });
+    const name = match[1]!;
+    const priority = EXT_PRIORITY[match[2]!] ?? 99;
+    const currentPriority = priorityByName.get(name);
+    if (currentPriority !== undefined && currentPriority <= priority) continue;
+    priorityByName.set(name, priority);
+    bestByName.set(name, { name, file, url: `/api/wallpapers/builtin/${file}` });
   }
+  const wallpapers = Array.from(bestByName.values());
   wallpapers.sort((a, b) => a.name.localeCompare(b.name));
   return wallpapers;
 }
@@ -66,7 +77,9 @@ export function createWallpapersRoutes(configDir: string): FastifyPluginAsync {
 
         const ext = match[2]!;
         void reply.type(MIME_MAP[ext] ?? 'application/octet-stream');
-        void reply.header('cache-control', 'public, max-age=604800, immutable');
+        // Not immutable: admins can replace a builtin file in place at the
+        // same path. Uploads (see uploads route) keep their own cache policy.
+        void reply.header('cache-control', 'public, max-age=3600');
         return reply.send(createReadStream(filePath));
       },
     );

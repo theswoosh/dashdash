@@ -62,6 +62,22 @@ describe('GET /api/wallpapers/builtin', () => {
     const res = await server.inject({ method: 'GET', url: '/api/wallpapers/builtin' });
     expect(res.statusCode).toBe(401);
   });
+
+  it('dedupes by name when the same theme has both a webp and a png on disk, preferring webp', async () => {
+    const cookie = await loginAsAdmin(server);
+    const wallpapersDir = join(tmpDir, 'wallpapers');
+    mkdirSync(wallpapersDir, { recursive: true });
+    writeFileSync(join(wallpapersDir, 'ascii_bg.png'), 'fake-png');
+    writeFileSync(join(wallpapersDir, 'ascii_bg.webp'), 'fake-webp');
+
+    const res = await server.inject({ method: 'GET', url: '/api/wallpapers/builtin', headers: { cookie } });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({
+      wallpapers: [
+        { name: 'ascii', file: 'ascii_bg.webp', url: '/api/wallpapers/builtin/ascii_bg.webp' },
+      ],
+    });
+  });
 });
 
 describe('GET /api/wallpapers/builtin/:file', () => {
@@ -81,6 +97,7 @@ describe('GET /api/wallpapers/builtin/:file', () => {
     });
     expect(res.statusCode).toBe(200);
     expect(res.headers['content-type']).toBe('image/png');
+    expect(res.headers['cache-control']).toBe('public, max-age=3600');
     expect(res.body).toBe('fake-png-bytes');
   });
 

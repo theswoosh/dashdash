@@ -13,7 +13,7 @@ import { BgColorPicker, parseRgba, buildRgba, DEFAULT_BG_HEX, DEFAULT_BG_ALPHA, 
 import { makeTokenValue, parseTokenValue, type ColorToken } from '../utils/color-tokens';
 import { getThemeColorDefaults } from '../utils/theme-color-defaults';
 import { guardCustomColors } from '../utils/color-contrast';
-import { useThemeId, getTheme } from '../themes/registry';
+import { useThemeId, useAllowsWidgetBg } from '../themes/registry';
 import { WidgetTitleField } from './widget-title-field.component';
 import { toAbsoluteUrl } from '../widgets/shared/app-icon.component';
 import { TimezonePicker } from './timezone-picker.component';
@@ -378,6 +378,11 @@ function FieldInput({
 export function WidgetConfigModal() {
   const t = useT();
   const activeThemeId = useThemeId();
+  // Liquid-glass/ascii/atom cards ARE their background — the per-widget bg
+  // picker never applies under them (widget-card.component.tsx suppresses
+  // it at render time too). Font color stays customizable everywhere. Must
+  // be called before the early return below (rules of hooks).
+  const bgLockedByTheme = !useAllowsWidgetBg();
   const configTarget = useUIStore(s => s.configTarget);
   const setConfigTarget = useUIStore(s => s.setConfigTarget);
   const { services, reload: reloadServices } = useServices();
@@ -619,17 +624,15 @@ export function WidgetConfigModal() {
       themeCardBg: buildRgba(themeDefaults.bg.hex, themeDefaults.bg.alpha),
       themeTextColor: buildRgba(themeDefaults.fg.hex, themeDefaults.fg.alpha),
     });
-    return result.bgSuppressed || result.fontSuppressed;
+    // The bg picker this hint refers to isn't rendered when bg is locked by
+    // the theme (bgLockedByTheme has its own dedicated message for that) —
+    // so only fontSuppressed is relevant in that case.
+    return bgLockedByTheme ? result.fontSuppressed : (result.bgSuppressed || result.fontSuppressed);
   })();
 
   const configFields = (template?.configFields ?? []).filter(
     f => !(isTinyLayout && f.key === 'pingIndicator'),
   );
-
-  // Liquid-glass/ascii/atom cards ARE their background — the per-widget bg
-  // picker never applies under them (widget-card.component.tsx suppresses
-  // it at render time too). Font color stays customizable everywhere.
-  const bgLockedByTheme = !getTheme(activeThemeId).allowsWidgetBg;
 
   const runHealthcheckTest = async () => {
     setTestResult('loading');
@@ -705,31 +708,7 @@ export function WidgetConfigModal() {
             <p className="config-field-info">{t('widgetConfig.colors.bgLockedByTheme')}</p>
           ) : (
             <div className="config-field">
-              <label className="config-label">
-                {t('widgetConfig.widgetBackground')}
-                <span className="color-clipboard-actions">
-                  <button
-                    type="button"
-                    className="color-clipboard-btn"
-                    onClick={copyColorsToClipboard}
-                    title={t('widgetConfig.copyColor')}
-                    aria-label={t('widgetConfig.copyColor')}
-                  >
-                    <Copy size={13} />
-                  </button>
-                  {colorClipboard !== null && (
-                    <button
-                      type="button"
-                      className="color-clipboard-btn"
-                      onClick={applyColorClipboard}
-                      title={t('widgetConfig.pasteColor')}
-                      aria-label={t('widgetConfig.pasteColor')}
-                    >
-                      <ClipboardPaste size={13} />
-                    </button>
-                  )}
-                </span>
-              </label>
+              <label className="config-label">{t('widgetConfig.widgetBackground')}</label>
               <BgColorPicker
                 hex={bgHex}
                 alpha={bgAlpha}
@@ -742,7 +721,35 @@ export function WidgetConfigModal() {
             </div>
           )}
           <div className="config-field">
-            <label className="config-label">{t('widgetConfig.fontColor')}</label>
+            <label className="config-label">
+              {t('widgetConfig.fontColor')}
+              {/* Clipboard row lives here (not the bg block above) so it stays
+                  reachable even when bg is locked by the theme — pasting a
+                  captured bg is harmless, render-time suppression still hides
+                  it under locked themes. */}
+              <span className="color-clipboard-actions">
+                <button
+                  type="button"
+                  className="color-clipboard-btn"
+                  onClick={copyColorsToClipboard}
+                  title={t('widgetConfig.copyColor')}
+                  aria-label={t('widgetConfig.copyColor')}
+                >
+                  <Copy size={13} />
+                </button>
+                {colorClipboard !== null && (
+                  <button
+                    type="button"
+                    className="color-clipboard-btn"
+                    onClick={applyColorClipboard}
+                    title={t('widgetConfig.pasteColor')}
+                    aria-label={t('widgetConfig.pasteColor')}
+                  >
+                    <ClipboardPaste size={13} />
+                  </button>
+                )}
+              </span>
+            </label>
             <BgColorPicker
               hex={fgHex}
               alpha={fgAlpha}
