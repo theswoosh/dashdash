@@ -17,6 +17,9 @@ async function setup() {
   writeFileSync(join(tmpDir, 'settings.yml'), 'title: test\n');
   ({ server, db } = await buildApp({ dataDir: tmpDir, configDir: tmpDir }));
   await server.ready();
+  // Startup seeding copies any real images from seed/wallpapers into this
+  // config dir — wipe them so each test controls its own fixtures.
+  rmSync(join(tmpDir, 'wallpapers'), { recursive: true, force: true });
 }
 
 async function teardown() {
