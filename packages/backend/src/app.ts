@@ -22,6 +22,7 @@ import { createPreferencesRoutes } from './routes/preferences.route.js';
 import { createWidgetTemplatesRoutes } from './routes/widget-templates.route.js';
 import { createHealthcheckTestRoutes } from './routes/healthcheck-test.route.js';
 import { createBoardRoutes } from './routes/boards.route.js';
+import { createWallpapersRoutes, BUILTIN_WALLPAPER_RE } from './routes/wallpapers.route.js';
 import { createAuthRoutes } from './routes/auth.route.js';
 import type { OidcConfig } from './config/schemas.js';
 import { createUsersRoutes } from './routes/users.route.js';
@@ -52,6 +53,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // or dist/../../seed/locales in prod — but in Docker we ship them inside the
 // package, so resolve relative to this file regardless of env.
 const SEED_LOCALES_DIR = join(__dirname, '..', 'seed', 'locales');
+const SEED_WALLPAPERS_DIR = join(__dirname, '..', 'seed', 'wallpapers');
 
 function seedLocales(configDir: string): void {
   const localesDir = join(configDir, 'locales');
@@ -70,6 +72,32 @@ function seedLocales(configDir: string): void {
     const dest = join(localesDir, file);
     if (!existsSync(dest)) {
       copyFileSync(join(SEED_LOCALES_DIR, file), dest);
+    }
+  }
+}
+
+// Admin-provided built-in theme wallpapers (config/wallpapers/<themeId>_bg.<ext>),
+// bundled with the app in packages/backend/seed/wallpapers/. The seed dir may be
+// empty or absent — the user adds images later — so this must tolerate 0..n files.
+// `seedDir` defaults to the real bundled dir; tests override it to stay isolated
+// from the (real, currently empty) repo seed directory.
+export function seedWallpapers(configDir: string, seedDir: string = SEED_WALLPAPERS_DIR): void {
+  const wallpapersDir = join(configDir, 'wallpapers');
+  mkdirSync(wallpapersDir, { recursive: true });
+
+  if (!existsSync(seedDir)) return;
+
+  let seedFiles: string[];
+  try {
+    seedFiles = readdirSync(seedDir).filter(f => BUILTIN_WALLPAPER_RE.test(f));
+  } catch {
+    return;
+  }
+
+  for (const file of seedFiles) {
+    const dest = join(wallpapersDir, file);
+    if (!existsSync(dest)) {
+      copyFileSync(join(seedDir, file), dest);
     }
   }
 }
@@ -111,6 +139,7 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
   await server.register(websocketPlugin);
 
   seedLocales(configDir);
+  seedWallpapers(configDir);
 
   const db = createDb(dataDir);
   const log = server.log;
@@ -182,6 +211,7 @@ export async function buildApp({ dataDir, configDir, publicDir, logger = false }
   await server.register(createWidgetTemplatesRoutes(configDir), { prefix: '/api' });
   await server.register(createHealthcheckTestRoutes({ getSettings }), { prefix: '/api' });
   await server.register(createBoardRoutes(db, configDir), { prefix: '/api' });
+  await server.register(createWallpapersRoutes(configDir), { prefix: '/api' });
   await server.register(createLocalesRoutes(configDir), { prefix: '/api' });
   await server.register(createConfigValidateRoutes(configDir), { prefix: '/api' });
   await server.register(createHealthcheckBatchRoutes({ getServices, getSettings }), { prefix: '/api' });

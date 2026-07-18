@@ -12,6 +12,7 @@ import {
   getActiveWallpaperId,
   setActiveWallpaperId,
 } from '../db/wallpapers.db.js';
+import { BUILTIN_WALLPAPER_RE } from './wallpapers.route.js';
 
 const ALLOWED_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.avif']);
 const MIME_TO_EXT: Record<string, string> = {
@@ -75,7 +76,19 @@ export function createBoardRoutes(db: Db, configDir: string): FastifyPluginAsync
         const board = getBoard(db, req.params.id);
         if (!board) return reply.code(404).send({ error: 'Board not found' });
         if (req.body.activeWallpaperId !== undefined) {
-          setActiveWallpaperId(db, req.userId, board.id, req.body.activeWallpaperId ?? null);
+          const value = req.body.activeWallpaperId;
+          if (value !== null && value !== 'none') {
+            if (value.startsWith('builtin:')) {
+              const file = value.slice('builtin:'.length);
+              if (!BUILTIN_WALLPAPER_RE.test(file)) {
+                return reply.code(400).send({ error: 'Invalid built-in wallpaper' });
+              }
+            } else {
+              const owned = listWallpapers(db, req.userId, board.id).some(w => w.id === value);
+              if (!owned) return reply.code(400).send({ error: 'Invalid wallpaper id' });
+            }
+          }
+          setActiveWallpaperId(db, req.userId, board.id, value ?? null);
         }
         return { ok: true };
       },
@@ -90,6 +103,12 @@ export function createBoardRoutes(db: Db, configDir: string): FastifyPluginAsync
 
         const activeId = getActiveWallpaperId(db, req.userId, board.id);
         if (!activeId) return reply.code(404).send({ error: 'No active wallpaper' });
+        // Built-ins are served from /api/wallpapers/builtin/:file directly by the
+        // frontend, and 'none' means explicitly no background — neither is an
+        // upload id, so don't try to resolve them against user_wallpapers.
+        if (activeId === 'none' || activeId.startsWith('builtin:')) {
+          return reply.code(404).send({ error: 'No active wallpaper' });
+        }
 
         const wallpapers = listWallpapers(db, req.userId, board.id);
         const wallpaper = wallpapers.find(w => w.id === activeId);
