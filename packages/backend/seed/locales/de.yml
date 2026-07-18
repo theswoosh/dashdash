@@ -296,16 +296,16 @@ widgets:
 themes:
   liquidGlass:
     name: "Liquid Glass"
-    description: "Squircle-Karten mit Hintergrundunschärfe und Linsenverzerrung"
+    description: "Milchglas-Karten mit sanft gerundeten Ecken und Linsenverzerrung"
   classic:
-    name: "Klassisch"
-    description: "Saubere, abgerundete Karten mit feinem Rahmen und Schatten"
+    name: "Color"
+    description: "Klare abgerundete Karten — Widget-Farben frei anpassbar"
   ascii:
     name: "ASCII"
-    description: "Commodore 64 PETSCII — Zeichenrahmen auf Mitternachtsblau"
+    description: "Retro-8-Bit-Terminal — Zeichenrahmen auf Mitternachtsblau"
   atom:
     name: "ATOM"
-    description: "Pip-Boy-Phosphor-CRT mit Scanlines, Vignette und Phosphorleuchten"
+    description: "Postapokalyptisches Phosphor-CRT — Scanlines, Vignette, grünes Leuchten"
 
 languages:
   en: "English"

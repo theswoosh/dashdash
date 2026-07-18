@@ -285,10 +285,10 @@ export const EN_FALLBACK: Record<string, unknown> = {
     chat: { label: 'Chat', description: 'Message channels shared between users' },
   },
   themes: {
-    liquidGlass: { name: 'Liquid Glass', description: 'Squircle cards with backdrop blur and lens distortion' },
-    classic: { name: 'Classic', description: 'Clean rounded cards with subtle border and shadow' },
-    ascii: { name: 'ASCII', description: 'Commodore 64 PETSCII — box-drawing borders on midnight blue' },
-    atom: { name: 'ATOM', description: 'Pip-Boy phosphor CRT with scanlines, vignette, and phosphor glow' },
+    liquidGlass: { name: 'Liquid Glass', description: 'Frosted-glass cards with soft rounded corners and lens distortion' },
+    classic: { name: 'Color', description: 'Clean rounded cards — fully customizable widget colors' },
+    ascii: { name: 'ASCII', description: 'Retro 8-bit terminal — box-drawing borders on midnight blue' },
+    atom: { name: 'ATOM', description: 'Post-apocalyptic phosphor CRT — scanlines, vignette, green glow' },
   },
   languages: {
     en: 'English',

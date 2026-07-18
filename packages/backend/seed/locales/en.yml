@@ -296,16 +296,16 @@ widgets:
 themes:
   liquidGlass:
     name: "Liquid Glass"
-    description: "Squircle cards with backdrop blur and lens distortion"
+    description: "Frosted-glass cards with soft rounded corners and lens distortion"
   classic:
-    name: "Classic"
-    description: "Clean rounded cards with subtle border and shadow"
+    name: "Color"
+    description: "Clean rounded cards — fully customizable widget colors"
   ascii:
     name: "ASCII"
-    description: "Commodore 64 PETSCII — box-drawing borders on midnight blue"
+    description: "Retro 8-bit terminal — box-drawing borders on midnight blue"
   atom:
     name: "ATOM"
-    description: "Pip-Boy phosphor CRT with scanlines, vignette, and phosphor glow"
+    description: "Post-apocalyptic phosphor CRT — scanlines, vignette, green glow"
 
 languages:
   en: "English"
