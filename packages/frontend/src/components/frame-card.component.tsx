@@ -5,13 +5,14 @@ import type { Layout, LayoutItem } from 'react-grid-layout';
 import { GripVertical, Settings, X } from 'lucide-react';
 import type { ServiceConfig } from '@dashdash/types';
 import { useUIStore } from '../store/uiStore';
-import { useThemeCard } from '../themes/registry';
+import { useThemeCard, useThemeId, getTheme } from '../themes/registry';
 import { useBehavior } from '../hooks/use-behavior.hook';
 import { useT } from '../i18n';
 import { WidgetCard } from './widget-card.component';
 import { serviceAsGridItem, persistedHeight } from '../utils/widget-layout';
 import type { GridConfigLike } from '../utils/widget-layout';
 import { OVERLAP_COMPACTOR, DROPPING_ELEMENT_ID, findOverlappingItems, classifyChildDragTarget } from '../utils/grid-collision';
+import { resolveColorOptionValue } from '../utils/color-tokens';
 import './FrameCard.css';
 
 const DRAG_GHOST_OFFSET_PX = 12;
@@ -77,6 +78,7 @@ interface Props {
 export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig, renderConfig, frameLayout, onDelete, onChildReparent, onChildLayoutSync, reloadServices }: Props) {
   const t = useT();
   const Card = useThemeCard();
+  const activeThemeId = useThemeId();
   const { holdToDeleteMs } = useBehavior();
   const setConfigTarget = useUIStore(s => s.setConfigTarget);
   const children = useMemo(() => service.children ?? [], [service.children]);
@@ -321,8 +323,13 @@ export const FrameCard = memo(function FrameCard({ service, editMode, gridConfig
   const dragConfig = useMemo(() => ({ enabled: editMode, handle: CHILD_DRAG_HANDLE }), [editMode]);
   const resizeConfig = useMemo(() => ({ enabled: editMode }), [editMode]);
   const isHeaderHidden = service.options?.['hideHeader'] === true && !editMode;
-  const bgColor = typeof service.options?.['bg_color'] === 'string' ? service.options['bg_color'] : undefined;
+  const rawBgColor = typeof service.options?.['bg_color'] === 'string' ? service.options['bg_color'] : undefined;
   const fontColor = typeof service.options?.['font_color'] === 'string' ? service.options['font_color'] : undefined;
+  // Liquid-glass/ascii/atom cards ARE their background (glass, terminal, CRT)
+  // — a frame's custom backdrop never renders under those themes, same as
+  // widget-card's per-widget bg override (see widget-card.component.tsx).
+  const allowsWidgetBg = getTheme(activeThemeId).allowsWidgetBg;
+  const bgColor = allowsWidgetBg ? resolveColorOptionValue(rawBgColor) : undefined;
   // A frame's colors are a backdrop for ITS OWN chrome only — never published
   // as the inheritable --card-bg/--card-fg vars, which would bleed into every
   // child widget that has no color of its own (live issue #4.1). Background
