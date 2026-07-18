@@ -7,7 +7,7 @@ import { useHoldAction } from '../hooks/use-hold-action.hook';
 import { useT } from '../i18n';
 import './wallpaper-picker.css';
 
-const MAX_WALLPAPERS = 6; // 3×3 grid − 2 reserved slots ("theme default" + "no background")
+const MAX_WALLPAPERS = 8; // uploads only — "theme default" / "no background" tiles sit outside the cap
 
 function HoldDeleteWallpaperButton({ wallpaperId, holdToDeleteMs, onDelete }: {
   wallpaperId: string;
