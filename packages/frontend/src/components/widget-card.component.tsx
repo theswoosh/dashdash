@@ -338,9 +338,9 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
         {tinyIconValue && (
           tinyInternalUrl
             ? <a href={toAbsoluteUrl(tinyInternalUrl)} target="_blank" rel="noopener noreferrer" className="widget-header-icon-link" title={tinyDescription}>
-                <AppIcon iconValue={tinyIconValue} size={12} />
+                <AppIcon iconValue={tinyIconValue} size={12} className={isHealthcheck ? 'healthcheck-tiny-icon' : undefined} />
               </a>
-            : <AppIcon iconValue={tinyIconValue} size={12} title={tinyDescription} />
+            : <AppIcon iconValue={tinyIconValue} size={12} title={tinyDescription} className={isHealthcheck ? 'healthcheck-tiny-icon' : undefined} />
         )}
         {isTinyLayout && tinyInternalUrl ? (
           // Tiny mode: the title itself links to the app (visually unchanged) —

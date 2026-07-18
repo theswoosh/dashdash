@@ -176,6 +176,18 @@
   opacity: 0.7;
 }
 
+/* Hover grow + springy flop-back for the healthcheck tiny-layout header icon
+   — smaller scale than the normal/big layouts so it doesn't overflow the
+   38px header bar. */
+.healthcheck-tiny-icon {
+  transition: transform 250ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.healthcheck-tiny-icon:hover {
+  transform: scale(1.12);
+  transition: transform 130ms ease-out;
+}
+
 /* Tiny layout — header-only card: remove the bottom separator, balance padding */
 .widget-card--tiny-layout .widget-header {
   border-bottom: none;
