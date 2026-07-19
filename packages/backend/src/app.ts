@@ -36,6 +36,7 @@ import { cleanupExpiredOidcStates } from './db/oidc-state.db.js';
 import { createChatRoutes } from './routes/chat.route.js';
 import { createUpdateCheckRoutes } from './routes/update-check.route.js';
 import { purgeExpiredChatMessages } from './db/chat.db.js';
+import { seedLocales as seedLocalesFromDir } from './config/locale-seeder.js';
 
 export interface AppOptions {
   dataDir: string;
@@ -55,25 +56,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const SEED_LOCALES_DIR = join(__dirname, '..', 'seed', 'locales');
 const SEED_WALLPAPERS_DIR = join(__dirname, '..', 'seed', 'wallpapers');
 
-function seedLocales(configDir: string): void {
-  const localesDir = join(configDir, 'locales');
-  mkdirSync(localesDir, { recursive: true });
-
-  if (!existsSync(SEED_LOCALES_DIR)) return;
-
-  let seedFiles: string[];
-  try {
-    seedFiles = readdirSync(SEED_LOCALES_DIR).filter(f => f.endsWith('.yml'));
-  } catch {
-    return;
-  }
-
-  for (const file of seedFiles) {
-    const dest = join(localesDir, file);
-    if (!existsSync(dest)) {
-      copyFileSync(join(SEED_LOCALES_DIR, file), dest);
-    }
-  }
+// Refreshes locale files whose text the user never edited when the shipped
+// seed changes, while preserving user edits and user-added keys — see
+// config/locale-seeder.ts for the three-way-merge details. `seedDir` defaults
+// to the real bundled dir; tests override it to stay isolated from the (real)
+// repo seed directory, mirroring the seedWallpapers pattern below.
+export function seedLocales(configDir: string, seedDir: string = SEED_LOCALES_DIR): void {
+  seedLocalesFromDir(configDir, seedDir);
 }
 
 // Admin-provided built-in theme wallpapers (config/wallpapers/<themeId>_bg.<ext>),
