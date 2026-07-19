@@ -22,6 +22,13 @@ function readYaml(path: string): Record<string, unknown> {
   return yaml.load(readFileSync(path, 'utf8'), { schema: yaml.CORE_SCHEMA }) as Record<string, unknown>;
 }
 
+function resolve(map: Record<string, unknown>, path: string): unknown {
+  return path.split('.').reduce<unknown>(
+    (node, key) => (node && typeof node === 'object' ? (node as Record<string, unknown>)[key] : undefined),
+    map,
+  );
+}
+
 describe('seedLocales', () => {
   it('copies seed to destination and baseline on first run', () => {
     const seedDir = makeTmpDir('dashdash-locseed-src-');
@@ -103,9 +110,9 @@ describe('seedLocales', () => {
 
     let dest = readYaml(join(localesDir, 'en.yml'));
     // Pre-existing value left untouched — no baseline to prove it was never edited.
-    expect((dest['themes'] as any).atom.description).toBe('Pip-Boy green');
+    expect(resolve(dest, 'themes.atom.description')).toBe('Pip-Boy green');
     // Missing key added from seed.
-    expect((dest['themes'] as any).classic.description).toBe('Classic theme');
+    expect(resolve(dest, 'themes.classic.description')).toBe('Classic theme');
 
     const baselinePath = join(localesDir, '.seed-baseline', 'en.yml');
     expect(existsSync(baselinePath)).toBe(true);
@@ -130,8 +137,8 @@ describe('seedLocales', () => {
     seedLocales(configDir, seedDir);
 
     dest = readYaml(join(localesDir, 'en.yml'));
-    expect((dest['themes'] as any).atom.description).toBe('Pip-Boy green');
-    expect((dest['themes'] as any).classic.description).toBe('New classic copy');
+    expect(resolve(dest, 'themes.atom.description')).toBe('Pip-Boy green');
+    expect(resolve(dest, 'themes.classic.description')).toBe('New classic copy');
   });
 
   it('preserves a user-added key not present in the seed across a rewrite', () => {
@@ -152,9 +159,8 @@ describe('seedLocales', () => {
     seedLocales(configDir, seedDir);
 
     const dest = readYaml(join(localesDir, 'en.yml'));
-    const atom = (dest['themes'] as any).atom;
-    expect(atom.description).toBe('Post-apocalyptic green');
-    expect(atom.customField).toBe('user extra');
+    expect(resolve(dest, 'themes.atom.description')).toBe('Post-apocalyptic green');
+    expect(resolve(dest, 'themes.atom.customField')).toBe('user extra');
   });
 
   it('leaves a malformed destination file byte-identical and does not crash', () => {
