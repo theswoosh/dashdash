@@ -19,6 +19,10 @@ interface FrontendWidget {
   // handles the `loading` prop itself — WidgetCard must not blank it with a
   // skeleton while server data is in flight.
   rendersWhileLoading?: boolean | undefined;
+  // Widget manages its own vertical layout and scrolling: the body must be a
+  // height-constrained flex column so inner `overflow: auto` regions can scroll
+  // instead of stretching the card.
+  fillsBody?: boolean | undefined;
 }
 
 const WIDGETS = new Map<string, FrontendWidget>([
@@ -28,9 +32,9 @@ const WIDGETS = new Map<string, FrontendWidget>([
   ['iframe',      { Component: IframeWidget,      clientOnly: true }],
   ['healthcheck', { Component: HealthcheckWidget, rendersWhileLoading: true }],
   ['stats',       { Component: StatsWidget                         }],
-  ['notepad',     { Component: NotepadWidget,     clientOnly: true }],
+  ['notepad',     { Component: NotepadWidget,     clientOnly: true, fillsBody: true }],
   ['frame',       { Component: FrameWidget,       clientOnly: true }],
-  ['chat',        { Component: ChatWidget,        clientOnly: true }],
+  ['chat',        { Component: ChatWidget,        clientOnly: true, fillsBody: true }],
 ]);
 
 /** Returns the frontend widget definition. Unknown widget types fall back to FallbackWidget. */

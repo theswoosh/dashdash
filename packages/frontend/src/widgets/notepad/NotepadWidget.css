@@ -24,6 +24,8 @@
   white-space: pre-wrap;
   word-break: break-word;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--chrome-border, var(--border-color)) transparent;
 }
 
 .notepad-display:focus {

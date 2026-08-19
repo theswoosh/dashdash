@@ -67,6 +67,8 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--chrome-border, var(--border-color)) transparent;
   display: flex;
   flex-direction: column;
   gap: 2px;

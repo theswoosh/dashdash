@@ -160,7 +160,7 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
   const Card = useThemeCard();
   const setConfigTarget = useUIStore(s => s.setConfigTarget);
   const { holdToDeleteMs } = useBehavior();
-  const { Component, clientOnly, rendersWhileLoading } = getWidget(service.widget);
+  const { Component, clientOnly, rendersWhileLoading, fillsBody } = getWidget(service.widget);
   const isHealthcheck = service.widget === 'healthcheck';
   // Individual fetch — disabled for healthcheck widgets (those use the batch hook below).
   const { data: singleData, error: singleError, loading: singleLoading } = useWidgetData(
@@ -377,7 +377,7 @@ export const WidgetCard = memo(function WidgetCard({ service, editMode, onDelete
         )}
       </div>}
       {!isTinyLayout && (
-        <div className="widget-body">
+        <div className={fillsBody ? 'widget-body widget-body--fill' : 'widget-body'}>
           {body}
         </div>
       )}

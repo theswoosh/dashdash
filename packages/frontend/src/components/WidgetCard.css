@@ -204,6 +204,17 @@
   padding: 12px;
 }
 
+/* Widgets that own their vertical layout (chat, notepad): the body must be able
+   to shrink below its content so inner overflow:auto regions actually scroll,
+   instead of growing past the card and pushing pinned bars (the chat composer)
+   under the card's overflow:hidden clip line. Mirrors .ascii-card__middle. */
+.widget-body--fill {
+  min-height: 0;
+  overflow: hidden;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
 .widget-placeholder-id {
   font-family: var(--font-mono);
   font-size: 13px;
