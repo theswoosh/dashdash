@@ -11,6 +11,7 @@ import { useBoard } from './hooks/use-board.hook';
 import { useAuth } from './hooks/use-auth.hook';
 import { useSettings } from './hooks/use-settings.hook';
 import { useLocales } from './hooks/use-locales.hook';
+import { useDocumentIdentity } from './hooks/use-document-identity.hook';
 import { I18nProvider } from './i18n';
 import { ThemeProvider } from './themes/registry';
 import { Topbar } from './components/topbar.component';
@@ -72,6 +73,14 @@ export function App() {
   useLayoutEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  // Mirror the board identity onto the browser tab
+  useDocumentIdentity({
+    isAuthenticated: !!user,
+    boardName: preferences?.boardName,
+    headerIcon: preferences?.headerIcon,
+    showBoardName: preferences?.showBoardName,
+  });
 
   if (isAuthLoading) return null;
   if (!user) {
