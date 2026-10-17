@@ -5,6 +5,24 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning
 follows [ZeroVer](https://0ver.org): major stays `0` indefinitely, minor bumps
 for feature releases, patch bumps for fixes.
 
+## [0.0.4] — 2026-10-17
+
+### Added
+- The browser tab now shows the board name and board icon (title and favicon),
+  matching the top bar. Respects the "show board name" preference. This also
+  fixes the 404 on `/favicon.svg`.
+
+### Fixed
+- **Sessions no longer expire early.** With `auth.session.slidingWindow`
+  (the default) the server extended the session on every request, but the
+  browser cookie kept its original expiry and was dropped `maxAgeSeconds`
+  after login, even for daily users. The cookie is now refreshed (at most once
+  per hour) so the session truly lasts `maxAgeSeconds` after last use. To stay
+  logged in longer than the 7-day default, set `auth.session.maxAgeSeconds`
+  in `settings.yml` (e.g. `7776000` for 90 days).
+- Chat widget: the message composer stays visible instead of being pushed out
+  of the card, and chat and notepad widgets scroll correctly.
+
 ## [0.0.3] — 2026-07-19
 
 **Breaking:** all `DASHDASH_*` environment variables are renamed to `BOARD_*`
