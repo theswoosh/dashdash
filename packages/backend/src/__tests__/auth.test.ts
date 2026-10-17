@@ -50,6 +50,30 @@ function extractSessionCookie(headers: Record<string, string | string[]>): strin
 }
 
 // ============================================================
+// Sliding cookie refresh
+// ============================================================
+
+describe('Sliding session cookie', () => {
+  beforeEach(setup);
+  afterEach(teardown);
+
+  it('re-issues the cookie with a fresh Max-Age on authenticated requests, throttled', async () => {
+    await register();
+    const loginRes = await login();
+    const sessionId = extractSessionCookie(loginRes.headers as Record<string, string | string[]>)!;
+
+    const first = await server.inject({ method: 'GET', url: '/api/auth/me', cookies: { dashdash_session: sessionId } });
+    const setCookie = first.headers['set-cookie'];
+    const header = Array.isArray(setCookie) ? setCookie[0] : setCookie;
+    expect(header).toContain(`dashdash_session=${sessionId}`);
+    expect(header).toMatch(/Max-Age=604800/);
+
+    const second = await server.inject({ method: 'GET', url: '/api/auth/me', cookies: { dashdash_session: sessionId } });
+    expect(second.headers['set-cookie']).toBeUndefined();
+  });
+});
+
+// ============================================================
 // Registration
 // ============================================================
 

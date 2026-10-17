@@ -17,6 +17,11 @@ const PUBLIC_PATHS = new Set([
 
 const COOKIE_NAME = SESSION_COOKIE_NAME;
 
+// Re-issuing the cookie on every request is wasteful; once per hour keeps the
+// browser-side expiry in step with the sliding DB session.
+const COOKIE_REFRESH_INTERVAL_MS = 60 * 60 * 1000;
+const COOKIE_REFRESH_MAX_TRACKED = 10_000;
+
 declare module 'fastify' {
   interface FastifyRequest {
     userId: string;
@@ -27,6 +32,8 @@ declare module 'fastify' {
 export function registerAuthMiddleware(server: FastifyInstance, db: Db, slidingWindowSeconds: number): void {
   server.decorateRequest('userId', '');
   server.decorateRequest('userRole', 'user');
+
+  const lastCookieRefresh = new Map<string, number>();
 
   server.addHook('preHandler', async (request: FastifyRequest, reply: FastifyReply) => {
     const path = request.url.split('?')[0]!;
@@ -49,6 +56,19 @@ export function registerAuthMiddleware(server: FastifyInstance, db: Db, slidingW
 
     if (slidingWindowSeconds > 0) {
       extendSession(db, sessionId, slidingWindowSeconds);
+
+      // The DB session slides, but the browser drops the cookie at its original
+      // maxAge unless it is re-sent.
+      const now = Date.now();
+      const last = lastCookieRefresh.get(sessionId);
+      if (last === undefined || now - last >= COOKIE_REFRESH_INTERVAL_MS) {
+        if (lastCookieRefresh.size >= COOKIE_REFRESH_MAX_TRACKED) lastCookieRefresh.clear();
+        lastCookieRefresh.set(sessionId, now);
+        void reply.setCookie(COOKIE_NAME, sessionId, {
+          ...getSessionCookieOptions(),
+          maxAge: slidingWindowSeconds,
+        });
+      }
     }
   });
 }
